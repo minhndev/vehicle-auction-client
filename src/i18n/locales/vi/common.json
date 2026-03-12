@@ -1,0 +1,19 @@
+{
+  "welcome": "Chào mừng đến với Hệ thống Đấu giá Phương tiện",
+  "navigation": {
+    "home": "Trang chủ",
+    "auctions": "Đấu giá",
+    "how_it_works": "Cách hoạt động",
+    "about_us": "Về chúng tôi",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "dashboard": "Bảng điều khiển",
+    "profile": "Hồ sơ",
+    "logout": "Đăng xuất"
+  },
+  "buttons": {
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "save": "Lưu thay đổi"
+  }
+}

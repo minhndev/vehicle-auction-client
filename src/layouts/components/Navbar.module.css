@@ -1,0 +1,106 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: var(--font-size-large);
+  font-weight: 700;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.logoAccent {
+  color: var(--color-secondary);
+}
+
+.navLinks {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+.link {
+  color: var(--color-text);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-background);
+  border: 1px solid #dcdde1;
+  border-radius: 20px;
+  padding: var(--space-xs) var(--space-md);
+  width: 300px;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  padding: var(--space-xs);
+  font-size: var(--font-size-small);
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-secondary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-small);
+}
+
+.dashboardLink {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.dashboardLink:hover {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .searchBar {
+    order: 3;
+    width: 100%;
+  }
+
+  .navLinks {
+    display: none; /* In a real app, this would be a hamburger menu */
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "welcome": "Welcome to the Vehicle Auction System",
+  "navigation": {
+    "home": "Home",
+    "auctions": "Auctions",
+    "how_it_works": "How it Works",
+    "about_us": "About Us",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save Changes"
+  }
+}

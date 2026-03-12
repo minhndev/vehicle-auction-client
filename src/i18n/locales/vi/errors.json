@@ -1,0 +1,9 @@
+{
+  "1001": "Email này đã được đăng ký.",
+  "1002": "Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại email và mật khẩu.",
+  "1003": "Tài khoản chưa được xác thực. Vui lòng kiểm tra email của bạn.",
+  "1004": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+  "1005": "Token làm mới không hợp lệ.",
+  "1006": "Bạn không có quyền thực hiện hành động này.",
+  "fallback": "Đã xảy ra lỗi không xác định"
+}

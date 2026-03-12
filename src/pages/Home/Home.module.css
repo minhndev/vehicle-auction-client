@@ -1,0 +1,199 @@
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* --- Hero Section --- */
+.heroSection {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #154360 100%);
+  color: white;
+  padding: var(--space-xxl) var(--space-xl);
+  text-align: center;
+}
+
+.heroContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: var(--space-md);
+  line-height: 1.2;
+}
+
+.heroSubtitle {
+  font-size: var(--font-size-large);
+  color: #a4b0be;
+  margin-bottom: var(--space-xl);
+}
+
+/* --- Advanced Filter Bar --- */
+.filterBar {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+  max-width: 1000px;
+  margin: -40px auto var(--space-xxl);
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  align-items: end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.filterLabel {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text);
+}
+
+.filterInput {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid #dcdde1;
+  border-radius: var(--border-radius-sm);
+  background-color: white;
+  font-size: var(--font-size-base);
+}
+
+.filterInput:focus {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+/* --- Content Sections --- */
+.section {
+  padding: var(--space-xl) var(--space-xl) var(--space-xxl);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xxlarge);
+  color: var(--color-primary);
+  margin-bottom: var(--space-xl);
+  text-align: center;
+  font-weight: 700;
+}
+
+/* --- Grid Layouts --- */
+.auctionsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-lg);
+}
+
+.categoriesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+.categoryCard {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal);
+  cursor: pointer;
+  border: 1px solid #edf2f7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.categoryCard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-secondary);
+}
+
+.categoryIcon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.categoryName {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* --- How it Works --- */
+.stepsContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xl);
+  text-align: center;
+}
+
+.stepNumber {
+  width: 50px;
+  height: 50px;
+  background-color: var(--color-secondary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 auto var(--space-md);
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  color: var(--color-primary);
+  margin-bottom: var(--space-sm);
+  font-weight: 600;
+}
+
+.stepDesc {
+  color: var(--color-text-light);
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 1024px) {
+  .auctionsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .filterBar {
+    grid-template-columns: repeat(2, 1fr);
+    margin: -40px var(--space-md) var(--space-xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2.25rem;
+  }
+  
+  .filterBar {
+    grid-template-columns: 1fr;
+    margin: var(--space-md);
+    box-shadow: none;
+    border: 1px solid #edf2f7;
+  }
+
+  .auctionsGrid, .categoriesGrid, .stepsContainer {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+  
+  .section {
+    padding: var(--space-xl) var(--space-md);
+  }
+}
