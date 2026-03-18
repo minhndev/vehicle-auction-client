@@ -50,7 +50,7 @@ axiosClient.interceptors.response.use(
 
     // If error is 401 and it's not the refresh token endpoint itself
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && originalRequest.url !== '/auth/refresh-token') {
-      
+
       if (isRefreshing) {
         // If already refreshing, queue the request until refresh completes
         try {
@@ -69,7 +69,7 @@ axiosClient.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        
+
         if (!refreshToken) {
           throw new Error('No refresh token available');
         }
@@ -81,10 +81,10 @@ axiosClient.interceptors.response.use(
         // Update tokens in Redux and localStorage
         const user = store.getState().auth.user;
         if (user) {
-          store.dispatch(setCredentials({ 
-            user, 
+          store.dispatch(setCredentials({
+            user,
             tokens: {
-              accessToken, 
+              accessToken,
               refreshToken: newRefreshToken || refreshToken,
               tokenType: 'Bearer' // Assume Bearer since it's standard or extract if backend sends it varying
             }
@@ -93,7 +93,7 @@ axiosClient.interceptors.response.use(
 
         // Process queued requests with the new token
         processQueue(null, accessToken);
-        
+
         // Retry original request
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosClient(originalRequest);

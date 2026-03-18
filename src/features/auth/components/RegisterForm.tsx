@@ -29,7 +29,7 @@ export const RegisterForm: React.FC = () => {
     identityNumber: z.string().min(5, t('validation:identity_required')),
     birthdate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, t('validation:birthdate_invalid')),
     gender: z.enum(['MALE', 'FEMALE', 'OTHER'] as const),
-    phoneNumber: z.string().min(8, t('validation:phone_required')),
+    phoneNumber: z.string().min(10, t('validation:phone_required')).max(15, t('validation:phone_required')).regex(/^\+?[0-9.]+$/, t('validation:phone_invalid')),
     address: z.string().min(5, t('validation:address_required')),
     avatarURL: z.string().url(t('validation:avatar_url_invalid')).optional().or(z.literal('')),
   }).refine((data) => data.password === data.confirmPassword, {
@@ -63,8 +63,8 @@ export const RegisterForm: React.FC = () => {
         avatarURL: data.avatarURL || undefined,
       });
       
-      // Fetch user profile securely post-registration 
-      const userProfile = await authService.getCurrentUser();
+      // Extract user profile from token since /users/me doesn't exist
+      const userProfile = authService.getCurrentUserFromToken(response.accessToken);
 
       dispatch(setCredentials({
         user: userProfile,

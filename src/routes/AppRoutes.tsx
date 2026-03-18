@@ -13,18 +13,26 @@ import { ResetPasswordForm } from '../features/auth/components/ResetPasswordForm
 
 // Public Pages
 import { Home } from '../pages/Home/Home';
+import { AuctionList } from '../pages/AuctionList/AuctionList';
+import { AuctionDetail } from '../pages/AuctionDetail/AuctionDetail';
+
+// User Pages
+import { UserDashboard } from '../pages/User/Dashboard/UserDashboard';
+import { DepositPage } from '../pages/User/Wallet/DepositPage';
+import { CheckoutPage } from '../pages/User/Orders/CheckoutPage';
 
 // Placeholder components to verify routing works
 const Unauthorized = () => <div><h2>403 - Unauthorized Access</h2></div>;
 const NotFound = () => <div><h2>404 - Page Not Found</h2></div>;
 
-// Seller placeholders
-const SellerDashboard = () => <div><h2>Seller Dashboard</h2></div>;
-const SellerAuctions = () => <div><h2>My Auctions</h2><p>List of seller's vehicles.</p></div>;
+// Seller Pages
+import { SellerDashboard } from '../pages/Seller/Dashboard/SellerDashboard';
+import { SellerAuctions } from '../pages/Seller/Vehicles/SellerAuctions';
+import { VehicleRegistrationForm } from '../pages/Seller/Vehicles/VehicleRegistrationForm';
 
-// Admin placeholders
-const AdminDashboard = () => <div><h2>Admin Dashboard</h2></div>;
-const AdminUsers = () => <div><h2>Manage Users</h2></div>;
+// Admin Pages
+import { AdminDashboard } from '../pages/Admin/Dashboard/AdminDashboard';
+import { AdminUsers } from '../pages/Admin/Users/AdminUsers';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -32,11 +40,24 @@ export const AppRoutes: React.FC = () => {
       {/* Public Routes with MainLayout */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/auctions" element={<AuctionList />} />
+        <Route path="/auctions/:id" element={<AuctionDetail />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/reset-password" element={<ResetPasswordForm />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+      </Route>
+
+      {/* User Protected Routes with MainLayout */}
+      <Route element={<ProtectedRoute allowedRoles={['USER', 'MEMBER', 'BUYER']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/user/wallet/deposit" element={<DepositPage />} />
+          <Route path="/user/orders/:id/checkout" element={<CheckoutPage />} />
+          <Route path="/user/bids" element={<div>My Bids (WIP)</div>} />
+          <Route path="/user/orders" element={<div>My Orders (WIP)</div>} />
+        </Route>
       </Route>
 
       {/* Seller Protected Routes */}
@@ -45,6 +66,7 @@ export const AppRoutes: React.FC = () => {
           <Route index element={<Navigate to="/seller/dashboard" replace />} />
           <Route path="dashboard" element={<SellerDashboard />} />
           <Route path="auctions" element={<SellerAuctions />} />
+          <Route path="auctions/new" element={<VehicleRegistrationForm />} />
           <Route path="settings" element={<div>Seller Settings</div>} />
         </Route>
       </Route>

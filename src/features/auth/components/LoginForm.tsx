@@ -33,8 +33,8 @@ export const LoginForm: React.FC = () => {
       dispatch(setLoading(true));
       const response = await authService.login(data);
       
-      // Fetch user profile after successful token retrieval
-      const userProfile = await authService.getCurrentUser();
+      // Extract user profile from token since /users/me doesn't exist
+      const userProfile = authService.getCurrentUserFromToken(response.accessToken);
       
       dispatch(setCredentials({
         user: userProfile,

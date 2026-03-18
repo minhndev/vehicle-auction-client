@@ -12,7 +12,17 @@ interface AuctionCardProps {
 export const AuctionCard: React.FC<AuctionCardProps> = ({ auction }) => {
   const navigate = useNavigate();
   const timeLeft = useCountdown(auction.endTime);
-  const { vehicle } = auction;
+  
+  // Safe fallback if API returns Auction without nested vehicle details
+  const vehicle = auction.vehicle || {
+    // @ts-ignore
+    brand: auction.productName || 'Unknown',
+    model: 'Vehicle',
+    year: 2024,
+    image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    mileage: 0,
+    transmission: 'Auto'
+  };
 
   const handleBidClick = () => {
     navigate(`/auctions/${auction.id}`);
