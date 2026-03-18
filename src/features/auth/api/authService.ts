@@ -36,18 +36,27 @@ export const authService = {
   getCurrentUserFromToken: (token: string): UserProfile => {
     const decoded = decodeToken(token) || {};
     
-    // Spring Security typically puts roles in an array, e.g. ["ROLE_USER"] or ["BUYER"]
-    let role: UserRole = 'BIDDER';
-    if (Array.isArray(decoded.roles) && decoded.roles.length > 0) {
-       role = decoded.roles[0].replace('ROLE_', '') as UserRole;
-    } else if (typeof decoded.role === 'string') {
-       role = decoded.role.replace('ROLE_', '') as UserRole;
+    const extractRole = (tokenData: any): string => {
+      if (typeof tokenData.role === 'string') return tokenData.role;
+      const rolesArr = tokenData.roles || tokenData.authorities;
+      if (Array.isArray(rolesArr) && rolesArr.length > 0) {
+        if (typeof rolesArr[0] === 'string') return rolesArr[0];
+        if (typeof rolesArr[0] === 'object' && rolesArr[0].authority) return rolesArr[0].authority;
+        if (typeof rolesArr[0] === 'object' && rolesArr[0].name) return rolesArr[0].name;
+      }
+      if (typeof tokenData.scope === 'string') return tokenData.scope.split(' ')[0];
+      return 'USER';
+    };
+
+    let roleStr = extractRole(decoded).replace('ROLE_', '').toUpperCase();
+    if (!['ADMIN', 'SELLER', 'BIDDER', 'USER', 'MEMBER'].includes(roleStr)) {
+      roleStr = 'USER';
     }
 
     return {
       id: decoded.id || decoded.sub || 'unknown-id',
       email: decoded.sub || decoded.email || '',
-      role: role || 'BIDDER',
+      role: roleStr as UserRole,
       firstName: decoded.firstName || 'User',
       lastName: decoded.lastName || '',
     };

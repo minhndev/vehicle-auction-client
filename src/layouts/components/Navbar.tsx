@@ -66,7 +66,7 @@ export const Navbar: React.FC = () => {
               {user?.firstName?.charAt(0).toUpperCase() || 'U'}
             </div>
             <Link 
-              to={`/${(user?.role || 'user').toLowerCase()}/dashboard`} 
+              to={user?.role === 'ADMIN' ? '/admin/dashboard' : user?.role === 'SELLER' ? '/seller/dashboard' : '/user/dashboard'} 
               className={styles.dashboardLink}
             >
               Dashboard

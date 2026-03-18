@@ -32,17 +32,18 @@ export const LoginForm: React.FC = () => {
     try {
       dispatch(setLoading(true));
       const response = await authService.login(data);
-      
+
       // Extract user profile from token since /users/me doesn't exist
       const userProfile = authService.getCurrentUserFromToken(response.accessToken);
-      
+
       dispatch(setCredentials({
         user: userProfile,
         tokens: response,
       }));
-      
+
       // Redirect to origin or dashboard based on role
-      const origin = location.state?.from?.pathname || `/${(userProfile.role || 'user').toLowerCase()}/dashboard`;
+      const roleStr = (userProfile.role || 'USER').toUpperCase();
+      const origin = location.state?.from?.pathname || (roleStr === 'ADMIN' ? '/admin/dashboard' : roleStr === 'SELLER' ? '/seller/dashboard' : '/user/dashboard');
       navigate(origin);
     } catch (err: unknown) {
       dispatch(setError(getErrorMessage(err, 'Failed to login')));
@@ -56,30 +57,30 @@ export const LoginForm: React.FC = () => {
       <div className={styles.card}>
         <h2 className={styles.title}>Welcome Back</h2>
         <p className={styles.subtitle}>Log in to access your account</p>
-        
-        {error && <div className={styles.errorText} style={{marginBottom: '1rem', textAlign: 'center'}}>{error}</div>}
+
+        {error && <div className={styles.errorText} style={{ marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="email">Email</label>
-            <input 
-              className={styles.input} 
-              id="email" 
-              type="email" 
-              {...register('email')} 
-              placeholder="name@example.com" 
+            <input
+              className={styles.input}
+              id="email"
+              type="email"
+              {...register('email')}
+              placeholder="name@example.com"
             />
             {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
           </div>
 
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="password">Password</label>
-            <input 
-              className={styles.input} 
-              id="password" 
-              type="password" 
-              {...register('password')} 
-              placeholder="••••••••" 
+            <input
+              className={styles.input}
+              id="password"
+              type="password"
+              {...register('password')}
+              placeholder="••••••••"
             />
             {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
           </div>
