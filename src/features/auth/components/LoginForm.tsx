@@ -42,7 +42,7 @@ export const LoginForm: React.FC = () => {
       }));
       
       // Redirect to origin or dashboard based on role
-      const origin = location.state?.from?.pathname || `/${userProfile.role.toLowerCase()}/dashboard`;
+      const origin = location.state?.from?.pathname || `/${(userProfile.role || 'user').toLowerCase()}/dashboard`;
       navigate(origin);
     } catch (err: unknown) {
       dispatch(setError(getErrorMessage(err, 'Failed to login')));

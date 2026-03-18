@@ -1,0 +1,73 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: var(--space-xl);
+  background-color: #f8fafc;
+}
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xxxl) var(--space-xxl);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  border: 1px solid #edf2f7;
+}
+
+.iconCircleSuccess {
+  width: 80px;
+  height: 80px;
+  background-color: #d1fae5;
+  color: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-xl);
+}
+
+.iconCircleFailed {
+  width: 80px;
+  height: 80px;
+  background-color: #fee2e2;
+  color: #ef4444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-xl);
+}
+
+.card h2 {
+  color: var(--color-text);
+  font-size: 1.75rem;
+  margin-bottom: var(--space-sm);
+}
+
+.text {
+  color: var(--color-text-light);
+  margin-bottom: var(--space-xl);
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-xxl);
+}
+
+.link {
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: var(--space-md);
+}
+
+.link:hover {
+  text-decoration: underline;
+}

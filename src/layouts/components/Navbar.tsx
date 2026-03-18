@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { Button } from '../../components/ui/Button/Button';
+import { NotificationBell } from './NotificationBell';
 import styles from './Navbar.module.css';
 
 export const Navbar: React.FC = () => {
@@ -60,11 +61,12 @@ export const Navbar: React.FC = () => {
           </>
         ) : (
           <>
+            <NotificationBell />
             <div className={styles.avatar}>
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+              {user?.firstName?.charAt(0).toUpperCase() || 'U'}
             </div>
             <Link 
-              to={`/${user?.role.toLowerCase()}/dashboard`} 
+              to={`/${(user?.role || 'user').toLowerCase()}/dashboard`} 
               className={styles.dashboardLink}
             >
               Dashboard

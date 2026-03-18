@@ -1,0 +1,100 @@
+.container {
+  padding: var(--space-xl);
+}
+
+.title {
+  color: var(--color-primary);
+  font-size: 2rem;
+  margin-bottom: var(--space-xs);
+}
+
+.subtitle {
+  color: var(--color-text-light);
+  margin-bottom: var(--space-xxl);
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.tableCard {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  border: 1px solid #edf2f7;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 16px var(--space-md);
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table th {
+  background-color: #f8fafc;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.table td {
+  font-size: 14px;
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.emptyRow {
+  text-align: center;
+  padding: var(--space-xxl) !important;
+  color: var(--color-text-light);
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.money {
+  font-weight: 600;
+  color: #047857;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.badgeLive {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badgeEnded {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.rowEnded {
+  background-color: #fafafa;
+  opacity: 0.8;
+}
+
+.textMuted {
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+}

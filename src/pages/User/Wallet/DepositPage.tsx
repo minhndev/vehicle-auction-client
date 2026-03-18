@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button/Button';
 import axiosClient from '../../../api/axiosClient';
+import { WalletHistory } from './WalletHistory';
 import styles from './DepositPage.module.css';
 
 export const DepositPage: React.FC = () => {
@@ -26,7 +27,7 @@ export const DepositPage: React.FC = () => {
         targetType: 'WALLET_DEPOSIT',
         referenceId: crypto.randomUUID(), // Tạo mã tham chiếu tạm thời
       });
-      
+
       // @ts-ignore
       if (response && response.paymentURL) {
         // @ts-ignore
@@ -49,7 +50,7 @@ export const DepositPage: React.FC = () => {
 
         <div className={styles.quickSelect}>
           {predefinedAmounts.map(preset => (
-            <button 
+            <button
               key={preset}
               className={`${styles.presetBtn} ${Number(amount) === preset ? styles.activePreset : ''}`}
               onClick={() => setAmount(preset.toString())}
@@ -61,8 +62,8 @@ export const DepositPage: React.FC = () => {
 
         <div className={styles.inputGroup}>
           <label>Nhập số tiền tùy chỉnh (VNĐ)</label>
-          <input 
-            type="number" 
+          <input
+            type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="VD: 2000000"
@@ -72,16 +73,18 @@ export const DepositPage: React.FC = () => {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <Button 
-          variant="primary" 
-          size="large" 
-          onClick={handleDeposit} 
+        <Button
+          variant="primary"
+          size="large"
+          onClick={handleDeposit}
           disabled={loading || !amount}
           style={{ width: '100%', marginTop: 'var(--space-xl)' }}
         >
           {loading ? 'Đang khởi tạo...' : 'Nạp tiền qua VNPay'}
         </Button>
       </div>
+
+      <WalletHistory />
     </div>
   );
 };

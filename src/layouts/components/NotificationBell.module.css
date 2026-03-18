@@ -1,0 +1,190 @@
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bellButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--color-text-light);
+  transition: color 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bellButton:hover {
+  color: var(--color-primary);
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  height: 16px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: -20px;
+  width: 350px;
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  z-index: 50;
+  margin-top: 12px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.dropdownHeader h3 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.unreadText {
+  font-size: 12px;
+  color: var(--color-secondary);
+  font-weight: 500;
+}
+
+.list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.empty {
+  padding: var(--space-xxl);
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: var(--font-size-small);
+}
+
+.item {
+  display: flex;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.item:hover {
+  background-color: #f8fafc;
+}
+
+.itemIcon {
+  font-size: 1.25rem;
+  background-color: #f1f5f9;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.itemContent {
+  flex: 1;
+}
+
+.message {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.time {
+  font-size: 11px;
+  color: var(--color-text-light);
+}
+
+.unreadItem {
+  background-color: #f0f9ff;
+}
+
+.unreadItem .message {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.markReadBtn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.readDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-secondary);
+}
+
+.dropdownFooter {
+  padding: var(--space-md);
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.dropdownFooter a {
+  font-size: var(--font-size-small);
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.dropdownFooter a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .dropdown {
+    position: fixed;
+    top: 60px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+}

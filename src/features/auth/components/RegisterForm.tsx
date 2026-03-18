@@ -71,7 +71,7 @@ export const RegisterForm: React.FC = () => {
         tokens: response,
       }));
       
-      navigate(`/${userProfile.role.toLowerCase()}/dashboard`);
+      navigate(`/${(userProfile.role || 'user').toLowerCase()}/dashboard`);
     } catch (err: unknown) {
       dispatch(setError(getErrorMessage(err, t('errors:fallback'))));
     } finally {

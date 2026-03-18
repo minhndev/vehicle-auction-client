@@ -134,11 +134,21 @@ frontend/
 *   Trang Profile, Lịch sử đấu giá.
 *   Quản lý Watchlist.
 
-### Phase 3: Payments & Admin Tools
-*   Tích hợp cổng thanh toán VNPay.
-*   Xây dựng Admin Dashboard.
-*   Quản lý CRUD cho Xe, Danh mục, Đấu giá.
-*   Hoàn thiện UI/UX, Loading states, Error handling.
+### Phase 3: Admin & Seller Portals
+*   Xây dựng Admin Dashboard, User Management.
+*   Seller Dashboard & Quản lý xe.
+*   Cơ chế Upload ảnh tự động (`/files/upload`) cho chức năng Đăng ký xe.
+
+### Phase 4: Order Management & User Engagement
+*   Khung hiển thị và Quản lý Đơn hàng cho người thắng đấu giá (`/orders/my-orders`).
+*   Quản lý danh sách yệu thích Watchlist.
+*   Hệ thống chuông Thông báo Real-time (Notifications).
+
+### Phase 5: Advanced Admin Control & Finalization
+*   Xét duyệt xe (Admin Approve/Reject Vehicle).
+*   Quản lý danh mục (Category CRUD).
+*   Kiểm soát phiên đấu giá toàn hệ thống (Hủy, Thêm, Quản trị rủi ro).
+*   Hoàn thiện Error Handling toàn cầu và kết nối API thực tế cho Payments.
 
 ---
 **Lưu ý:**

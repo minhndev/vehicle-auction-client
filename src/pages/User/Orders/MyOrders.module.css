@@ -1,0 +1,141 @@
+.container {
+  padding: var(--space-xl);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.title {
+  color: var(--color-primary);
+  font-size: 2rem;
+  margin-bottom: var(--space-xs);
+}
+
+.subtitle {
+  color: var(--color-text-light);
+  margin-bottom: var(--space-xxl);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-xxxl);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px dashed #cbd5e1;
+}
+
+.emptyState h3 {
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.emptyState p {
+  color: var(--color-text-light);
+  margin-bottom: var(--space-xl);
+}
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.orderCard {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-xl);
+  border: 1px solid #edf2f7;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid #edf2f7;
+  margin-bottom: var(--space-md);
+}
+
+.orderId {
+  display: block;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+}
+
+.orderDate {
+  font-size: var(--font-size-small);
+  color: var(--color-text-light);
+}
+
+.orderDetails {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+
+.productInfo h4 {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.auctionId {
+  font-size: var(--font-size-small);
+  color: var(--color-text-light);
+}
+
+.priceInfo {
+  text-align: right;
+}
+
+.totalLabel {
+  font-size: var(--font-size-small);
+  color: var(--color-text-light);
+  margin-bottom: 4px;
+}
+
+.totalValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.orderActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.badgePending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badgePaid {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badgeShipped {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.badgeDelivered {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badgeCancelled {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}

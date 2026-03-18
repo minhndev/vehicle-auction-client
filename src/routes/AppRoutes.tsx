@@ -15,11 +15,15 @@ import { ResetPasswordForm } from '../features/auth/components/ResetPasswordForm
 import { Home } from '../pages/Home/Home';
 import { AuctionList } from '../pages/AuctionList/AuctionList';
 import { AuctionDetail } from '../pages/AuctionDetail/AuctionDetail';
+import { PaymentReturn } from '../pages/Public/PaymentReturn/PaymentReturn';
+import { VerifyEmail } from '../pages/Public/VerifyEmail/VerifyEmail';
 
 // User Pages
 import { UserDashboard } from '../pages/User/Dashboard/UserDashboard';
 import { DepositPage } from '../pages/User/Wallet/DepositPage';
 import { CheckoutPage } from '../pages/User/Orders/CheckoutPage';
+import { MyOrders } from '../pages/User/Orders/MyOrders';
+import { Watchlist } from '../pages/User/Dashboard/Watchlist';
 
 // Placeholder components to verify routing works
 const Unauthorized = () => <div><h2>403 - Unauthorized Access</h2></div>;
@@ -33,6 +37,10 @@ import { VehicleRegistrationForm } from '../pages/Seller/Vehicles/VehicleRegistr
 // Admin Pages
 import { AdminDashboard } from '../pages/Admin/Dashboard/AdminDashboard';
 import { AdminUsers } from '../pages/Admin/Users/AdminUsers';
+import { AdminVehicles } from '../pages/Admin/Vehicles/AdminVehicles';
+import { AdminCategories } from '../pages/Admin/Categories/AdminCategories';
+import { AdminAuctions } from '../pages/Admin/Auctions/AdminAuctions';
+import { AdminRoles } from '../pages/Admin/Roles/AdminRoles';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -42,6 +50,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/:id" element={<AuctionDetail />} />
+        <Route path="/payment-return" element={<PaymentReturn />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
@@ -55,8 +65,9 @@ export const AppRoutes: React.FC = () => {
           <Route path="/user/dashboard" element={<UserDashboard />} />
           <Route path="/user/wallet/deposit" element={<DepositPage />} />
           <Route path="/user/orders/:id/checkout" element={<CheckoutPage />} />
+          <Route path="/user/orders" element={<MyOrders />} />
+          <Route path="/user/watchlist" element={<Watchlist />} />
           <Route path="/user/bids" element={<div>My Bids (WIP)</div>} />
-          <Route path="/user/orders" element={<div>My Orders (WIP)</div>} />
         </Route>
       </Route>
 
@@ -77,7 +88,10 @@ export const AppRoutes: React.FC = () => {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="auctions" element={<div>Admin Moderate Auctions</div>} />
+          <Route path="vehicles" element={<AdminVehicles />} />
+          <Route path="categories" element={<AdminCategories />} />
+          <Route path="auctions" element={<AdminAuctions />} />
+          <Route path="roles" element={<AdminRoles />} />
         </Route>
       </Route>
 
