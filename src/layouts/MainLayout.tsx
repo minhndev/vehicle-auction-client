@@ -1,16 +1,17 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
+import { HeaderNav } from './components/HeaderNav';
+import { FooterTopBar } from './components/FooterTopBar';
+import styles from './MainLayout.module.css';
 
 export const MainLayout: React.FC = () => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar />
-      <main style={{ flex: 1, backgroundColor: 'var(--color-background)' }}>
+    <div className={styles.layout}>
+      <HeaderNav />
+      <main className={styles.main}>
         <Outlet />
       </main>
-      <Footer />
+      <FooterTopBar />
     </div>
   );
 };

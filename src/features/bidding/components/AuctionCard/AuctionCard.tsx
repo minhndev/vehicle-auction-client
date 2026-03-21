@@ -32,6 +32,7 @@ const statusLabel: Record<string, string> = {
 export const AuctionCard: React.FC<AuctionCardProps> = ({ auction }) => {
   const navigate = useNavigate();
   const timeLeft = useCountdown(auction.endTime ?? '');
+  const totalBids = (auction as { totalBids?: number; bidCount?: number }).totalBids ?? (auction as { totalBids?: number; bidCount?: number }).bidCount ?? 0;
 
   const isEnded =
     auction.status === 'COMPLETED' ||
@@ -58,6 +59,14 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({ auction }) => {
 
       <div className={styles.content}>
         <h3 className={styles.title}>{auction.productName ?? 'Xe đấu giá'}</h3>
+        <p className={styles.excerpt}>
+          Lorem ipsum dolor sit amet consectetur. At in pretium semper vitae eu eu mus.
+        </p>
+
+        <div className={styles.metaRow}>
+          <span className={styles.metaTag}>ID #{String(auction.id).slice(0, 8)}</span>
+          <span className={styles.metaTag}>{totalBids} bids</span>
+        </div>
 
         <div className={styles.priceContainer}>
           <div>
@@ -89,7 +98,7 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({ auction }) => {
             )}
           </div>
         )}
-        <div style={{ flex: 1, marginLeft: 'var(--space-md)' }}>
+        <div className={styles.ctaWrap}>
           <Button
             variant={isEnded ? 'secondary' : 'primary'}
             size="small"

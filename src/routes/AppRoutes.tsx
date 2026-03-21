@@ -13,6 +13,7 @@ import { ResetPasswordForm } from '../features/auth/components/ResetPasswordForm
 
 // Public Pages
 import { Home } from '../pages/Home/Home';
+import { About } from '../pages/About/About';
 import { AuctionList } from '../pages/AuctionList/AuctionList';
 import { AuctionDetail } from '../pages/AuctionDetail/AuctionDetail';
 import { PaymentReturn } from '../pages/Public/PaymentReturn/PaymentReturn';
@@ -28,6 +29,7 @@ import { MyOrders } from '../pages/User/Orders/MyOrders';
 import { Watchlist } from '../pages/User/Dashboard/Watchlist';
 import { NotificationsPage } from '../pages/User/Notifications/NotificationsPage';
 import { MyBids } from '../pages/User/Bids/MyBids';
+import { MyProfilePage } from '../pages/User/Profile/MyProfilePage';
 
 // Placeholder components to verify routing works
 const Unauthorized = () => <div><h2>403 - Unauthorized Access</h2></div>;
@@ -52,6 +54,7 @@ export const AppRoutes: React.FC = () => {
       {/* Public Routes with MainLayout */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/:id" element={<AuctionDetail />} />
         <Route path="/payment-return" element={<PaymentReturn />} />
@@ -74,6 +77,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/user/orders" element={<MyOrders />} />
           <Route path="/user/watchlist" element={<Watchlist />} />
           <Route path="/user/bids" element={<MyBids />} />
+          <Route path="/user/profile" element={<MyProfilePage />} />
           <Route path="/user/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>

@@ -99,6 +99,11 @@ export const UserDashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <div className={styles.actionsGrid}>
+        <Link to="/user/profile" className={styles.actionCard}>
+          <div className={styles.actionIcon}>👤</div>
+          <h3>Hồ sơ của tôi</h3>
+          <p>Xem và quản lý thông tin tài khoản đấu giá</p>
+        </Link>
         <Link to="/user/wallet/deposit" className={styles.actionCard}>
           <div className={styles.actionIcon}>💳</div>
           <h3>Nộp tiền cọc</h3>

@@ -1,6 +1,6 @@
 .card {
   background: var(--color-surface);
-  border-radius: var(--border-radius-lg);
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
@@ -17,7 +17,7 @@
 .imageContainer {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 176px;
   background-color: #e2e8f0;
   overflow: hidden;
 }
@@ -35,39 +35,72 @@
 
 .statusBadge {
   position: absolute;
-  top: var(--space-sm);
-  left: var(--space-sm);
-  background-color: var(--color-success);
+  top: 0.55rem;
+  left: 0.55rem;
+  background-color: #1ea971;
   color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: var(--font-size-small);
-  font-weight: 600;
-  text-transform: uppercase;
+  padding: 0.25rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
   z-index: 10;
 }
 
-.statusBadge.ended {
-  background-color: var(--color-error);
+.ACTIVE {
+  background-color: #1ea971;
 }
 
-.statusBadge.upcoming {
-  background-color: var(--color-warning);
+.UPCOMING {
+  background-color: #f4c23d;
+  color: #4e3c10;
+}
+
+.COMPLETED,
+.CANCELLED,
+.FAILED {
+  background-color: #de3c4b;
 }
 
 .content {
-  padding: var(--space-md);
+  padding: 0.78rem;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--color-primary);
   margin-bottom: var(--space-xs);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.excerpt {
+  margin: 0;
+  color: #677296;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.metaRow {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.metaTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  border: 1px solid #dce3f2;
+  background: #f7f9ff;
+  color: #4f5b81;
+  font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1.3;
+  padding: 0 0.5rem;
 }
 
 .meta {
@@ -96,7 +129,7 @@
 }
 
 .price {
-  font-size: var(--font-size-large);
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-primary);
 }
@@ -108,7 +141,7 @@
 }
 
 .footer {
-  padding: var(--space-md);
+  padding: 0.68rem 0.78rem 0.8rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -119,13 +152,18 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: var(--color-error);
 }
 
 .timer.ended {
   color: var(--color-text-light);
+}
+
+.ctaWrap {
+  flex: 1;
+  margin-left: var(--space-md);
 }
 
 .bidBtn {

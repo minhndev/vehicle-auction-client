@@ -18,6 +18,7 @@ export const MyBids: React.FC = () => {
   const [bids, setBids] = useState<BidResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'winning' | 'outbid'>('all');
 
   useEffect(() => {
     const fetchMyBids = async () => {
@@ -46,16 +47,77 @@ export const MyBids: React.FC = () => {
     fetchMyBids();
   }, []);
 
+  const filteredBids = bids.filter((bid) => {
+    if (statusFilter === 'winning') return bid.isWinning === true;
+    if (statusFilter === 'outbid') return bid.isWinning === false;
+    return true;
+  });
+
+  const winningCount = bids.filter((bid) => bid.isWinning === true).length;
+  const outbidCount = bids.filter((bid) => bid.isWinning === false).length;
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Lịch Sử Trả Giá</h1>
-      <p className={styles.subtitle}>Xem lại các mức giá bạn đã đặt cho các phương tiện trên hệ thống.</p>
+      <section className={styles.hero}>
+        <p className={styles.eyebrow}>Bidding History</p>
+        <h1 className={styles.title}>Theo doi toan bo luot tra gia cua ban</h1>
+        <p className={styles.subtitle}>Kiem tra vi tri dan dau, luot bi vuot gia va truy cap nhanh den phien dau gia dang quan tam.</p>
 
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        <div className={styles.metrics}>
+          <article className={styles.metricCard}>
+            <span>Total bids</span>
+            <strong>{bids.length}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <span>Winning bids</span>
+            <strong>{winningCount}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <span>Outbid bids</span>
+            <strong>{outbidCount}</strong>
+          </article>
+        </div>
+      </section>
+
+      {error && <div className={styles.errorBox}>{error}</div>}
+
+      <div className={styles.filterRow}>
+        <button
+          type="button"
+          className={`${styles.filterBtn} ${statusFilter === 'all' ? styles.filterBtnActive : ''}`}
+          onClick={() => setStatusFilter('all')}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          className={`${styles.filterBtn} ${statusFilter === 'winning' ? styles.filterBtnActive : ''}`}
+          onClick={() => setStatusFilter('winning')}
+        >
+          Winning
+        </button>
+        <button
+          type="button"
+          className={`${styles.filterBtn} ${statusFilter === 'outbid' ? styles.filterBtnActive : ''}`}
+          onClick={() => setStatusFilter('outbid')}
+        >
+          Outbid
+        </button>
+      </div>
 
       <div className={styles.tableCard}>
         {loading ? (
-          <div className="loadingSpinner" style={{ padding: '2rem' }}>Đang tải lịch sử trả giá...</div>
+          <div className={styles.loadingState}>Dang tai lich su tra gia...</div>
+        ) : filteredBids.length === 0 ? (
+          <div className={styles.emptyState}>
+            <h3>My Bids Empty State</h3>
+            <p>
+              Ban chua co du lieu phu hop voi bo loc hien tai. Hay tham gia mot phien dau gia de bat dau ghi nhan lich su bid.
+            </p>
+            <Link to="/auctions" className={styles.emptyAction}>
+              Kham pha phien dang mo
+            </Link>
+          </div>
         ) : (
           <table className={styles.table}>
             <thead>
@@ -68,46 +130,34 @@ export const MyBids: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {bids.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className={styles.emptyRow}>
-                    Bạn chưa tham gia trả giá phiền đấu nào hoặc hệ thống API chưa ghi nhận.
-                    <br />
-                    <Link to="/auctions" style={{ color: '#3b82f6', marginTop: '10px', display: 'inline-block', textDecoration: 'none' }}>Khám phá các phương tiện đang đấu giá →</Link>
-                  </td>
-                </tr>
-              ) : (
-                bids.map(bid => {
-                  // Fallback names if backend does not inline product details in BidResponse
-                  const vehicleName = bid.productName || (bid.vehicle ? `${bid.vehicle.brand} ${bid.vehicle.model}` : `ID Đấu Giá: #${bid.auctionId.substring(0,8)}`);
-                  
-                  return (
-                    <tr key={bid.id}>
-                      <td>
-                        <strong>{vehicleName}</strong>
-                        <div className={styles.infoText}>Mã Bid: #{bid.id.substring(0,8)}</div>
-                      </td>
-                      <td className={styles.amount}>{formatCurrency(bid.amount)}</td>
-                      <td>{new Date(bid.createdAt).toLocaleString('vi-VN')}</td>
-                      <td>
-                        {/* We assume backend returns isWinning, if not, we can't definitively know unless we join auctions */}
-                        {bid.isWinning === true ? (
-                          <span className={styles.badgeWinning}>Đang Dẫn Đầu</span>
-                        ) : bid.isWinning === false ? (
-                          <span className={styles.badgeOutbid}>Bị Vượt Giá</span>
-                        ) : (
-                          <span className={styles.infoText}>Đã ghi nhận</span>
-                        )}
-                      </td>
-                      <td>
-                        <Link to={`/auctions/${bid.auctionId}`} style={{ textDecoration: 'none' }}>
-                          <Button variant="outline" size="small">Xem Phiên</Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
+              {filteredBids.map((bid) => {
+                const vehicleName = bid.productName || (bid.vehicle ? `${bid.vehicle.brand} ${bid.vehicle.model}` : `ID Dau Gia: #${bid.auctionId.substring(0, 8)}`);
+
+                return (
+                  <tr key={bid.id}>
+                    <td>
+                      <strong>{vehicleName}</strong>
+                      <div className={styles.infoText}>Ma Bid: #{bid.id.substring(0, 8)}</div>
+                    </td>
+                    <td className={styles.amount}>{formatCurrency(bid.amount)}</td>
+                    <td>{new Date(bid.createdAt).toLocaleString('vi-VN')}</td>
+                    <td>
+                      {bid.isWinning === true ? (
+                        <span className={styles.badgeWinning}>Dang dan dau</span>
+                      ) : bid.isWinning === false ? (
+                        <span className={styles.badgeOutbid}>Bi vuot gia</span>
+                      ) : (
+                        <span className={styles.infoText}>Da ghi nhan</span>
+                      )}
+                    </td>
+                    <td>
+                      <Link to={`/auctions/${bid.auctionId}`} className={styles.tableActionLink}>
+                        <Button variant="outline" size="small">Xem phien</Button>
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

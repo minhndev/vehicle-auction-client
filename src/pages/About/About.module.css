@@ -1,0 +1,226 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  display: grid;
+  gap: 1.35rem;
+}
+
+.hero {
+  border-radius: 28px;
+  border: 1px solid #dde4f3;
+  background:
+    radial-gradient(520px 240px at 100% 0%, rgba(98, 154, 249, 0.34), transparent 68%),
+    linear-gradient(135deg, #243268 0%, #1c264f 100%);
+  color: #f4f7ff;
+  padding: 2rem 2rem 1.9rem;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #f2c247;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.title {
+  margin: 0.72rem 0 0.7rem;
+  font-size: clamp(2rem, 2.7vw, 2.65rem);
+  line-height: 1.08;
+  max-width: 720px;
+}
+
+.lead {
+  margin: 0;
+  color: #d7ddf3;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 690px;
+}
+
+.heroActions {
+  margin-top: 1.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 800;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.primaryAction {
+  background: #f2c247;
+  color: #1e2651;
+  box-shadow: 0 12px 22px rgba(26, 34, 71, 0.32);
+}
+
+.secondaryAction {
+  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f6f8ff;
+}
+
+.primaryAction:hover,
+.secondaryAction:hover {
+  transform: translateY(-1px);
+}
+
+.gridSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.panel {
+  border-radius: 22px;
+  border: 1px solid #e1e7f4;
+  background: #ffffff;
+  padding: 1.2rem 1.25rem;
+  box-shadow: 0 16px 28px rgba(29, 43, 89, 0.08);
+}
+
+.panelTitle {
+  margin: 0;
+  color: #22305f;
+  font-size: 1.18rem;
+}
+
+.panelText {
+  margin: 0.68rem 0 0;
+  color: #596486;
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+.featureList {
+  margin: 0.72rem 0 0;
+  padding-left: 1.1rem;
+  color: #596486;
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.section {
+  border-radius: 22px;
+  border: 1px solid #e2e8f4;
+  background: #ffffff;
+  padding: 1.2rem 1.25rem;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  color: #22305f;
+  font-size: 1.22rem;
+}
+
+.sectionHeading p {
+  margin: 0.38rem 0 0;
+  color: #637094;
+  font-size: 0.9rem;
+}
+
+.milestones {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.milestoneCard {
+  border-radius: 16px;
+  border: 1px solid #dbe3f3;
+  background: #f9fbff;
+  padding: 0.92rem;
+}
+
+.milestoneYear {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #304286;
+}
+
+.milestoneCard p {
+  margin: 0;
+  color: #5e6a8c;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.teamGrid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.memberCard {
+  border-radius: 16px;
+  border: 1px solid #d9e1f1;
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  padding: 0.92rem;
+}
+
+.memberCard h3 {
+  margin: 0;
+  color: #22305f;
+  font-size: 1rem;
+}
+
+.memberCard p {
+  margin: 0.35rem 0 0;
+  color: #59678b;
+  font-size: 0.88rem;
+}
+
+.memberCard span {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  min-height: 28px;
+  padding: 0 0.62rem;
+  background: #edf2ff;
+  color: #2f4387;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 920px) {
+  .gridSection,
+  .milestones,
+  .teamGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 1.1rem 0.9rem 2rem;
+    gap: 0.95rem;
+  }
+
+  .hero,
+  .panel,
+  .section {
+    border-radius: 18px;
+    padding: 1rem;
+  }
+}

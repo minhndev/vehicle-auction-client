@@ -54,49 +54,87 @@ export const LoginForm: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <h2 className={styles.title}>Welcome Back</h2>
-        <p className={styles.subtitle}>Log in to access your account</p>
+      <div className={styles.authShell}>
+        <aside className={styles.promoPanel}>
+          <p className={styles.promoEyebrow}>Vehicle Auction</p>
+          <h2 className={styles.promoTitle}>Đăng nhập để tiếp tục các phiên đấu giá trực tiếp</h2>
+          <p className={styles.promoText}>
+            Theo dõi giá theo thời gian thực, nhận thông báo vượt giá và thanh toán xe thắng thầu trên một nền tảng thống nhất.
+          </p>
+          <div className={styles.promoTags}>
+            <span>Live bidding</span>
+            <span>Thông báo tức thì</span>
+            <span>VNPay checkout</span>
+          </div>
+          <div className={styles.promoStats}>
+            <div>
+              <strong>12.5k+</strong>
+              <p>active bidders</p>
+            </div>
+            <div>
+              <strong>98%</strong>
+              <p>trusted sellers</p>
+            </div>
+          </div>
+        </aside>
 
-        {error && <div className={styles.errorText} style={{ marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+        <div className={styles.card}>
+          <h2 className={styles.title}>Welcome Back</h2>
+          <p className={styles.subtitle}>Sign in to manage bids, orders and live auctions</p>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="email">Email</label>
-            <input
-              className={styles.input}
-              id="email"
-              type="email"
-              {...register('email')}
-              placeholder="name@example.com"
-            />
-            {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
+          {error && (
+            <div className={styles.loginErrorBox}>{error}</div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className={styles.formGroup}>
+              <label className={styles.label} htmlFor="email">Email</label>
+              <input
+                className={styles.input}
+                id="email"
+                type="email"
+                {...register('email')}
+                placeholder="name@example.com"
+              />
+              {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label} htmlFor="password">Password</label>
+              <input
+                className={styles.input}
+                id="password"
+                type="password"
+                {...register('password')}
+                placeholder="••••••••"
+              />
+              {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
+            </div>
+
+            <div className={styles.inlineRow}>
+              <label className={styles.rememberOption}>
+                <input type="checkbox" />
+                <span>Remember me</span>
+              </label>
+              <Link to="/forgot-password" className={styles.forgotLink}>Forgot password?</Link>
+            </div>
+
+            <Button type="submit" variant="primary" className={styles.submitBtn} disabled={loading}>
+              {loading ? 'Loading...' : 'Sign In'}
+            </Button>
+          </form>
+
+          <div className={styles.divider}>or continue with</div>
+
+          <div className={styles.socialActions}>
+            <button type="button" className={styles.socialBtn}>Google</button>
+            <button type="button" className={styles.socialBtn}>Facebook</button>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="password">Password</label>
-            <input
-              className={styles.input}
-              id="password"
-              type="password"
-              {...register('password')}
-              placeholder="••••••••"
-            />
-            {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
-          </div>
-
-          <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
-            <Link to="/forgot-password" style={{ fontSize: 'var(--font-size-small)' }}>Forgot password?</Link>
-          </div>
-
-          <Button type="submit" variant="primary" className={styles.submitBtn} isLoading={loading}>
-            Sign In
-          </Button>
-        </form>
-
-        <p className={styles.linkText}>
-          Don't have an account? <Link to="/register">Create one</Link>
-        </p>
+          <p className={styles.linkText}>
+            Don't have an account? <Link to="/register">Create one</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -81,97 +81,98 @@ export const RegisterForm: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <h2 className={styles.title}>{t('auth:register.title')}</h2>
-        <p className={styles.subtitle}>{t('auth:register.subtitle')}</p>
-        
-        {error && <div className={styles.errorText} style={{marginBottom: '1rem', textAlign: 'center'}}>{error}</div>}
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="email">{t('auth:register.email_label')}</label>
-            <input className={styles.input} id="email" type="email" {...register('email')} placeholder="name@example.com" />
-            {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
+      <div className={styles.authShell}>
+        <div className={styles.promoPanel}>
+          <p className={styles.promoEyebrow}>Seller Onboarding</p>
+          <h2 className={styles.promoTitle}>Create your auction profile in under 2 minutes</h2>
+          <p className={styles.promoText}>
+            Complete the form to activate bidding access, sync your account across devices, and receive
+            instant notifications when your target lots go live.
+          </p>
+          <div className={styles.promoTags}>
+            <span>Identity verified</span>
+            <span>Realtime bids</span>
+            <span>Secure checkout</span>
           </div>
+        </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className={`${styles.card} ${styles.registerCard}`}>
+          <h2 className={styles.title}>{t('auth:register.title')}</h2>
+          <p className={styles.subtitle}>{t('auth:register.subtitle')}</p>
+
+          {error && <div className={styles.formErrorBox}>{error}</div>}
+
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="firstName">{t('auth:register.first_name')}</label>
-              <input className={styles.input} id="firstName" {...register('firstName')} />
-              {errors.firstName && <span className={styles.errorText}>{errors.firstName.message}</span>}
+              <label className={styles.label} htmlFor="email">{t('auth:register.email_label')}</label>
+              <input className={styles.input} id="email" type="email" {...register('email')} placeholder="name@example.com" />
+              {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="lastName">{t('auth:register.last_name')}</label>
-              <input className={styles.input} id="lastName" {...register('lastName')} />
-              {errors.lastName && <span className={styles.errorText}>{errors.lastName.message}</span>}
-            </div>
-          </div>
+            <div className={styles.formGridTwo}>
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="firstName">{t('auth:register.first_name')}</label>
+                <input className={styles.input} id="firstName" {...register('firstName')} />
+                {errors.firstName && <span className={styles.errorText}>{errors.firstName.message}</span>}
+              </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="identityNumber">{t('auth:register.identity_number')}</label>
-            <input className={styles.input} id="identityNumber" {...register('identityNumber')} />
-            {errors.identityNumber && <span className={styles.errorText}>{errors.identityNumber.message}</span>}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="birthdate">{t('auth:register.birthdate')}</label>
-              <input className={styles.input} id="birthdate" type="date" {...register('birthdate')} />
-              {errors.birthdate && <span className={styles.errorText}>{errors.birthdate.message}</span>}
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="lastName">{t('auth:register.last_name')}</label>
+                <input className={styles.input} id="lastName" {...register('lastName')} />
+                {errors.lastName && <span className={styles.errorText}>{errors.lastName.message}</span>}
+              </div>
             </div>
 
-            <div className={styles.formGroup}>
-               <label className={styles.label} htmlFor="gender">{t('auth:register.gender.label')}</label>
-               <select className={styles.input} id="gender" {...register('gender')}>
-                 <option value="MALE">{t('auth:register.gender.male')}</option>
-                 <option value="FEMALE">{t('auth:register.gender.female')}</option>
-                 <option value="OTHER">{t('auth:register.gender.other')}</option>
-               </select>
-               {errors.gender && <span className={styles.errorText}>{errors.gender.message}</span>}
+            <div className={styles.formGridTwo}>
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="birthdate">{t('auth:register.birthdate')}</label>
+                <input className={styles.input} id="birthdate" type="date" {...register('birthdate')} />
+                {errors.birthdate && <span className={styles.errorText}>{errors.birthdate.message}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="gender">{t('auth:register.gender.label')}</label>
+                <select className={styles.input} id="gender" {...register('gender')}>
+                  <option value="MALE">{t('auth:register.gender.male')}</option>
+                  <option value="FEMALE">{t('auth:register.gender.female')}</option>
+                  <option value="OTHER">{t('auth:register.gender.other')}</option>
+                </select>
+                {errors.gender && <span className={styles.errorText}>{errors.gender.message}</span>}
+              </div>
             </div>
-          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="phoneNumber">{t('auth:register.phone')}</label>
-              <input className={styles.input} id="phoneNumber" type="tel" {...register('phoneNumber')} />
-              {errors.phoneNumber && <span className={styles.errorText}>{errors.phoneNumber.message}</span>}
+            <div className={styles.formGridTwo}>
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="phoneNumber">{t('auth:register.phone')}</label>
+                <input className={styles.input} id="phoneNumber" type="tel" {...register('phoneNumber')} />
+                {errors.phoneNumber && <span className={styles.errorText}>{errors.phoneNumber.message}</span>}
+              </div>
+
             </div>
-            
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="avatarURL">{t('auth:register.avatar')}</label>
-              <input className={styles.input} id="avatarURL" type="url" {...register('avatarURL')} placeholder="https://..." />
-              {errors.avatarURL && <span className={styles.errorText}>{errors.avatarURL.message}</span>}
+
+            <div className={styles.formGridTwo}>
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="password">{t('auth:register.password_label')}</label>
+                <input className={styles.input} id="password" type="password" {...register('password')} placeholder="••••••••" />
+                {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="confirmPassword">{t('auth:register.confirm_password_label')}</label>
+                <input className={styles.input} id="confirmPassword" type="password" {...register('confirmPassword')} placeholder="••••••••" />
+                {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword.message}</span>}
+              </div>
             </div>
-          </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="address">{t('auth:register.address')}</label>
-            <textarea className={styles.input} id="address" {...register('address')} rows={3}></textarea>
-            {errors.address && <span className={styles.errorText}>{errors.address.message}</span>}
-          </div>
+            <Button type="submit" variant="primary" className={styles.submitBtn} disabled={loading}>
+              {loading ? t('common:loading') : t('auth:register.submit_btn')}
+            </Button>
+          </form>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="password">{t('auth:register.password_label')}</label>
-            <input className={styles.input} id="password" type="password" {...register('password')} placeholder="••••••••" />
-            {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="confirmPassword">{t('auth:register.confirm_password_label')}</label>
-            <input className={styles.input} id="confirmPassword" type="password" {...register('confirmPassword')} placeholder="••••••••" />
-            {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword.message}</span>}
-          </div>
-
-          <Button type="submit" variant="primary" className={styles.submitBtn} isLoading={loading}>
-            {t('auth:register.submit_btn')}
-          </Button>
-        </form>
-
-        <p className={styles.linkText}>
-          {t('auth:register.already_have_account')} <Link to="/login">{t('auth:register.sign_in')}</Link>
-        </p>
+          <p className={styles.linkText}>
+            {t('auth:register.already_have_account')} <Link to="/login">{t('auth:register.sign_in')}</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

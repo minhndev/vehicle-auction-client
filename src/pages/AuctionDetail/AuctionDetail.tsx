@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { auctionApi } from '../../features/bidding/api/auctionApi';
-import type { AuctionResponse, ProductResponse } from '../../types/index';
+import type { AuctionResponse, BidResponse, ProductResponse } from '../../types/index';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useAuctionWebSocket } from '../../hooks/useAuctionWebSocket';
 import { Button } from '../../components/ui/Button/Button';
@@ -19,6 +19,16 @@ const formatVND = (amount?: number | null) => {
   }).format(amount);
 };
 
+const formatDateTime = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 export const AuctionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -33,14 +43,22 @@ export const AuctionDetail: React.FC = () => {
   const [bidError, setBidError] = useState('');
   const [bidSuccess, setBidSuccess] = useState('');
   const [bidLoading, setBidLoading] = useState(false);
+  const [recentBids, setRecentBids] = useState<BidResponse[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'activity'>('overview');
 
   useEffect(() => {
     if (!id) return;
     const fetchData = async () => {
       try {
         setLoading(true);
-        const auctionData = await auctionApi.getAuctionById(id);
+        const [auctionData, bidsData] = await Promise.all([
+          auctionApi.getAuctionById(id),
+          auctionApi.getAuctionBids(id).catch(() => [] as BidResponse[]),
+        ]);
+
         setAuction(auctionData);
+        setRecentBids(Array.isArray(bidsData) ? bidsData.slice(0, 8) : []);
 
         // Fetch product details for images
         if (auctionData.productId) {
@@ -62,6 +80,12 @@ export const AuctionDetail: React.FC = () => {
   }, [id]);
 
   const { currentPrice: wsPrice, latestMessage, notification, isConnected } = useAuctionWebSocket(id ?? '');
+
+  useEffect(() => {
+    if (!latestMessage || !id) return;
+    // Keep most recent feed item when websocket pushes an update.
+    setRecentBids((prev) => prev.slice(0, 8));
+  }, [latestMessage, id]);
 
   // Prefer real-time WS price over initial API price
   const displayPrice = wsPrice ?? auction?.currentPrice ?? auction?.startPrice ?? 0;
@@ -94,9 +118,12 @@ export const AuctionDetail: React.FC = () => {
     setBidLoading(true);
     try {
       // Use HTTP fallback (POST /auctions/{auctionId}/bids) as required by spec §7
-      await auctionApi.placeBid(id!, { amount });
+      const createdBid = await auctionApi.placeBid(id!, { amount });
       setBidAmount('');
       setBidSuccess('Đặt giá thành công!');
+      if (createdBid) {
+        setRecentBids((prev) => [createdBid, ...prev].slice(0, 8));
+      }
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setBidError(axiosErr.response?.data?.message ?? 'Đặt giá thất bại, vui lòng thử lại');
@@ -113,6 +140,26 @@ export const AuctionDetail: React.FC = () => {
 
   const allImages = product?.images?.map((img) => img.url).filter(Boolean) as string[] | undefined;
 
+  useEffect(() => {
+    if (mainImage) {
+      setSelectedImage(mainImage);
+    }
+  }, [mainImage]);
+
+  const statusToneClass =
+    auction?.status === 'ACTIVE'
+      ? styles.statusLive
+      : auction?.status === 'SCHEDULED'
+        ? styles.statusUpcoming
+        : styles.statusEnded;
+
+  const statusLabel =
+    auction?.status === 'ACTIVE'
+      ? 'Dang dau gia'
+      : auction?.status === 'SCHEDULED'
+        ? 'Sap mo ban'
+        : 'Da ket thuc';
+
   if (loading) return <div className={styles.loading}>Đang tải thông tin đấu giá...</div>;
 
   if (error || !auction) {
@@ -121,7 +168,7 @@ export const AuctionDetail: React.FC = () => {
         <h2>Không tìm thấy phiên đấu giá</h2>
         <p>{error}</p>
         <Link to="/auctions">
-          <Button variant="outline">Quay lại danh sách</Button>
+          <Button variant="secondary">Quay lại danh sách</Button>
         </Link>
       </div>
     );
@@ -129,45 +176,83 @@ export const AuctionDetail: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <Link to="/auctions" className={styles.backLink}>
-        ← Quay lại danh sách
-      </Link>
+      <div className={styles.headerRow}>
+        <Link to="/auctions" className={styles.backLink}>
+          ← Quay lại danh sách
+        </Link>
+        <div className={styles.liveState}>
+          <span className={`${styles.dot} ${isConnected ? styles.dotOn : styles.dotOff}`} />
+          {isConnected ? 'Cập nhật tự động' : 'Đang đồng bộ lại'}
+        </div>
+      </div>
 
-      {/* WS Notification toast */}
       {(latestMessage || notification?.content) && (
-        <div
-          style={{
-            background: '#fff3cd',
-            border: '1px solid #ffc107',
-            borderRadius: '8px',
-            padding: '10px 16px',
-            marginBottom: '1rem',
-            fontSize: '14px',
-            color: '#856404',
-          }}
-        >
+        <div className={styles.toast}>
           🔔 {notification?.content ?? latestMessage}
         </div>
       )}
 
       <div className={styles.detailGrid}>
-        {/* Left: Image Gallery */}
         <div className={styles.gallerySection}>
           <img
-            src={mainImage}
+            src={selectedImage || mainImage}
             alt={auction.productName ?? 'Xe đấu giá'}
             className={styles.mainImage}
           />
           {allImages && allImages.length > 1 && (
             <div className={styles.thumbnailGrid}>
               {allImages.slice(0, 4).map((url, idx) => (
-                <img key={idx} src={url} alt={`Ảnh ${idx + 1}`} className={styles.thumbnail} />
+                <button
+                  key={idx}
+                  type="button"
+                  className={`${styles.thumbnailButton} ${selectedImage === url ? styles.thumbnailActive : ''}`}
+                  onClick={() => setSelectedImage(url)}
+                >
+                  <img src={url} alt={`Ảnh ${idx + 1}`} className={styles.thumbnail} />
+                </button>
               ))}
             </div>
           )}
 
-          {/* Vehicle Specs */}
-          {product && (
+          <div className={styles.tabsRow}>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              Tong quan
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'specs' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('specs')}
+            >
+              Thong so
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('activity')}
+            >
+              Lich su gia
+            </button>
+          </div>
+
+          {activeTab === 'overview' && (
+            <div className={styles.vehicleSpecs}>
+              <h3 className={styles.specsTitle}>Tong quan phien dau gia</h3>
+              <ul className={styles.specsList}>
+                <li><strong>Gia khoi diem:</strong> {formatVND(auction.startPrice)}</li>
+                <li><strong>Gia hien tai:</strong> {formatVND(displayPrice)}</li>
+                <li><strong>Buoc gia:</strong> {formatVND(auction.bidIncrement)}</li>
+                <li><strong>Tien coc:</strong> {formatVND(auction.depositAmount)}</li>
+                {auction.startTime && <li><strong>Bat dau:</strong> {formatDateTime(auction.startTime)}</li>}
+                {auction.endTime && <li><strong>Ket thuc:</strong> {formatDateTime(auction.endTime)}</li>}
+              </ul>
+            </div>
+          )}
+
+          {activeTab === 'specs' && product && (
             <div className={styles.vehicleSpecs}>
               <h3 className={styles.specsTitle}>Thông số kỹ thuật</h3>
               <ul className={styles.specsList}>
@@ -179,25 +264,42 @@ export const AuctionDetail: React.FC = () => {
               </ul>
             </div>
           )}
+
+          {activeTab === 'activity' && (
+            <div className={styles.vehicleSpecs}>
+              <h3 className={styles.specsTitle}>Lich su dau gia gan day</h3>
+              {recentBids.length === 0 ? (
+                <p className={styles.activityEmpty}>Chua co luot tra gia nao.</p>
+              ) : (
+                <ul className={styles.activityList}>
+                  {recentBids.map((bid) => (
+                    <li key={bid.id ?? `${bid.bidderId}-${bid.createdAt}`} className={styles.activityItem}>
+                      <div>
+                        <p className={styles.activityPrice}>{formatVND(bid.amount)}</p>
+                        <p className={styles.activityMeta}>Nguoi dat: {bid.bidderId?.slice(0, 8) ?? 'An danh'}</p>
+                      </div>
+                      <span className={styles.activityTime}>{formatDateTime(bid.createdAt)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right: Bidding Panel */}
         <div className={styles.biddingSection}>
           <div className={styles.headerInfo}>
             <h1 className={styles.title}>{auction.productName}</h1>
-            <p className={styles.subtitle}>
-              Trạng thái:{' '}
-              <span style={{ fontWeight: 600 }}>{auction.status}</span>
-              {isConnected && (
-                <span style={{ color: '#22c55e', fontSize: '12px', marginLeft: '8px' }}>
-                  ● LIVE
-                </span>
-              )}
-            </p>
+            <p className={styles.subtitle}>Thong tin phien dau gia cap nhat theo thoi gian thuc.</p>
+            <span className={`${styles.statusBadge} ${statusToneClass}`}>{statusLabel}</span>
+            <div className={styles.summaryChips}>
+              <span className={styles.chip}>Mã phiên: {String(auction.id).slice(0, 8)}</span>
+              <span className={styles.chip}>Bước giá: {formatVND(auction.bidIncrement)}</span>
+              <span className={styles.chip}>Cọc: {formatVND(auction.depositAmount)}</span>
+            </div>
           </div>
 
           <div className={styles.bidBox}>
-            {/* Countdown */}
             <div className={styles.timerRow}>
               <span className={styles.timerLabel}>Thời gian còn lại:</span>
               {isEnded ? (
@@ -211,37 +313,34 @@ export const AuctionDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Current Price */}
             <div className={styles.priceRow}>
               <div>
                 <p className={styles.priceLabel}>Giá hiện tại</p>
                 <p className={styles.currentPrice}>{formatVND(displayPrice)}</p>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div className={styles.priceMetaBlock}>
                 <p className={styles.bidsCount}>Giá khởi điểm</p>
-                <p style={{ fontWeight: 600 }}>{formatVND(auction.startPrice)}</p>
+                <p className={styles.startPrice}>{formatVND(auction.startPrice)}</p>
               </div>
             </div>
 
-            {/* Bid Increment Info */}
             {auction.bidIncrement && (
-              <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 8px' }}>
+              <p className={styles.metaLine}>
                 Bước giá tối thiểu: <strong>{formatVND(auction.bidIncrement)}</strong>
                 &nbsp;|&nbsp;
                 Đặt cọc: <strong>{formatVND(auction.depositAmount)}</strong>
               </p>
             )}
 
-            {/* Bid Form / Actions */}
             <div className={styles.actionRow}>
               {!isEnded && isAuthenticated ? (
                 <div className={styles.bidForm}>
                   {bidSuccess && (
-                    <div style={{ color: '#16a34a', fontWeight: 600, marginBottom: '6px' }}>
+                    <div className={styles.successText}>
                       ✅ {bidSuccess}
                     </div>
                   )}
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <div className={styles.bidRow}>
                     <input
                       type="number"
                       placeholder={`Tối thiểu: ${formatVND(minNextBid)}`}
@@ -252,36 +351,35 @@ export const AuctionDetail: React.FC = () => {
                     />
                     <Button
                       variant="primary"
-                      size="large"
+                      size="lg"
                       onClick={handlePlaceBid}
                       disabled={bidLoading}
-                      style={{ flex: 1, whiteSpace: 'nowrap' }}
+                      className={styles.bidCta}
                     >
                       {bidLoading ? 'Đang xử lý...' : 'Đặt giá'}
                     </Button>
                   </div>
                   {bidError && (
-                    <p style={{ color: '#dc2626', fontSize: '13px', margin: 0 }}>{bidError}</p>
+                    <p className={styles.errorText}>{bidError}</p>
                   )}
                 </div>
               ) : !isEnded && !isAuthenticated ? (
                 <Link to="/login" style={{ textDecoration: 'none', display: 'block' }}>
-                  <Button variant="outline" size="large" className={styles.fullWidthBtn}>
+                  <Button variant="secondary" size="lg" className={styles.fullWidthBtn}>
                     Đăng nhập để đặt giá
                   </Button>
                 </Link>
               ) : (
-                <Button variant="outline" size="large" className={styles.fullWidthBtn} disabled>
+                <Button variant="secondary" size="lg" className={styles.fullWidthBtn} disabled>
                   Phiên đấu giá đã kết thúc
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Auction metadata */}
           <div className={styles.sellerInfo}>
             <h3 className={styles.specsTitle}>Thông tin phiên đấu giá</h3>
-            <ul className={styles.specsList} style={{ listStyle: 'none', padding: 0 }}>
+            <ul className={styles.metaList}>
               {auction.startTime && (
                 <li><strong>Bắt đầu:</strong> {new Date(auction.startTime).toLocaleString('vi-VN')}</li>
               )}
@@ -291,7 +389,34 @@ export const AuctionDetail: React.FC = () => {
               {auction.winnerId && (
                 <li><strong>Người thắng:</strong> {auction.winnerId}</li>
               )}
+              {auction.createdBy && (
+                <li><strong>Khởi tạo bởi:</strong> {auction.createdBy}</li>
+              )}
             </ul>
+          </div>
+
+          <div className={styles.sellerInfo}>
+            <div className={styles.activityHeader}>
+              <h3 className={styles.specsTitle}>Hoạt động đấu giá</h3>
+              <span className={styles.activityCount}>{recentBids.length} lượt gần nhất</span>
+            </div>
+            {recentBids.length === 0 ? (
+              <p className={styles.activityEmpty}>Chưa có lượt trả giá nào.</p>
+            ) : (
+              <ul className={styles.activityList}>
+                {recentBids.map((bid) => (
+                  <li key={bid.id ?? `${bid.bidderId}-${bid.createdAt}`} className={styles.activityItem}>
+                    <div>
+                      <p className={styles.activityPrice}>{formatVND(bid.amount)}</p>
+                      <p className={styles.activityMeta}>
+                        Người đặt: {bid.bidderId?.slice(0, 8) ?? 'Ẩn danh'}
+                      </p>
+                    </div>
+                    <span className={styles.activityTime}>{formatDateTime(bid.createdAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>
