@@ -2,19 +2,43 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import type { RootState } from '../../store';
-import { notificationApi, type Notification } from '../../api/notificationApi';
+import { notificationApi } from '../../api/notificationApi';
+import type { NotificationModel } from '../../types/index';
 import styles from './NotificationBell.module.css';
+
+const getIcon = (type?: string) => {
+  switch (type) {
+    case 'AUCTION_WON': return '🏆';
+    case 'OUTBID': return '⚠️';
+    case 'PAYMENT_SUCCESS': return '💰';
+    case 'PAYMENT_FAILED': return '❌';
+    default: return '📢';
+  }
+};
+
+const formatTime = (dateStr?: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - date.getTime()) / 60000);
+  if (diff < 1) return 'Vừa xong';
+  if (diff < 60) return `${diff} phút trước`;
+  if (diff < 1440) return `${Math.floor(diff / 60)} giờ trước`;
+  return date.toLocaleDateString('vi-VN');
+};
 
 export const NotificationBell: React.FC = () => {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationModel[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchUnreadCount();
+      notificationApi.getUnreadCount().then((count) => {
+        setUnreadCount(Number(count) || 0);
+      }).catch(() => {});
     }
   }, [isAuthenticated]);
 
@@ -28,78 +52,40 @@ export const NotificationBell: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchUnreadCount = async () => {
-    try {
-      const response = await notificationApi.getUnreadCount();
-      // Assume API returns a number directly or an object { count: number }
-      const count = typeof response === 'number' ? response : (response.data?.count || 0);
-      setUnreadCount(count);
-    } catch {
-      // Ignore silently
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await notificationApi.getNotifications({ page: 0, size: 5 });
-      if (response && response.content) {
-        setNotifications(response.content);
-      } else if (Array.isArray(response)) {
-        setNotifications(response.slice(0, 5));
-      }
-    } catch {
-      // Ignore silently
-    }
-  };
-
   const toggleDropdown = async () => {
-    const nextState = !isOpen;
-    setIsOpen(nextState);
-    if (nextState) {
-      await fetchNotifications();
+    const next = !isOpen;
+    setIsOpen(next);
+    if (next) {
+      try {
+        const data = await notificationApi.getNotifications({ page: 0, size: 5 });
+        setNotifications(Array.isArray(data) ? data.slice(0, 5) : []);
+      } catch {
+        // silent
+      }
     }
   };
 
-  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMarkAsRead = async (id?: string, e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (!id) return;
     try {
       await notificationApi.markAsRead(id);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {
-      // Ignore
+      // silent
     }
-  };
-
-  const getIcon = (type: Notification['type']) => {
-    switch(type) {
-      case 'AUCTION_WON': return '🏆';
-      case 'OUTBID': return '⚠️';
-      case 'PAYMENT_SUCCESS': return '💰';
-      default: return '📢';
-    }
-  };
-
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 60000); // in minutes
-    
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return `${diff}m ago`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-    return date.toLocaleDateString();
   };
 
   if (!isAuthenticated) return null;
 
   return (
     <div className={styles.container} ref={dropdownRef}>
-      <button className={styles.bellButton} onClick={toggleDropdown} aria-label="Notifications">
+      <button className={styles.bellButton} onClick={toggleDropdown} aria-label="Thông báo">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unreadCount > 0 && (
           <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
@@ -109,36 +95,39 @@ export const NotificationBell: React.FC = () => {
       {isOpen && (
         <div className={styles.dropdown}>
           <div className={styles.dropdownHeader}>
-            <h3>Notifications</h3>
-            {unreadCount > 0 && <span className={styles.unreadText}>{unreadCount} unread</span>}
+            <h3>Thông báo</h3>
+            {unreadCount > 0 && <span className={styles.unreadText}>{unreadCount} chưa đọc</span>}
           </div>
-          
+
           <div className={styles.list}>
             {notifications.length === 0 ? (
-              <div className={styles.empty}>No notifications yet.</div>
+              <div className={styles.empty}>Chưa có thông báo nào.</div>
             ) : (
               notifications.map((notif) => (
                 <div key={notif.id} className={`${styles.item} ${!notif.read ? styles.unreadItem : ''}`}>
                   <div className={styles.itemIcon}>{getIcon(notif.type)}</div>
                   <div className={styles.itemContent}>
-                    <p className={styles.message}>{notif.message}</p>
+                    <p className={styles.message}>{notif.content ?? notif.title ?? 'Thông báo mới'}</p>
                     <span className={styles.time}>{formatTime(notif.createdAt)}</span>
                   </div>
                   {!notif.read && (
-                    <button 
-                      className={styles.markReadBtn} 
+                    <button
+                      className={styles.markReadBtn}
                       onClick={(e) => handleMarkAsRead(notif.id, e)}
-                      title="Mark as read"
+                      title="Đánh dấu đã đọc"
                     >
-                      <div className={styles.readDot}></div>
+                      <div className={styles.readDot} />
                     </button>
                   )}
                 </div>
               ))
             )}
           </div>
+
           <div className={styles.dropdownFooter}>
-            <Link to="/user/dashboard" onClick={() => setIsOpen(false)}>View all notifications</Link>
+            <Link to="/user/notifications" onClick={() => setIsOpen(false)}>
+              Xem tất cả thông báo
+            </Link>
           </div>
         </div>
       )}

@@ -1,27 +1,33 @@
 import axiosClient from './axiosClient';
+import type { OrderResponse, PageOrderResponse } from '../types/index';
 
-export interface Order {
-  id: string;
-  totalAmount: number;
-  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-  createdAt: string;
-  auctionId: string;
-  productName: string;
+export interface CheckoutRequest {
+  recipientName: string;
+  recipientPhone: string;
+  shippingAddress: string;
+  shippingNote?: string;
+}
+
+export interface PaymentUrlResponse {
+  paymentUrl?: string;
+  paymentURL?: string; // backend may return either casing
 }
 
 export const orderApi = {
-  getMyOrders: async (params?: { page?: number; size?: number; sort?: string[] }) => {
-    const response = await axiosClient.get('/orders/my-orders', { params });
-    return response.data || response;
+  getMyOrders: async (params?: { page?: number; size?: number; sort?: string }): Promise<PageOrderResponse> => {
+    return axiosClient.get('/orders/my-orders', { params });
   },
 
-  getOrderById: async (id: string) => {
-    const response = await axiosClient.get(`/orders/${id}`);
-    return response.data || response;
+  getOrderById: async (id: string): Promise<OrderResponse> => {
+    return axiosClient.get(`/orders/${id}`);
   },
 
-  payOrder: async (id: string, paymentMethod: string) => {
-    const response = await axiosClient.post(`/orders/${id}/pay`, { paymentMethod });
-    return response.data || response;
-  }
+  /**
+   * POST /orders/{id}/pay
+   * Submits shipping info and initiates VNPay payment.
+   * Returns paymentUrl to redirect the user.
+   */
+  payOrder: async (id: string, shippingInfo: CheckoutRequest): Promise<PaymentUrlResponse> => {
+    return axiosClient.post(`/orders/${id}/pay`, shippingInfo);
+  },
 };

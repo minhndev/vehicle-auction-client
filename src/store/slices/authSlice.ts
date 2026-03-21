@@ -9,10 +9,18 @@ interface AuthState {
   error: string | null;
 }
 
+const loadUserFromStorage = (): UserProfile | null => {
+  const userStr = localStorage.getItem('user');
+  if (!userStr) return null;
+  try { return JSON.parse(userStr) as UserProfile; } catch { return null; }
+};
+
+const storedToken = localStorage.getItem('accessToken');
+
 const initialState: AuthState = {
-  user: null, // Depending on persistence strategy, you might hydrate this from localStorage or an initial API call
-  accessToken: localStorage.getItem('accessToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  user: loadUserFromStorage(),
+  accessToken: storedToken,
+  isAuthenticated: !!storedToken,
   loading: false,
   error: null,
 };

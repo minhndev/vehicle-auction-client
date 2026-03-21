@@ -1,27 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button/Button';
 import { adminApi } from '../../../api/adminApi';
+import type { ProductResponse } from '../../../types/index';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './AdminVehicles.module.css';
 
-// Mock Product interface for admin view
-interface Product {
-  id: string;
-  brand: string;
-  model: string;
-  year: number;
-  type: string;
-  mileage: number;
-  transmission: string;
-  fuelType: string;
-  description: string;
-  image: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  sellerId: string;
-}
-
 export const AdminVehicles: React.FC = () => {
-  const [vehicles, setVehicles] = useState<Product[]>([]);
+  const [vehicles, setVehicles] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -34,52 +19,41 @@ export const AdminVehicles: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      // Let's assume the API returns pending vehicles
-      const response = await adminApi.getPendingVehicles();
-      
-      if (response && response.content) {
-         setVehicles(response.content);
-      } else if (Array.isArray(response)) {
-         setVehicles(response);
-      } else {
-         // Mock data if API is not fully ready
-         setVehicles([
-           { id: 'v1', brand: 'Toyota', model: 'Camry', year: 2022, type: 'Sedan', mileage: 15000, transmission: 'Automatic', fuelType: 'Gasoline', description: 'Great condition.', image: '', status: 'PENDING', sellerId: 'seller_123' },
-           { id: 'v2', brand: 'Honda', model: 'CR-V', year: 2023, type: 'SUV', mileage: 5000, transmission: 'Automatic', fuelType: 'Hybrid', description: 'Like new.', image: '', status: 'PENDING', sellerId: 'seller_456' },
-         ]);
-      }
+      const data = await adminApi.getPendingVehicles();
+      const list = Array.isArray(data) ? data : (data as any)?.content || [];
+      setVehicles(list);
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to fetch vehicles.'));
+      setError(getErrorMessage(err, 'Lỗi tải danh sách xe chờ duyệt.'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn DUYỆT chiếc xe này? Sau khi duyệt xe có thể được mang ra Đấu giá.")) return;
     try {
       setActionLoading(id);
       await adminApi.approveVehicle(id);
       setVehicles(prev => prev.filter(v => v.id !== id));
+      setTimeout(() => alert('Duyệt xe thành công!'), 100);
     } catch (err) {
-      alert('Failed to approve vehicle: ' + getErrorMessage(err, 'Unknown error'));
-      // For mock purposes, remove it anyway if API fails but we want to test UI
-      setVehicles(prev => prev.filter(v => v.id !== id));
+      alert('Không thể duyệt xe: ' + getErrorMessage(err, 'Lỗi không xác định'));
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleReject = async (id: string) => {
-    const reason = window.prompt("Enter rejection reason:");
-    if (reason === null) return; // User cancelled
+    const reason = window.prompt("Nhập lý do từ chối (bắt buộc):");
+    if (!reason) return; // Bị huỷ hoặc empty
     
     try {
       setActionLoading(id);
       await adminApi.rejectVehicle(id, reason);
       setVehicles(prev => prev.filter(v => v.id !== id));
+      setTimeout(() => alert('Từ chối xe thành công!'), 100);
     } catch (err) {
-      alert('Failed to reject vehicle: ' + getErrorMessage(err, 'Unknown error'));
-      setVehicles(prev => prev.filter(v => v.id !== id));
+      alert('Không thể từ chối xe: ' + getErrorMessage(err, 'Lỗi không xác định'));
     } finally {
       setActionLoading(null);
     }
@@ -87,42 +61,42 @@ export const AdminVehicles: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Vehicle Registration Queue</h1>
-      <p className={styles.subtitle}>Review and approve vehicles submitted by sellers before they can go to auction.</p>
+      <h1 className={styles.title}>Hàng Chờ Kiểm Duyệt Xe</h1>
+      <p className={styles.subtitle}>Kiểm tra thông tin phương tiện do người bán đăng tải trước khi lên sàn.</p>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && <div className={styles.error} style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
       {loading ? (
-        <div className="loadingSpinner">Loading queue...</div>
+        <div className="loadingSpinner" style={{ padding: '2rem' }}>Đang tải hàng chờ...</div>
       ) : vehicles.length === 0 ? (
         <div className={styles.emptyState}>
-          <h3>All caught up!</h3>
-          <p>There are no pending vehicles to review.</p>
+          <h3>Tất cả đã hoàn tất!</h3>
+          <p>Không có phương tiện mới nào cần duyệt.</p>
         </div>
       ) : (
         <div className={styles.grid}>
           {vehicles.map(vehicle => (
             <div key={vehicle.id} className={styles.card}>
               <div className={styles.cardHeader}>
-                <span className={styles.statusBadge}>Pending Approval</span>
-                <span className={styles.sellerInfo}>Seller: {vehicle.sellerId.substring(0,8)}...</span>
+                <span className={styles.statusBadge}>Chờ Duyệt</span>
+                <span className={styles.sellerInfo} title={vehicle.sellerId}>ID Người Bán: {vehicle.sellerId?.substring(0,8) || 'N/A'}</span>
               </div>
               
               <div className={styles.cardBody}>
-                {vehicle.image ? (
-                  <img src={vehicle.image} alt={vehicle.model} className={styles.image} />
+                {Array.isArray(vehicle.images) && vehicle.images.length > 0 ? (
+                  <img src={vehicle.images[0].url || vehicle.images[0]} alt={vehicle.model} className={styles.image} />
                 ) : (
-                  <div className={styles.placeholderImage}>No Image Provided</div>
+                  <div className={styles.placeholderImage}>Không có hình ảnh</div>
                 )}
                 <div className={styles.info}>
-                  <h3>{vehicle.year} {vehicle.brand} {vehicle.model}</h3>
-                  <div className={styles.specs}>
-                    <span className={styles.specTag}>{vehicle.type}</span>
-                    <span className={styles.specTag}>{vehicle.transmission}</span>
-                    <span className={styles.specTag}>{vehicle.mileage.toLocaleString()} mi</span>
-                    <span className={styles.specTag}>{vehicle.fuelType}</span>
+                  <h3>{vehicle.year || ''} {vehicle.brand} {vehicle.model}</h3>
+                  <div className={styles.specs} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    <span className={styles.specTag}>VIN: {vehicle.vinNumber || 'N/A'}</span>
+                    <span className={styles.specTag}>ODO: {(vehicle.mileage || 0).toLocaleString()} km</span>
                   </div>
-                  <p className={styles.description}>{vehicle.description || 'No description provided.'}</p>
+                  <div style={{ marginTop: '12px', fontWeight: 600 }}>
+                    Đề xuất: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(vehicle.startPrice || vehicle.basePrice || 0)}
+                  </div>
                 </div>
               </div>
 
@@ -133,7 +107,7 @@ export const AdminVehicles: React.FC = () => {
                   disabled={actionLoading === vehicle.id}
                   style={{ borderColor: '#ef4444', color: '#ef4444' }}
                 >
-                  {actionLoading === vehicle.id ? 'Processing...' : 'Reject'}
+                  {actionLoading === vehicle.id ? 'Loading...' : 'Từ Chối'}
                 </Button>
                 <Button 
                   variant="primary" 
@@ -141,7 +115,7 @@ export const AdminVehicles: React.FC = () => {
                   disabled={actionLoading === vehicle.id}
                   style={{ backgroundColor: '#10b981' }}
                 >
-                  {actionLoading === vehicle.id ? 'Processing...' : 'Approve'}
+                  {actionLoading === vehicle.id ? 'Loading...' : 'Duyệt Vào Sàn'}
                 </Button>
               </div>
             </div>

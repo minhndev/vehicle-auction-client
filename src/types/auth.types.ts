@@ -1,5 +1,5 @@
 // Matches Java Enums and Role Constants
-export type UserRole = 'ADMIN' | 'SELLER' | 'BIDDER';
+export type UserRole = 'ADMIN' | 'SELLER' | 'BIDDER' | 'USER' | 'MEMBER' | 'BUYER';
 
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 

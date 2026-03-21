@@ -1,18 +1,21 @@
 import axiosClient from './axiosClient';
+import type { WatchlistModel, ProductResponse } from '../types/index';
+
+export interface WatchlistItem {
+  watchlist: WatchlistModel;
+  product?: ProductResponse;
+}
 
 export const watchlistApi = {
-  getWatchlist: async () => {
-    const response = await axiosClient.get('/watchlist');
-    return response.data || response;
+  getWatchlist: async (): Promise<WatchlistModel[]> => {
+    return axiosClient.get('/watchlist');
   },
 
-  addToWatchlist: async (productId: string) => {
-    const response = await axiosClient.post(`/watchlist/${productId}`);
-    return response.data || response;
+  addToWatchlist: async (productId: string): Promise<WatchlistModel> => {
+    return axiosClient.post(`/watchlist/${productId}`);
   },
 
-  removeFromWatchlist: async (productId: string) => {
-    const response = await axiosClient.delete(`/watchlist/${productId}`);
-    return response.data || response;
-  }
+  removeFromWatchlist: async (productId: string): Promise<void> => {
+    return axiosClient.delete(`/watchlist/${productId}`);
+  },
 };

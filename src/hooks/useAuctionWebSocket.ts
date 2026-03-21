@@ -3,28 +3,42 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { store } from '../store';
 
+export interface AuctionUpdateMessage {
+  auctionId: string;
+  currentPrice: number;
+  highestBidderId: string;
+  message: string;
+}
+
+export interface NotificationMessage {
+  id?: string;
+  type?: string;
+  title?: string;
+  content?: string;
+  referenceId?: string;
+  referenceType?: string;
+  createdAt?: string;
+}
+
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws-auctions';
+
 export const useAuctionWebSocket = (auctionId: string) => {
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [bidsCount, setBidsCount] = useState<number | null>(null);
+  const [latestMessage, setLatestMessage] = useState<string | null>(null);
+  const [notification, setNotification] = useState<NotificationMessage | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
     if (!auctionId) return;
 
-    // Thay thế WS_URL bằng VITE_WS_URL thực tế, mặc định fallback về localhost:8080/ws
-    const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
-    const token = store.getState().auth.accessToken || localStorage.getItem('token');
+    const token = store.getState().auth.accessToken ?? localStorage.getItem('accessToken');
+    const accountId = store.getState().auth.user?.id;
 
     const client = new Client({
-      // @ts-ignore
+      // @ts-ignore — SockJS is not typed for webSocketFactory
       webSocketFactory: () => new SockJS(WS_URL),
-      connectHeaders: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      debug: () => {
-        // console.log('STOMP: ', str);
-      },
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
@@ -32,27 +46,39 @@ export const useAuctionWebSocket = (auctionId: string) => {
 
     client.onConnect = () => {
       setIsConnected(true);
-      // Subscribe to the specific auction updates
+
+      // 1. Subscribe to real-time auction price updates
       client.subscribe(`/topic/auction/${auctionId}`, (message) => {
-        if (message.body) {
-          try {
-            const data = JSON.parse(message.body);
-            if (data.currentPrice !== undefined) {
-              setCurrentPrice(data.currentPrice);
-            }
-            if (data.totalBids !== undefined) {
-              setBidsCount(data.totalBids);
-            }
-          } catch (e) {
-            console.error('Failed to parse websocket message', e);
-          }
+        if (!message.body) return;
+        try {
+          const data: AuctionUpdateMessage = JSON.parse(message.body);
+          if (data.currentPrice !== undefined) setCurrentPrice(data.currentPrice);
+          if (data.message) setLatestMessage(data.message);
+        } catch (e) {
+          console.error('[WS] Failed to parse auction update', e);
         }
       });
+
+      // 2. Subscribe to personal notifications (outbid, won, etc.)
+      if (accountId) {
+        client.subscribe(`/queue/notifications/${accountId}`, (message) => {
+          if (!message.body) return;
+          try {
+            const notif: NotificationMessage = JSON.parse(message.body);
+            setNotification(notif);
+          } catch (e) {
+            console.error('[WS] Failed to parse notification', e);
+          }
+        });
+      }
     };
 
     client.onStompError = (frame) => {
-      console.error('Broker reported error: ' + frame.headers['message']);
-      console.error('Additional details: ' + frame.body);
+      console.error('[WS] STOMP error:', frame.headers['message']);
+    };
+
+    client.onDisconnect = () => {
+      setIsConnected(false);
     };
 
     client.activate();
@@ -64,19 +90,17 @@ export const useAuctionWebSocket = (auctionId: string) => {
     };
   }, [auctionId]);
 
-  const placeBid = useCallback((amount: number) => {
-    if (clientRef.current && clientRef.current.connected) {
-      // Endpoint gửi bid qua STOMP, có thể sửa đổi theo BE yêu cầu
+  // Place bid via WebSocket (preferred) — returns true if sent successfully
+  const placeBidViaWS = useCallback((amount: number): boolean => {
+    if (clientRef.current?.connected) {
       clientRef.current.publish({
         destination: `/app/auction/${auctionId}/bid`,
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ amount }),
       });
       return true;
-    } else {
-      console.error('WebSocket is not connected');
-      return false;
     }
+    return false;
   }, [auctionId]);
 
-  return { currentPrice, bidsCount, isConnected, placeBid };
+  return { currentPrice, latestMessage, notification, isConnected, placeBidViaWS };
 };

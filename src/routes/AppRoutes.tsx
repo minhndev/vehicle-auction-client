@@ -16,6 +16,8 @@ import { Home } from '../pages/Home/Home';
 import { AuctionList } from '../pages/AuctionList/AuctionList';
 import { AuctionDetail } from '../pages/AuctionDetail/AuctionDetail';
 import { PaymentReturn } from '../pages/Public/PaymentReturn/PaymentReturn';
+import { PaymentSuccess } from '../pages/Public/PaymentSuccess/PaymentSuccess';
+import { PaymentFailed } from '../pages/Public/PaymentFailed/PaymentFailed';
 import { VerifyEmail } from '../pages/Public/VerifyEmail/VerifyEmail';
 
 // User Pages
@@ -24,6 +26,8 @@ import { DepositPage } from '../pages/User/Wallet/DepositPage';
 import { CheckoutPage } from '../pages/User/Orders/CheckoutPage';
 import { MyOrders } from '../pages/User/Orders/MyOrders';
 import { Watchlist } from '../pages/User/Dashboard/Watchlist';
+import { NotificationsPage } from '../pages/User/Notifications/NotificationsPage';
+import { MyBids } from '../pages/User/Bids/MyBids';
 
 // Placeholder components to verify routing works
 const Unauthorized = () => <div><h2>403 - Unauthorized Access</h2></div>;
@@ -51,6 +55,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/:id" element={<AuctionDetail />} />
         <Route path="/payment-return" element={<PaymentReturn />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
@@ -67,7 +73,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/user/orders/:id/checkout" element={<CheckoutPage />} />
           <Route path="/user/orders" element={<MyOrders />} />
           <Route path="/user/watchlist" element={<Watchlist />} />
-          <Route path="/user/bids" element={<div>My Bids (WIP)</div>} />
+          <Route path="/user/bids" element={<MyBids />} />
+          <Route path="/user/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 

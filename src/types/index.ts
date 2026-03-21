@@ -62,6 +62,7 @@ export interface ProductResponse {
   status?: string;
   categoryId?: string;
   categoryName?: string;
+  createdAt?: string;
   images?: ProductImageResponse[];
 }
 

@@ -1,133 +1,190 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '../../../components/ui/Button/Button';
-import axiosClient from '../../../api/axiosClient';
+import { orderApi } from '../../../api/orderApi';
+import type { OrderResponse } from '../../../types/index';
 import styles from './CheckoutPage.module.css';
+
+const shippingSchema = z.object({
+  recipientName: z.string().min(2, 'Vui lòng nhập tên người nhận (ít nhất 2 ký tự)'),
+  recipientPhone: z
+    .string()
+    .regex(/^(\+84|0)[0-9]{8,10}$/, 'Số điện thoại không hợp lệ (VD: 0912345678)'),
+  shippingAddress: z.string().min(10, 'Địa chỉ phải ít nhất 10 ký tự'),
+  shippingNote: z.string().optional(),
+});
+
+type ShippingFormValues = z.infer<typeof shippingSchema>;
+
+const formatVND = (amount?: number | null) => {
+  if (amount == null) return '—';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
 export const CheckoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const [shippingInfo, setShippingInfo] = useState({
-    recipientName: '',
-    recipientPhone: '',
-    shippingAddress: '',
-    shippingNote: ''
+  const [order, setOrder] = useState<OrderResponse | null>(null);
+  const [orderLoading, setOrderLoading] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ShippingFormValues>({
+    resolver: zodResolver(shippingSchema),
+    defaultValues: {
+      recipientName: '',
+      recipientPhone: '',
+      shippingAddress: '',
+      shippingNote: '',
+    },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setShippingInfo({
-      ...shippingInfo,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
     if (!id) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      // Dựa theo FRONTEND_PLAN.md: Gọi API POST /orders/{id}/pay
-      // Có thể backend yêu cầu truyền shippingInfo trong body
-      const response = await axiosClient.post(`/orders/${id}/pay`, shippingInfo);
-      
-      // @ts-ignore
-      if (response && response.paymentURL) {
-        // @ts-ignore
-        window.location.href = response.paymentURL;
-      } else {
-        setError('Không nhận được URL thanh toán từ máy chủ.');
+    const fetchOrder = async () => {
+      try {
+        const data = await orderApi.getOrderById(id);
+        setOrder(data);
+      } catch {
+        // Non-critical; order summary optional
+      } finally {
+        setOrderLoading(false);
       }
-    } catch (err: any) {
-      setError('Lỗi thanh toán: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setLoading(false);
+    };
+    fetchOrder();
+  }, [id]);
+
+  const onSubmit = async (formData: ShippingFormValues) => {
+    if (!id) return;
+    setSubmitError(null);
+    try {
+      const result = await orderApi.payOrder(id, formData);
+      // API returns paymentUrl or paymentURL (handle both casings)
+      const url = result.paymentUrl ?? result.paymentURL;
+      if (url) {
+        window.location.href = url;
+      } else {
+        setSubmitError('Không nhận được URL thanh toán từ máy chủ. Vui lòng thử lại.');
+      }
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setSubmitError(axiosErr.response?.data?.message ?? 'Lỗi khi xử lý thanh toán, vui lòng thử lại.');
     }
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.checkoutForm}>
-        <h1 className={styles.title}>Checkout Order</h1>
-        <p className={styles.subtitle}>Please provide shipping information before completing the payment.</p>
+        <h1 className={styles.title}>Thanh toán đơn hàng</h1>
+        <p className={styles.subtitle}>Vui lòng điền thông tin giao hàng trước khi thanh toán.</p>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {submitError && <div className={styles.error}>{submitError}</div>}
 
-        <form onSubmit={handleCheckout}>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className={styles.formGroup}>
-            <label>Recipient Name *</label>
-            <input 
-              type="text" 
-              name="recipientName"
-              required 
-              value={shippingInfo.recipientName}
-              onChange={handleChange}
-              placeholder="Full name"
+            <label>Tên người nhận *</label>
+            <input
+              type="text"
               className={styles.input}
+              placeholder="Nguyễn Văn A"
+              {...register('recipientName')}
             />
+            {errors.recipientName && (
+              <span style={{ color: '#dc2626', fontSize: '13px' }}>{errors.recipientName.message}</span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
-            <label>Phone Number *</label>
-            <input 
-              type="tel" 
-              name="recipientPhone"
-              required 
-              value={shippingInfo.recipientPhone}
-              onChange={handleChange}
-              placeholder="e.g. 0912345678"
+            <label>Số điện thoại *</label>
+            <input
+              type="tel"
               className={styles.input}
+              placeholder="0912345678"
+              {...register('recipientPhone')}
             />
+            {errors.recipientPhone && (
+              <span style={{ color: '#dc2626', fontSize: '13px' }}>{errors.recipientPhone.message}</span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
-            <label>Shipping Address *</label>
-            <textarea 
-              name="shippingAddress"
-              required 
-              value={shippingInfo.shippingAddress}
-              onChange={handleChange}
-              placeholder="Full detailed address"
+            <label>Địa chỉ giao hàng *</label>
+            <textarea
               className={styles.textarea}
+              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
               rows={3}
+              {...register('shippingAddress')}
             />
+            {errors.shippingAddress && (
+              <span style={{ color: '#dc2626', fontSize: '13px' }}>{errors.shippingAddress.message}</span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
-            <label>Order Note (Optional)</label>
-            <textarea 
-              name="shippingNote"
-              value={shippingInfo.shippingNote}
-              onChange={handleChange}
-              placeholder="Any special instructions?"
+            <label>Ghi chú (tuỳ chọn)</label>
+            <textarea
               className={styles.textarea}
+              placeholder="Yêu cầu đặc biệt về giao hàng..."
               rows={2}
+              {...register('shippingNote')}
             />
           </div>
 
+          {/* Order Summary */}
           <div className={styles.summary}>
-            <h3>Order Summary</h3>
-            <div className={styles.summaryRow}>
-              <span>Subtotal</span>
-              <span>Pending</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Shipping</span>
-              <span>Calculated at next step</span>
-            </div>
+            <h3>Tóm tắt đơn hàng</h3>
+            {orderLoading ? (
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>Đang tải...</p>
+            ) : order ? (
+              <>
+                <div className={styles.summaryRow}>
+                  <span>Tên xe</span>
+                  <span style={{ fontWeight: 600 }}>{order.productName ?? '—'}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Giá thắng</span>
+                  <span>{formatVND(order.winningPrice)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Tiền cọc đã nộp</span>
+                  <span>- {formatVND(order.depositAmount)}</span>
+                </div>
+                <div
+                  className={styles.summaryRow}
+                  style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', marginTop: '4px' }}
+                >
+                  <span style={{ fontWeight: 700 }}>Số tiền cần thanh toán</span>
+                  <span style={{ fontWeight: 700, color: '#dc2626', fontSize: '18px' }}>
+                    {formatVND(order.remainingAmount)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className={styles.summaryRow}>
+                <span>Tổng cộng</span>
+                <span>Đang xử lý</span>
+              </div>
+            )}
           </div>
 
-          <Button 
-            type="submit" 
-            variant="primary" 
-            size="large" 
-            disabled={loading}
+          <Button
+            type="submit"
+            variant="primary"
+            size="large"
+            disabled={isSubmitting}
             style={{ width: '100%', marginTop: 'var(--space-lg)' }}
           >
-            {loading ? 'Processing...' : 'Proceed to Payment (VNPay)'}
+            {isSubmitting ? 'Đang xử lý...' : 'Thanh toán qua VNPay →'}
           </Button>
         </form>
       </div>

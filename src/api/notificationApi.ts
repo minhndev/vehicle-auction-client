@@ -1,27 +1,21 @@
 import axiosClient from './axiosClient';
+import type { NotificationModel } from '../types/index';
 
-export interface Notification {
-  id: string;
-  message: string;
-  type: 'AUCTION_WON' | 'OUTBID' | 'SYSTEM' | 'PAYMENT_SUCCESS';
-  read: boolean;
-  createdAt: string;
-  referenceId?: string;
+export interface UnreadCountResponse {
+  count: number;
 }
 
 export const notificationApi = {
-  getNotifications: async (params?: { page?: number; size?: number }) => {
-    const response = await axiosClient.get('/notifications', { params });
-    return response.data || response;
+  getNotifications: async (params?: { page?: number; size?: number }): Promise<NotificationModel[]> => {
+    return axiosClient.get('/notifications', { params });
   },
 
-  getUnreadCount: async () => {
-    const response = await axiosClient.get('/notifications/unread-count');
-    return response;
+  getUnreadCount: async (): Promise<number> => {
+    return axiosClient.get('/notifications/unread-count');
   },
 
-  markAsRead: async (id: string) => {
-    const response = await axiosClient.put(`/notifications/${id}/read`);
-    return response.data || response;
-  }
+  // PATCH — not PUT — per FRONTEND_INTEGRATION.md §12
+  markAsRead: async (id: string): Promise<void> => {
+    return axiosClient.patch(`/notifications/${id}/read`);
+  },
 };

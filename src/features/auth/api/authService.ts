@@ -1,9 +1,9 @@
 import axiosClient from '../../../api/axiosClient';
-import type { 
-  AuthResponse, 
-  LoginRequest, 
-  RegisterRequest, 
-  RefreshTokenRequest 
+import type {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  RefreshTokenRequest
 } from '../../../types/auth.types';
 import type { UserRole, UserProfile } from '../../../types/auth.types';
 
@@ -35,7 +35,7 @@ export const authService = {
   // Simulate getting user from token since there is no /users/me endpoint
   getCurrentUserFromToken: (token: string): UserProfile => {
     const decoded = decodeToken(token) || {};
-    
+
     const extractRole = (tokenData: any): string => {
       if (typeof tokenData.role === 'string') return tokenData.role;
       const rolesArr = tokenData.roles || tokenData.authorities;
@@ -54,7 +54,7 @@ export const authService = {
     }
 
     return {
-      id: decoded.id || decoded.sub || 'unknown-id',
+      id: decoded.accountId || decoded.sub || 'unknown-id',
       email: decoded.sub || decoded.email || '',
       role: roleStr as UserRole,
       firstName: decoded.firstName || 'User',
