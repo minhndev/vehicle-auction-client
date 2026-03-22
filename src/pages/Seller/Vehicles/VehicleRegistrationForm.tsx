@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { catalogApi } from '../../../api/catalogApi';
 import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi, type ProductRequest } from '../../../features/seller/api/sellerApi';
-import axiosClient from '../../../api/axiosClient';
 import type { CategoryResponse } from '../../../types/index';
+import type { RootState } from '../../../store';
 import styles from './VehicleRegistrationForm.module.css';
 
 export const VehicleRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
+  const authUser = useSelector((state: RootState) => state.auth.user);
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,21 +22,58 @@ export const VehicleRegistrationForm: React.FC = () => {
   const [formData, setFormData] = useState<ProductRequest>({
     brand: '',
     model: '',
+    color: '',
+    engineNumber: '',
+    licensePlate: '',
     year: new Date().getFullYear(),
     vinNumber: '',
     categoryId: '',
     mileage: 0,
     transmission: 'Automatic',
     fuelType: 'Gasoline',
+    description: '',
     basePrice: 0,
     stepPrice: 0,
     images: []
   });
 
+  const isValidUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+
+  const isValidVin = (value: string) =>
+    /^[A-HJ-NPR-Z0-9]{17}$/i.test(value.trim());
+
+  const getValidationErrorMessage = (err: any): string => {
+    const data = err?.response?.data;
+
+    if (data && typeof data === 'object') {
+      const errors = (data as Record<string, unknown>).errors;
+      if (errors && typeof errors === 'object' && !Array.isArray(errors)) {
+        const entries = Object.entries(errors as Record<string, unknown>);
+        if (entries.length > 0) {
+          const [field, message] = entries[0];
+          return `Truong ${field}: ${String(message)}`;
+        }
+      }
+
+      const listErrors = (data as Record<string, unknown>).errorDetails;
+      if (Array.isArray(listErrors) && listErrors.length > 0) {
+        return String(listErrors[0]);
+      }
+
+      const msg = (data as Record<string, unknown>).message;
+      if (typeof msg === 'string' && msg.trim().length > 0) {
+        return msg;
+      }
+    }
+
+    return err?.message || 'Lỗi đăng ký xe';
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response: any = await axiosClient.get('/categories');
+        const response: any = await catalogApi.getCategories();
         setCategories(response?.content || response || []);
       } catch (err) {
         // silent fail
@@ -46,7 +86,7 @@ export const VehicleRegistrationForm: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'year' || name === 'mileage' || name === 'basePrice' || name === 'stepPrice') 
+      [name]: (name === 'year' || name === 'mileage' || name === 'basePrice') 
         ? Number(value) : value
     }));
   };
@@ -66,9 +106,62 @@ export const VehicleRegistrationForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.categoryId) {
+
+    const categoryId = String(formData.categoryId || '').trim();
+    if (!categoryId) {
       setError('Vui lòng chọn danh mục xe');
+      return;
+    }
+
+    if (!isValidUuid(categoryId)) {
+      setError('Danh mục không hợp lệ. Vui lòng chọn lại danh mục xe.');
+      return;
+    }
+
+    const vin = formData.vinNumber.trim().toUpperCase();
+        if (!formData.color.trim()) {
+          setError('Mau xe la truong bat buoc.');
+          return;
+        }
+
+        if (!formData.engineNumber.trim()) {
+          setError('So may (engine number) la truong bat buoc.');
+          return;
+        }
+
+        if (!formData.licensePlate.trim()) {
+          setError('Bien so xe la truong bat buoc.');
+          return;
+        }
+
+        if (!formData.transmission.trim() || !formData.fuelType.trim()) {
+          setError('Hop so va nhien lieu la truong bat buoc.');
+          return;
+        }
+
+    if (!isValidVin(vin)) {
+      setError('So khung (VIN) phai dung 17 ky tu, chi gom chu va so hop le.');
+      return;
+    }
+
+    if (!Number.isFinite(formData.basePrice) || formData.basePrice < 1000000) {
+      setError('Gia khoi diem khong hop le (toi thieu 1,000,000 VND).');
+      return;
+    }
+
+    if (!Number.isFinite(formData.mileage) || formData.mileage < 0) {
+      setError('So ODO khong hop le.');
+      return;
+    }
+
+    if (imageFiles.length === 0) {
+      setError('Vui long tai len it nhat 1 anh xe.');
+      return;
+    }
+
+    const role = String(authUser?.role || '').toUpperCase();
+    if (role && role !== 'SELLER' && role !== 'ADMIN') {
+      setError('Tai khoan hien tai chua co quyen dang ban xe. Vui long lien he Admin de duoc cap quyen SELLER.');
       return;
     }
 
@@ -86,24 +179,39 @@ export const VehicleRegistrationForm: React.FC = () => {
         }
       }
 
+      if (uploadedImageUrls.length === 0) {
+        setError('Khong the tai anh len he thong. Vui long thu lai.');
+        return;
+      }
+
       await sellerApi.registerVehicle({
         ...formData,
-        categoryId: Number(formData.categoryId), // Convert categoryId to number for payload
+        categoryId,
+        vinNumber: vin,
         images: uploadedImageUrls
       });
 
       alert('Đăng ký xe thành công! Chờ Admin duyệt.');
-      navigate('/seller/auctions');
+      navigate('/seller/products');
       
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Lỗi đăng ký xe');
+      setError(getValidationErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   const goToStepTwo = () => {
-    if (!formData.brand || !formData.model || !formData.vinNumber || !formData.categoryId || !formData.year) {
+    if (
+      !formData.brand ||
+      !formData.model ||
+      !formData.color ||
+      !formData.engineNumber ||
+      !formData.licensePlate ||
+      !formData.vinNumber ||
+      !formData.categoryId ||
+      !formData.year
+    ) {
       setError('Vui long nhap day du thong tin bat buoc truoc khi tiep tuc');
       return;
     }
@@ -172,6 +280,18 @@ export const VehicleRegistrationForm: React.FC = () => {
                     <input type="text" name="model" required value={formData.model} onChange={handleChange} placeholder="VD: Camry" />
                   </div>
                   <div className={styles.formGroup}>
+                    <label>Mau son *</label>
+                    <input type="text" name="color" required value={formData.color} onChange={handleChange} placeholder="VD: Do" />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>So may *</label>
+                    <input type="text" name="engineNumber" required value={formData.engineNumber} onChange={handleChange} placeholder="VD: 2AR-XXXXXXX" />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Bien so xe *</label>
+                    <input type="text" name="licensePlate" required value={formData.licensePlate} onChange={handleChange} placeholder="VD: 60-AA123.45" />
+                  </div>
+                  <div className={styles.formGroup}>
                     <label>Nam san xuat *</label>
                     <input type="number" name="year" required value={formData.year} onChange={handleChange} min={1900} max={new Date().getFullYear() + 1} />
                   </div>
@@ -229,8 +349,8 @@ export const VehicleRegistrationForm: React.FC = () => {
                     <input type="number" name="basePrice" required value={formData.basePrice || ''} onChange={handleChange} min={1000000} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Buoc gia toi thieu (VND) *</label>
-                    <input type="number" name="stepPrice" required value={formData.stepPrice || ''} onChange={handleChange} min={100000} />
+                    <label>Mo ta xe</label>
+                    <input type="text" name="description" value={formData.description || ''} onChange={handleChange} placeholder="Mo ta tinh trang xe..." />
                   </div>
                 </div>
               </div>
@@ -307,10 +427,6 @@ export const VehicleRegistrationForm: React.FC = () => {
           <div className={styles.summaryItem}>
             <span>Gia khoi diem</span>
             <strong>{formData.basePrice ? `${formData.basePrice.toLocaleString('vi-VN')} VND` : 'Chua cap nhat'}</strong>
-          </div>
-          <div className={styles.summaryItem}>
-            <span>Buoc gia</span>
-            <strong>{formData.stepPrice ? `${formData.stepPrice.toLocaleString('vi-VN')} VND` : 'Chua cap nhat'}</strong>
           </div>
         </aside>
       </div>

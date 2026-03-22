@@ -16,11 +16,11 @@ export interface RegisterRequest {
   confirmPassword?: string;
   firstName: string;
   lastName: string;
-  identityNumber: string;
+  identityNumber?: string;
   birthdate: string; // LocalDate mapped as ISO Date String 'YYYY-MM-DD'
   gender: Gender;
   phoneNumber: string;
-  address: string;
+  address?: string;
   avatarURL?: string;
 }
 

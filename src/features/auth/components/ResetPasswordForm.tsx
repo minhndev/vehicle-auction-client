@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import axiosClient from '../../../api/axiosClient';
+import { authService } from '../api/authService';
 import { Button } from '../../../components/ui/Button/Button';
 import styles from './AuthForm.module.css';
 
@@ -37,10 +37,10 @@ export const ResetPasswordForm: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      // In a real app, this would be in authService
-      await axiosClient.post('/auth/reset-password', {
+      await authService.resetPassword({
         token,
-        password: data.password,
+        newPassword: data.password,
+        confirmPassword: data.confirmPassword,
       });
       // Redirect to login after successful reset
       navigate('/login?reset=success');

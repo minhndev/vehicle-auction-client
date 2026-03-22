@@ -26,12 +26,9 @@ export const RegisterForm: React.FC = () => {
     confirmPassword: z.string(),
     firstName: z.string().min(2, t('validation:first_name_required')),
     lastName: z.string().min(2, t('validation:last_name_required')),
-    identityNumber: z.string().min(5, t('validation:identity_required')),
     birthdate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, t('validation:birthdate_invalid')),
     gender: z.enum(['MALE', 'FEMALE', 'OTHER'] as const),
     phoneNumber: z.string().min(10, t('validation:phone_required')).max(15, t('validation:phone_required')).regex(/^\+?[0-9.]+$/, t('validation:phone_invalid')),
-    address: z.string().min(5, t('validation:address_required')),
-    avatarURL: z.string().url(t('validation:avatar_url_invalid')).optional().or(z.literal('')),
   }).refine((data) => data.password === data.confirmPassword, {
     message: t('validation:passwords_dont_match'),
     path: ["confirmPassword"],
@@ -46,21 +43,28 @@ export const RegisterForm: React.FC = () => {
     }
   });
 
+  const buildFallbackIdentityNumber = () => {
+    const now = `${Date.now()}`;
+    const random = `${Math.floor(Math.random() * 1000000)}`.padStart(6, '0');
+    const merged = `${now}${random}`;
+    return merged.slice(-12);
+  };
+
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       dispatch(setLoading(true));
+      const normalizedEmail = data.email.trim().toLowerCase();
       const response = await authService.register({
-        email: data.email,
+        email: normalizedEmail,
         password: data.password,
         confirmPassword: data.confirmPassword,
         firstName: data.firstName,
         lastName: data.lastName,
-        identityNumber: data.identityNumber,
+        identityNumber: buildFallbackIdentityNumber(),
         birthdate: data.birthdate,
         gender: data.gender as Gender,
         phoneNumber: data.phoneNumber,
-        address: data.address,
-        avatarURL: data.avatarURL || undefined,
+        address: 'Chua cap nhat',
       });
       
       // Extract user profile from token since /users/me doesn't exist
@@ -147,7 +151,6 @@ export const RegisterForm: React.FC = () => {
                 <input className={styles.input} id="phoneNumber" type="tel" {...register('phoneNumber')} />
                 {errors.phoneNumber && <span className={styles.errorText}>{errors.phoneNumber.message}</span>}
               </div>
-
             </div>
 
             <div className={styles.formGridTwo}>

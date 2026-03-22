@@ -19,8 +19,7 @@ export const AdminCategories: React.FC = () => {
     try {
       setLoading(true);
       const res = await adminApi.getCategories();
-      if (Array.isArray(res)) setCategories(res);
-      else if (res && res.content) setCategories(res.content);
+      setCategories(res);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to fetch categories.'));
     } finally {

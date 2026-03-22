@@ -1,5 +1,5 @@
 import axiosClient from '../../../api/axiosClient';
-import type { AuctionResponse, PageAuctionResponse, BidRequest, BidResponse } from '../../../types/index';
+import type { AuctionRequest, AuctionResponse, PageAuctionResponse, BidRequest, BidResponse } from '../../../types/index';
 
 export interface AuctionQueryParams {
   keyword?: string;
@@ -13,6 +13,10 @@ export interface AuctionQueryParams {
 }
 
 export const auctionApi = {
+  createAuction: async (data: AuctionRequest): Promise<AuctionResponse> => {
+    return axiosClient.post('/auctions', data);
+  },
+
   getPublicAuctions: async (params?: AuctionQueryParams): Promise<PageAuctionResponse> => {
     return axiosClient.get('/auctions', { params });
   },

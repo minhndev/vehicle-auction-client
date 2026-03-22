@@ -57,6 +57,17 @@
   background-color: #E2E8F0;
 }
 
+/* Biến thể Outline */
+.outline {
+  background-color: transparent;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.outline:hover:not(:disabled) {
+  background-color: #F8FAFC;
+}
+
 /* Biến thể Danger */
 .danger {
   background-color: #EF4444;

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { catalogApi } from '../../api/catalogApi';
 import { auctionApi } from '../../features/bidding/api/auctionApi';
 import type { AuctionResponse, BidResponse, ProductResponse } from '../../types/index';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useAuctionWebSocket } from '../../hooks/useAuctionWebSocket';
 import { Button } from '../../components/ui/Button/Button';
 import type { RootState } from '../../store';
-import axiosClient from '../../api/axiosClient';
 import styles from './AuctionDetail.module.css';
 
 const formatVND = (amount?: number | null) => {
@@ -63,7 +63,7 @@ export const AuctionDetail: React.FC = () => {
         // Fetch product details for images
         if (auctionData.productId) {
           try {
-            const productData: ProductResponse = await axiosClient.get(`/products/${auctionData.productId}`);
+            const productData: ProductResponse = await catalogApi.getProductById(auctionData.productId);
             setProduct(productData);
           } catch {
             // Product details optional — don't fail the page

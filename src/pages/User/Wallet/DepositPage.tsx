@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button/Button';
-import axiosClient from '../../../api/axiosClient';
+import { paymentApi } from '../../../api/paymentApi';
 import { WalletHistory } from './WalletHistory';
 import type { DepositRequest } from '../../../types/index';
 import styles from './DepositPage.module.css';
@@ -41,7 +41,7 @@ export const DepositPage: React.FC = () => {
         paymentMethod: 'VNPAY',
       };
 
-      const response: any = await axiosClient.post('/deposits', payload);
+      const response: any = await paymentApi.createDepositPayment(payload);
       const url = response?.paymentUrl || response?.paymentURL;
 
       if (url) {

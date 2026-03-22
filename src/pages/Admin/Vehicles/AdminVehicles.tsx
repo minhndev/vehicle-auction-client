@@ -84,7 +84,7 @@ export const AdminVehicles: React.FC = () => {
               
               <div className={styles.cardBody}>
                 {Array.isArray(vehicle.images) && vehicle.images.length > 0 ? (
-                  <img src={vehicle.images[0].url || vehicle.images[0]} alt={vehicle.model} className={styles.image} />
+                  <img src={vehicle.images[0].url || ''} alt={vehicle.model} className={styles.image} />
                 ) : (
                   <div className={styles.placeholderImage}>Không có hình ảnh</div>
                 )}
@@ -103,16 +103,16 @@ export const AdminVehicles: React.FC = () => {
               <div className={styles.cardFooter}>
                 <Button 
                   variant="outline" 
-                  onClick={() => handleReject(vehicle.id)}
-                  disabled={actionLoading === vehicle.id}
+                  onClick={() => vehicle.id && handleReject(vehicle.id)}
+                  disabled={actionLoading === vehicle.id || !vehicle.id}
                   style={{ borderColor: '#ef4444', color: '#ef4444' }}
                 >
                   {actionLoading === vehicle.id ? 'Loading...' : 'Từ Chối'}
                 </Button>
                 <Button 
                   variant="primary" 
-                  onClick={() => handleApprove(vehicle.id)}
-                  disabled={actionLoading === vehicle.id}
+                  onClick={() => vehicle.id && handleApprove(vehicle.id)}
+                  disabled={actionLoading === vehicle.id || !vehicle.id}
                   style={{ backgroundColor: '#10b981' }}
                 >
                   {actionLoading === vehicle.id ? 'Loading...' : 'Duyệt Vào Sàn'}

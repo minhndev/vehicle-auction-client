@@ -20,7 +20,7 @@ export interface NotificationMessage {
   createdAt?: string;
 }
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws-auctions';
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/api/v1/ws-auctions';
 
 export const useAuctionWebSocket = (auctionId: string) => {
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
@@ -48,7 +48,7 @@ export const useAuctionWebSocket = (auctionId: string) => {
       setIsConnected(true);
 
       // 1. Subscribe to real-time auction price updates
-      client.subscribe(`/topic/auction/${auctionId}`, (message) => {
+      client.subscribe(`/topic/auctions/${auctionId}`, (message) => {
         if (!message.body) return;
         try {
           const data: AuctionUpdateMessage = JSON.parse(message.body);

@@ -59,7 +59,7 @@ export const SellerDashboard: React.FC = () => {
           <h1 className={styles.title}>Quản Lý Bán Hàng</h1>
           <p className={styles.subtitle}>Quản lý phương tiện và theo dõi trạng thái đấu giá của bạn.</p>
         </div>
-        <Link to="/seller/auctions/new" style={{ textDecoration: 'none' }}>
+          <Link to="/seller/products/new" style={{ textDecoration: 'none' }}>
            <Button variant="primary">Đăng Ký Đấu Giá Xe Mới</Button>
         </Link>
       </div>
@@ -88,7 +88,7 @@ export const SellerDashboard: React.FC = () => {
       <div className={styles.recentActivity}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
            <h2 style={{ color: 'var(--color-primary)' }}>Xe Gần Đây</h2>
-           <Link to="/seller/auctions" style={{ color: 'var(--color-secondary)' }}>Xem Tất Cả</Link>
+           <Link to="/seller/products" style={{ color: 'var(--color-secondary)' }}>Xem Tất Cả</Link>
         </div>
 
         <table className={styles.table}>
@@ -116,9 +116,17 @@ export const SellerDashboard: React.FC = () => {
                   <td>{formatVND(v.startPrice)}</td>
                   <td>{v.createdAt ? new Date(v.createdAt).toLocaleDateString('vi-VN') : '—'}</td>
                   <td>
-                    <Button variant="outline" size="small" onClick={() => alert(`Tính năng sửa/xóa ID: ${v.id} đang phát triển`)}>
-                      Quản lý
-                    </Button>
+                    {v.status === 'IN_AUCTION' || v.status === 'SOLD' ? (
+                      <Button variant="outline" size="small" disabled title="Không thể chỉnh sửa khi sản phẩm đang đấu giá hoặc đã bán.">
+                        Quản lý (đã khóa)
+                      </Button>
+                    ) : (
+                      <Link to={`/seller/products/${v.id}/edit`} style={{ textDecoration: 'none' }}>
+                        <Button variant="outline" size="small" disabled={!v.id}>
+                          Quản lý
+                        </Button>
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))

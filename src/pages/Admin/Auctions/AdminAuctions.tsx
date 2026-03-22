@@ -19,17 +19,22 @@ export const AdminAuctions: React.FC = () => {
   const [auctions, setAuctions] = useState<AuctionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'FAILED'>('ALL');
 
   useEffect(() => {
     fetchAuctions();
-  }, []);
+  }, [statusFilter]);
 
   const fetchAuctions = async () => {
     try {
       setLoading(true);
       setError(null);
-      // Fetch currently ACTIVE auctions
-      const response = await auctionApi.getPublicAuctions({ page: 0, size: 50, status: 'ACTIVE' });
+      const response = await auctionApi.getPublicAuctions({
+        page: 0,
+        size: 50,
+        sort: 'createdAt,desc',
+        ...(statusFilter !== 'ALL' ? { status: statusFilter } : {}),
+      });
       // @ts-ignore
       const list = response?.content || response || [];
       setAuctions(Array.isArray(list) ? list : []);
@@ -79,13 +84,13 @@ export const AdminAuctions: React.FC = () => {
             </thead>
             <tbody>
               {auctions.length === 0 ? (
-                <tr><td colSpan={6} className={styles.emptyRow} style={{ textAlign: 'center', padding: '2rem' }}>Chưa có phiên đấu giá nào đang ACTIVE</td></tr>
+                <tr><td colSpan={6} className={styles.emptyRow} style={{ textAlign: 'center', padding: '2rem' }}>Không có phiên đấu giá nào theo bộ lọc hiện tại</td></tr>
               ) : (
                 auctions.map(auction => {
-                  const isLive = auction.status === 'ACTIVE';
+                  const canCancel = auction.status === 'ACTIVE' || auction.status === 'UPCOMING';
                   
                   return (
-                    <tr key={auction.id} className={!isLive ? styles.rowEnded : ''}>
+                    <tr key={auction.id} className={!canCancel ? styles.rowEnded : ''}>
                       <td><span className={styles.mono}>#{String(auction.id).substring(0, 8)}</span></td>
                       <td><strong>{auction.productName || 'Không rõ xe'}</strong></td>
                       <td className={styles.money} style={{ fontWeight: 'bold' }}>
@@ -93,8 +98,8 @@ export const AdminAuctions: React.FC = () => {
                       </td>
                       <td>{auction.endTime ? new Date(auction.endTime).toLocaleString('vi-VN') : '—'}</td>
                       <td>
-                        <span className={`${styles.badge} ${isLive ? styles.badgeLive : styles.badgeEnded}`} style={{ 
-                          backgroundColor: isLive ? '#3b82f6' : '#9ca3af',
+                        <span className={`${styles.badge} ${canCancel ? styles.badgeLive : styles.badgeEnded}`} style={{ 
+                          backgroundColor: auction.status === 'ACTIVE' ? '#3b82f6' : auction.status === 'UPCOMING' ? '#f59e0b' : '#9ca3af',
                           color: 'white',
                           padding: '4px 8px',
                           borderRadius: '4px',
@@ -104,7 +109,7 @@ export const AdminAuctions: React.FC = () => {
                         </span>
                       </td>
                       <td>
-                        {isLive && (
+                        {canCancel && (
                           <Button 
                             variant="danger" 
                             size="small" 
@@ -114,7 +119,7 @@ export const AdminAuctions: React.FC = () => {
                             Ép Buộc Huỷ
                           </Button>
                         )}
-                        {!isLive && <span className={styles.textMuted} style={{ color: '#9ca3af' }}>Đã đóng</span>}
+                        {!canCancel && <span className={styles.textMuted} style={{ color: '#9ca3af' }}>Đã đóng</span>}
                       </td>
                     </tr>
                   )
@@ -123,6 +128,23 @@ export const AdminAuctions: React.FC = () => {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <label htmlFor="auction-status-filter" style={{ fontWeight: 600 }}>Lọc trạng thái:</label>
+        <select
+          id="auction-status-filter"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+        >
+          <option value="ALL">Tất cả</option>
+          <option value="UPCOMING">UPCOMING</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
+          <option value="FAILED">FAILED</option>
+        </select>
       </div>
     </div>
   );

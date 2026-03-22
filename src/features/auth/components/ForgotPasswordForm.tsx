@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link } from 'react-router-dom';
-import axiosClient from '../../../api/axiosClient';
+import { authService } from '../api/authService';
 import { Button } from '../../../components/ui/Button/Button';
 import styles from './AuthForm.module.css';
 
@@ -26,8 +26,7 @@ export const ForgotPasswordForm: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      // In a real app, this would be in authService
-      await axiosClient.post('/auth/forgot-password', data);
+      await authService.forgotPassword(data);
       setSuccess(true);
     } catch (err: unknown) {
       setError((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to send reset link');

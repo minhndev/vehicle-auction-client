@@ -22,12 +22,19 @@ export const orderApi = {
     return axiosClient.get(`/orders/${id}`);
   },
 
+  updateCheckoutInfo: async (id: string, shippingInfo: CheckoutRequest): Promise<OrderResponse> => {
+    return axiosClient.put(`/orders/${id}/checkout`, shippingInfo);
+  },
+
   /**
    * POST /orders/{id}/pay
    * Submits shipping info and initiates VNPay payment.
    * Returns paymentUrl to redirect the user.
    */
-  payOrder: async (id: string, shippingInfo: CheckoutRequest): Promise<PaymentUrlResponse> => {
-    return axiosClient.post(`/orders/${id}/pay`, shippingInfo);
+  payOrder: async (id: string, shippingInfo?: CheckoutRequest): Promise<PaymentUrlResponse> => {
+    if (shippingInfo) {
+      await axiosClient.put(`/orders/${id}/checkout`, shippingInfo);
+    }
+    return axiosClient.post(`/orders/${id}/pay`);
   },
 };

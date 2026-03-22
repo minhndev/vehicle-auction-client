@@ -38,6 +38,12 @@ export interface ProductRequest {
   name: string;
   brand: string;
   model: string;
+  color: string;
+  engineNumber: string;
+  licensePlate: string;
+  transmission: string;
+  fuelType: string;
+  description?: string;
   vinNumber: string;
   manufactureYear: string;
   mileage: string;
@@ -54,10 +60,21 @@ export interface ProductImageResponse {
 
 export interface ProductResponse {
   id?: string;
+  sellerId?: string;
   name?: string;
   brand?: string;
   model?: string;
+  year?: number;
+  manufactureYear?: number;
   vinNumber?: string;
+  color?: string;
+  engineNumber?: string;
+  licensePlate?: string;
+  transmission?: string;
+  fuelType?: string;
+  description?: string;
+  mileage?: number;
+  basePrice?: number;
   startPrice?: number;
   status?: string;
   categoryId?: string;

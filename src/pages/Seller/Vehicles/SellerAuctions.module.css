@@ -98,3 +98,43 @@
   font-size: 12px;
   font-weight: bold;
 }
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border: 1px solid #dbe4f2;
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  padding: 20px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+}
+
+.modalText {
+  margin: 10px 0 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.modalActions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
