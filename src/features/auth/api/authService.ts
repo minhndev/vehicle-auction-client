@@ -32,6 +32,10 @@ export const authService = {
     return axiosClient.get(`/auth/verify?token=${token}`);
   },
 
+  loginWithGoogle: async (idToken: String): Promise<AuthResponse> => {
+    return axiosClient.post('/auth/google-login', { idToken });
+  },
+
   // Simulate getting user from token since there is no /users/me endpoint
   getCurrentUserFromToken: (token: string): UserProfile => {
     const decoded = decodeToken(token) || {};
