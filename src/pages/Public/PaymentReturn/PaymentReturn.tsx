@@ -2,22 +2,48 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
 import { miscApi } from '../../../api/miscApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import styles from './PaymentReturn.module.css';
 
+const DEPOSIT_PENDING_AUCTION_ID_KEY = 'deposit.pendingAuctionId';
+const DEPOSIT_PAID_AUCTION_KEY_PREFIX = 'deposit.paidAuctionId.';
+
 export const PaymentReturn: React.FC = () => {
+  const { tp } = usePageI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
-  const [message, setMessage] = useState('Verifying payment status...');
+  const [message, setMessage] = useState(tp('paymentReturn.verifying'));
+  const [depositAuctionId, setDepositAuctionId] = useState<string>('');
+
+  useEffect(() => {
+    if (status === 'loading') {
+      setMessage(tp('paymentReturn.verifying'));
+    }
+  }, [status, tp]);
 
   useEffect(() => {
     verifyPayment();
   }, [location.search]);
 
+  useEffect(() => {
+    if (status !== 'success' || !depositAuctionId) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      navigate(`/auctions/${depositAuctionId}`);
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [status, depositAuctionId, navigate]);
+
   const verifyPayment = async () => {
     if (!location.search) {
       setStatus('failed');
-      setMessage('No payment information provided in the URL.');
+      setMessage(tp('paymentReturn.missingInfo'));
       return;
     }
 
@@ -27,18 +53,32 @@ export const PaymentReturn: React.FC = () => {
       // Usually vnpay returns vnp_ResponseCode=00 in query string if success
       const urlParams = new URLSearchParams(location.search);
       const isSuccess = urlParams.get('vnp_ResponseCode') === '00';
+      const auctionIdFromQuery =
+        urlParams.get('auctionId') ||
+        urlParams.get('referenceId') ||
+        urlParams.get('ref') ||
+        '';
+      const pendingAuctionId = sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || '';
+      const resolvedAuctionId = auctionIdFromQuery || pendingAuctionId;
       
       if (isSuccess || (response && response.status === 'success')) {
+        if (resolvedAuctionId) {
+          sessionStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
+          setDepositAuctionId(resolvedAuctionId);
+        }
+        sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
         setStatus('success');
-        setMessage('Your payment was processed successfully!');
+        setMessage(tp('paymentReturn.success'));
       } else {
+        sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
         setStatus('failed');
-        setMessage('Payment failed or was cancelled.');
+        setMessage(tp('paymentReturn.failed'));
       }
     } catch (err) {
       // In a real app we might get a 400 from backend if signature fails
+      sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
       setStatus('failed');
-      setMessage('Failed to verify payment with the server. Please check your wallet order history.');
+      setMessage(tp('paymentReturn.serverVerifyFailed'));
     }
   };
 
@@ -47,7 +87,7 @@ export const PaymentReturn: React.FC = () => {
       <div className={styles.card}>
         {status === 'loading' && (
           <div className={styles.loadingState}>
-            <div className="loadingSpinner" style={{ marginBottom: '1rem' }}>Processing Payment...</div>
+            <div className="loadingSpinner" style={{ marginBottom: '1rem' }}>{tp('paymentReturn.processing')}</div>
             <p className={styles.text}>{message}</p>
           </div>
         )}
@@ -60,11 +100,17 @@ export const PaymentReturn: React.FC = () => {
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
             </div>
-            <h2>Payment Successful!</h2>
+            <h2>{tp('paymentReturn.successTitle')}</h2>
             <p className={styles.text}>{message}</p>
+            {depositAuctionId && (
+              <p className={styles.text}>{tp('paymentReturn.redirectAuction')}</p>
+            )}
             <div className={styles.actions}>
-              <Button variant="primary" onClick={() => navigate('/user/wallet/deposit')}>View Wallet</Button>
-              <Button variant="outline" onClick={() => navigate('/user/orders')}>View Orders</Button>
+              {depositAuctionId && (
+                <Button variant="primary" onClick={() => navigate(`/auctions/${depositAuctionId}`)}>{tp('paymentReturn.backToAuction')}</Button>
+              )}
+              <Button variant="primary" onClick={() => navigate('/user/wallet/deposit')}>{tp('paymentReturn.viewWallet')}</Button>
+              <Button variant="outline" onClick={() => navigate('/user/orders')}>{tp('paymentReturn.viewOrders')}</Button>
             </div>
           </div>
         )}
@@ -78,11 +124,11 @@ export const PaymentReturn: React.FC = () => {
                 <line x1="9" y1="9" x2="15" y2="15"></line>
               </svg>
             </div>
-            <h2>Payment Failed</h2>
+            <h2>{tp('paymentReturn.failedTitle')}</h2>
             <p className={styles.text}>{message}</p>
             <div className={styles.actions}>
-              <Button variant="primary" onClick={() => navigate('/user/wallet/deposit')}>Try Again</Button>
-              <Link to="/" className={styles.link}>Return to Home</Link>
+              <Button variant="primary" onClick={() => navigate('/user/wallet/deposit')}>{tp('paymentReturn.retry')}</Button>
+              <Link to="/" className={styles.link}>{tp('paymentReturn.goHome')}</Link>
             </div>
           </div>
         )}

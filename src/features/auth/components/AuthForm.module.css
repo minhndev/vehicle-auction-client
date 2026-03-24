@@ -205,6 +205,18 @@
   color: #c52b39;
 }
 
+.formSuccessBox {
+  margin-bottom: 0.95rem;
+  text-align: center;
+  background: #eefbf3;
+  border: 1px solid #93d7ad;
+  border-radius: 10px;
+  padding: 0.58rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f7a4f;
+}
+
 .submitBtn {
   width: 100%;
   margin-top: 0.7rem;

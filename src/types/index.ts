@@ -173,6 +173,9 @@ export interface AuctionResponse {
   bidIncrement?: number;
   depositAmount?: number;
   winnerId?: string;
+  winnerEmail?: string;
+  winnerUsername?: string;
+  winnerName?: string;
   version?: number;
   status?: string;
   active?: boolean;
@@ -192,9 +195,14 @@ export interface BidRequest {
 
 export interface BidResponse {
   id?: string;
+  bidId?: string;
   auctionId?: string;
   bidderId?: string;
+  bidderMask?: string;
   amount?: number;
+  bidStatus?: string;
+  rank?: number;
+  winning?: boolean;
   createdAt?: string;
   isWinning?: boolean;
 }

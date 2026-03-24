@@ -12,6 +12,34 @@ export interface AuctionQueryParams {
   sort?: string;
 }
 
+export interface BidHistoryQueryParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+const normalizeBidHistory = (payload: unknown): BidResponse[] => {
+  const candidates: unknown[] = [payload];
+
+  if (payload && typeof payload === 'object') {
+    const root = payload as { data?: unknown; content?: unknown[]; items?: unknown[]; result?: unknown };
+    candidates.push(root.data, root.content, root.items, root.result);
+
+    if (root.data && typeof root.data === 'object') {
+      const nested = root.data as { content?: unknown[]; items?: unknown[]; result?: unknown };
+      candidates.push(nested.content, nested.items, nested.result);
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate as BidResponse[];
+    }
+  }
+
+  return [];
+};
+
 export const auctionApi = {
   createAuction: async (data: AuctionRequest): Promise<AuctionResponse> => {
     return axiosClient.post('/auctions', data);
@@ -29,7 +57,9 @@ export const auctionApi = {
     return axiosClient.post(`/auctions/${auctionId}/bids`, data);
   },
 
-  getAuctionBids: async (auctionId: string): Promise<BidResponse[]> => {
-    return axiosClient.get(`/auctions/${auctionId}/bids`);
+  getAuctionBids: async (auctionId: string, params?: BidHistoryQueryParams): Promise<BidResponse[]> => {
+    const hasParams = params && Object.keys(params).length > 0;
+    const response = await axiosClient.get(`/auctions/${auctionId}/bids`, hasParams ? { params } : undefined);
+    return normalizeBidHistory(response);
   },
 };

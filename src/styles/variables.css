@@ -41,6 +41,14 @@
   --shadow-md: 0 12px 28px rgba(20, 33, 76, 0.1);
   --shadow-lg: 0 24px 42px rgba(20, 33, 76, 0.14);
 
+  /* Layout */
+  --layout-header-height: 82px;
+  --header-bg: rgba(232, 237, 250, 0.92);
+  --header-border: rgba(226, 232, 240, 0.7);
+  --header-bg-scrolled: rgba(255, 255, 255, 0.98);
+  --header-border-scrolled: rgba(226, 232, 240, 0.9);
+  --header-shadow-scrolled: 0 8px 20px rgba(15, 23, 42, 0.08);
+
   /* Transitions */
   --transition-fast: 0.15s ease-in-out;
   --transition-normal: 0.3s ease-in-out;

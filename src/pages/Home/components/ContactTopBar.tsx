@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../Home.module.css';
+import { Mail, Phone, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 // --- MOCK DATA ---
 interface ContactInfo {
@@ -7,13 +7,13 @@ interface ContactInfo {
   type: string;
   label: string;
   value: string;
-  icon: string;
+  icon: React.ElementType;
 }
 
 interface SocialLink {
   id: string;
   url: string;
-  icon: string;
+  icon: React.ElementType;
 }
 
 const MOCK_CONTACTS: ContactInfo[] = [
@@ -22,59 +22,55 @@ const MOCK_CONTACTS: ContactInfo[] = [
     type: 'email',
     label: 'Email:',
     value: 'support@vehicleauction.com',
-    icon: 'https://img.icons8.com/color/48/000000/new-post.png' // Email Icon
+    icon: Mail
   },
   {
     id: 'phone',
     type: 'phone',
     label: 'Phone:',
     value: '+1 234 567 8900',
-    icon: 'https://img.icons8.com/color/48/000000/phone.png' // Phone Icon
+    icon: Phone
   }
 ];
 
 const MOCK_SOCIALS: SocialLink[] = [
-  { id: 'facebook', url: '#', icon: 'https://img.icons8.com/color/48/000000/facebook-new.png' },
-  { id: 'twitter', url: '#', icon: 'https://img.icons8.com/color/48/000000/twitter--v1.png' },
-  { id: 'instagram', url: '#', icon: 'https://img.icons8.com/color/48/000000/instagram-new--v1.png' },
-  { id: 'linkedin', url: '#', icon: 'https://img.icons8.com/color/48/000000/linkedin.png' }
+  { id: 'facebook', url: '#', icon: Facebook },
+  { id: 'twitter', url: '#', icon: Twitter },
+  { id: 'instagram', url: '#', icon: Instagram },
+  { id: 'linkedin', url: '#', icon: Linkedin }
 ];
-
-// --- SUB-COMPONENTS ---
-const ContactItem: React.FC<{ contact: ContactInfo }> = ({ contact }) => (
-  <div className={styles.contactItem}>
-    <div className={styles.contactIconWrap}>
-      <img src={contact.icon} alt={contact.type} className={styles.contactIcon} />
-    </div>
-    <span className={styles.contactText}>
-      {contact.label} <a href={contact.type === 'email' ? `mailto:${contact.value}` : `tel:${contact.value}`} className={styles.contactLink}>{contact.value}</a>
-    </span>
-  </div>
-);
-
-const SocialItem: React.FC<{ social: SocialLink }> = ({ social }) => (
-  <a href={social.url} className={styles.contactSocialItem}>
-    <img src={social.icon} alt={social.id} className={styles.contactSocialIcon} />
-  </a>
-);
 
 // --- MAIN COMPONENT ---
 export const ContactTopBar: React.FC = () => {
   return (
-    <div className={styles.contactTopWrap}>
-      <div className={`${styles.containerHero} ${styles.contactTopInner}`}>
-        <div className={styles.contactLeft}>
-          {MOCK_CONTACTS.map(contact => (
-            <ContactItem key={contact.id} contact={contact} />
-          ))}
+    <div className="w-full bg-[#0f172a] text-slate-300 py-1.5 px-4 xl:px-0 text-xs font-medium tracking-wide">
+      <div className="w-full max-w-[1202px] mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          {MOCK_CONTACTS.map(contact => {
+            const Icon = contact.icon;
+            return (
+              <div key={contact.id} className="flex items-center gap-2">
+                <Icon size={14} className="text-[#ffcb23]" strokeWidth={2} />
+                <span className="hidden sm:inline">{contact.label}</span>
+                <a href={contact.type === 'email' ? `mailto:${contact.value}` : `tel:${contact.value}`} className="hover:text-white transition-colors">
+                  {contact.value}
+                </a>
+              </div>
+            );
+          })}
         </div>
 
-        <div className={styles.contactRight}>
-          <span className={styles.contactFollow}>Follow us</span>
-          <div className={styles.contactSocialRow}>
-            {MOCK_SOCIALS.map(social => (
-              <SocialItem key={social.id} social={social} />
-            ))}
+        <div className="flex items-center gap-4">
+          <span className="hidden md:inline text-slate-400">Kết nối với chúng tôi:</span>
+          <div className="flex items-center gap-3">
+            {MOCK_SOCIALS.map(social => {
+              const Icon = social.icon;
+              return (
+                <a key={social.id} href={social.url} className="text-slate-400 hover:text-[#ffcb23] transition-colors" title={social.id}>
+                  <Icon size={14} strokeWidth={2} />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

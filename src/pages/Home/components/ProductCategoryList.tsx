@@ -1,29 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Car } from 'lucide-react';
+import type { CategoryResponse } from '../../../types';
+import { getHomeCategories } from './homeDataService';
 import styles from '../Home.module.css';
 
 export interface CategoryData {
   id: string | number;
   name: string;
-  logo: string;
+  logo: React.ElementType;
 }
 
-const CATEGORY_MOCK_DATA: CategoryData[] = [
-  { id: 1, name: 'Lamborgini', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 2, name: 'Toyota', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 3, name: 'Volkswagen', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 4, name: 'Bently', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 5, name: 'BMW', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 6, name: 'Audi', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 7, name: 'Rolls Royce', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 8, name: 'Bugatti', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-  { id: 9, name: 'Rolls Royce', logo: 'https://img.icons8.com/color/96/000000/car.png' },
-];
-
 const CategoryItem = ({ data }: { data: CategoryData }) => {
+  const Icon = data.logo;
   return (
     <div className={styles.categoryItem}>
       <div className={styles.categoryIconWrap}>
-        <img src={data.logo} alt={data.name} className={styles.categoryIcon} />
+        <Icon size={40} strokeWidth={1.5} color="#2e3d83" className={styles.categoryIcon} />
       </div>
       <span className={styles.categoryName}>
         {data.name}
@@ -33,12 +25,42 @@ const CategoryItem = ({ data }: { data: CategoryData }) => {
 };
 
 export const ProductCategoryList: React.FC = () => {
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchCategories = async () => {
+      try {
+        const content = await getHomeCategories();
+        const safeContent = Array.isArray(content) ? content : [];
+
+        if (!mounted) return;
+        setCategories(
+          safeContent.map((item: CategoryResponse, index: number) => ({
+            id: String(item.id ?? item.slug ?? item.name ?? `category-${index}`),
+            name: item.name ?? 'Danh mục',
+            logo: Car,
+          })),
+        );
+      } catch {
+        if (!mounted) return;
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <section className={`${styles.sectionCompact} ${styles.sectionLight} ${styles.categorySection}`}>
       <div className={styles.container}>
       <div className={`${styles.titleBlock} ${styles.categoryTitleBlock}`}>
         <h2 className={`${styles.title} ${styles.categoryTitle}`}>
-          Auction Product Category
+          Danh mục sản phẩm đấu giá
         </h2>
 
         <div className={styles.divider}>
@@ -48,9 +70,13 @@ export const ProductCategoryList: React.FC = () => {
       </div>
 
       <div className={styles.categoryList}>
-        {CATEGORY_MOCK_DATA.map((item) => (
-          <CategoryItem key={item.id} data={item} />
-        ))}
+        {categories.length === 0 ? (
+          <p className={styles.activityEmpty}>Chưa có danh mục.</p>
+        ) : (
+          categories.map((item) => (
+            <CategoryItem key={item.id} data={item} />
+          ))
+        )}
       </div>
 
       </div>

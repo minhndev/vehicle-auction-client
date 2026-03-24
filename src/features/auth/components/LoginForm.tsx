@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,6 +24,20 @@ export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+  const [registerNotice, setRegisterNotice] = useState('');
+
+  useEffect(() => {
+    const routeState = (location.state || {}) as Record<string, unknown>;
+    const notice = typeof routeState.registerNotice === 'string' ? routeState.registerNotice : '';
+    if (!notice) {
+      return;
+    }
+
+    setRegisterNotice(notice);
+
+    const { registerNotice: _ignored, ...restState } = routeState;
+    navigate(location.pathname, { replace: true, state: restState });
+  }, [location.pathname, location.state, navigate]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -103,6 +117,10 @@ export const LoginForm: React.FC = () => {
 
           {error && (
             <div className={styles.loginErrorBox}>{error}</div>
+          )}
+
+          {registerNotice && (
+            <div className={styles.formSuccessBox}>{registerNotice}</div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)}>

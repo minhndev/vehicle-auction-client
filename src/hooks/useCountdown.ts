@@ -8,16 +8,26 @@ export const useCountdown = (targetDate: string) => {
   const [timeLeft, setTimeLeft] = useState<{ hours: string; minutes: string; seconds: string } | null>(null);
 
   useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const target = new Date(targetDate).getTime();
+    if (!Number.isFinite(target)) {
+      setTimeLeft(null);
+      return;
+    }
+
     const intervalId = setInterval(() => {
       const now = new Date().getTime();
-      const target = new Date(targetDate).getTime();
       const difference = target - now;
 
       if (difference <= 0) {
         clearInterval(intervalId);
         setTimeLeft(null);
       } else {
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const hours = Math.floor(difference / (1000 * 60 * 60));
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 

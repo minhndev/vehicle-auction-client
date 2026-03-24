@@ -4,11 +4,13 @@ import { useSelector } from 'react-redux';
 import { catalogApi } from '../../../api/catalogApi';
 import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi, type ProductRequest } from '../../../features/seller/api/sellerApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { CategoryResponse } from '../../../types/index';
 import type { RootState } from '../../../store';
 import styles from './VehicleRegistrationForm.module.css';
 
 export const VehicleRegistrationForm: React.FC = () => {
+  const { tp } = usePageI18n();
   const navigate = useNavigate();
   const authUser = useSelector((state: RootState) => state.auth.user);
   const [step, setStep] = useState<1 | 2>(1);
@@ -52,7 +54,7 @@ export const VehicleRegistrationForm: React.FC = () => {
         const entries = Object.entries(errors as Record<string, unknown>);
         if (entries.length > 0) {
           const [field, message] = entries[0];
-          return `Truong ${field}: ${String(message)}`;
+          return tp('sellerVehicleRegistration.validationFieldError', { field, message: String(message) });
         }
       }
 
@@ -67,7 +69,7 @@ export const VehicleRegistrationForm: React.FC = () => {
       }
     }
 
-    return err?.message || 'Lỗi đăng ký xe';
+    return err?.message || tp('sellerVehicleRegistration.registerError');
   };
 
   useEffect(() => {
@@ -109,59 +111,59 @@ export const VehicleRegistrationForm: React.FC = () => {
 
     const categoryId = String(formData.categoryId || '').trim();
     if (!categoryId) {
-      setError('Vui lòng chọn danh mục xe');
+      setError(tp('sellerVehicleRegistration.categoryRequired'));
       return;
     }
 
     if (!isValidUuid(categoryId)) {
-      setError('Danh mục không hợp lệ. Vui lòng chọn lại danh mục xe.');
+      setError(tp('sellerVehicleRegistration.categoryInvalid'));
       return;
     }
 
     const vin = formData.vinNumber.trim().toUpperCase();
         if (!formData.color.trim()) {
-          setError('Mau xe la truong bat buoc.');
+          setError(tp('sellerVehicleRegistration.colorRequired'));
           return;
         }
 
         if (!formData.engineNumber.trim()) {
-          setError('So may (engine number) la truong bat buoc.');
+          setError(tp('sellerVehicleRegistration.engineNumberRequired'));
           return;
         }
 
         if (!formData.licensePlate.trim()) {
-          setError('Bien so xe la truong bat buoc.');
+          setError(tp('sellerVehicleRegistration.licensePlateRequired'));
           return;
         }
 
         if (!formData.transmission.trim() || !formData.fuelType.trim()) {
-          setError('Hop so va nhien lieu la truong bat buoc.');
+          setError(tp('sellerVehicleRegistration.transmissionFuelRequired'));
           return;
         }
 
     if (!isValidVin(vin)) {
-      setError('So khung (VIN) phai dung 17 ky tu, chi gom chu va so hop le.');
+      setError(tp('sellerVehicleRegistration.vinInvalid'));
       return;
     }
 
     if (!Number.isFinite(formData.basePrice) || formData.basePrice < 1000000) {
-      setError('Gia khoi diem khong hop le (toi thieu 1,000,000 VND).');
+      setError(tp('sellerVehicleRegistration.basePriceInvalid'));
       return;
     }
 
     if (!Number.isFinite(formData.mileage) || formData.mileage < 0) {
-      setError('So ODO khong hop le.');
+      setError(tp('sellerVehicleRegistration.mileageInvalid'));
       return;
     }
 
     if (imageFiles.length === 0) {
-      setError('Vui long tai len it nhat 1 anh xe.');
+      setError(tp('sellerVehicleRegistration.imageRequired'));
       return;
     }
 
     const role = String(authUser?.role || '').toUpperCase();
     if (role && role !== 'SELLER' && role !== 'ADMIN') {
-      setError('Tai khoan hien tai chua co quyen dang ban xe. Vui long lien he Admin de duoc cap quyen SELLER.');
+      setError(tp('sellerVehicleRegistration.permissionError'));
       return;
     }
 
@@ -180,7 +182,7 @@ export const VehicleRegistrationForm: React.FC = () => {
       }
 
       if (uploadedImageUrls.length === 0) {
-        setError('Khong the tai anh len he thong. Vui long thu lai.');
+        setError(tp('sellerVehicleRegistration.uploadFailed'));
         return;
       }
 
@@ -191,7 +193,7 @@ export const VehicleRegistrationForm: React.FC = () => {
         images: uploadedImageUrls
       });
 
-      alert('Đăng ký xe thành công! Chờ Admin duyệt.');
+      alert(tp('sellerVehicleRegistration.registerSuccess'));
       navigate('/seller/products');
       
     } catch (err: any) {
@@ -212,7 +214,7 @@ export const VehicleRegistrationForm: React.FC = () => {
       !formData.categoryId ||
       !formData.year
     ) {
-      setError('Vui long nhap day du thong tin bat buoc truoc khi tiep tuc');
+      setError(tp('sellerVehicleRegistration.stepOneRequired'));
       return;
     }
 
@@ -223,42 +225,42 @@ export const VehicleRegistrationForm: React.FC = () => {
   const selectedCategory = categories.find((category) => String(category.id) === String(formData.categoryId));
 
   const recentSales = [
-    { model: 'BMW X5 2020', soldTime: 'Sold in 4 days', price: '1.48B VND', trend: '+12%' },
-    { model: 'Mercedes C300 2019', soldTime: 'Sold in 5 days', price: '1.27B VND', trend: '+9%' },
-    { model: 'Ford Everest 2021', soldTime: 'Sold in 3 days', price: '1.08B VND', trend: '+15%' },
+    { model: 'BMW X5 2020', soldTime: 'Bán trong 4 ngày', price: '1.48 tỷ VND', trend: '+12%' },
+    { model: 'Mercedes C300 2019', soldTime: 'Bán trong 5 ngày', price: '1.27 tỷ VND', trend: '+9%' },
+    { model: 'Ford Everest 2021', soldTime: 'Bán trong 3 ngày', price: '1.08 tỷ VND', trend: '+15%' },
   ];
 
   const howItWorksItems = [
     {
-      title: 'Create listing',
-      desc: 'Nhap thong tin xe va bo anh de doi ngu kiem duyet.',
+      title: tp('sellerVehicle.step1Title'),
+      desc: tp('sellerVehicle.step1Description'),
     },
     {
-      title: 'Admin verification',
-      desc: 'Ho so duoc xac minh nhanh de dua len san dau gia.',
+      title: tp('sellerVehicle.step2Title'),
+      desc: tp('sellerVehicle.step2Description'),
     },
     {
-      title: 'Receive bids',
-      desc: 'Theo doi gia theo thoi gian thuc va chot giao dich an toan.',
+      title: tp('sellerVehicle.step3Title'),
+      desc: tp('sellerVehicle.step3Description'),
     },
   ];
 
   return (
     <div className={styles.container}>
       <div className={styles.heroBlock}>
-        <p className={styles.eyebrow}>Sell Your Car</p>
-        <h1 className={styles.title}>Dang ky xe dau gia trong 2 buoc</h1>
-        <p className={styles.subtitle}>Hoan tat thong tin co ban, thong so va gia de Admin kiem duyet nhanh hon.</p>
+        <p className={styles.eyebrow}>{tp('sellerVehicleRegistration.eyebrow')}</p>
+        <h1 className={styles.title}>{tp('sellerVehicleRegistration.title')}</h1>
+        <p className={styles.subtitle}>{tp('sellerVehicleRegistration.subtitle')}</p>
       </div>
 
       <div className={styles.stepper}>
         <div className={`${styles.stepItem} ${step === 1 ? styles.stepActive : ''}`}>
           <span>01</span>
-          <p>Thong tin xe</p>
+          <p>{tp('sellerVehicleRegistration.stepOne')}</p>
         </div>
         <div className={`${styles.stepItem} ${step === 2 ? styles.stepActive : ''}`}>
           <span>02</span>
-          <p>Gia va hinh anh</p>
+          <p>{tp('sellerVehicleRegistration.stepTwo')}</p>
         </div>
       </div>
 
@@ -269,40 +271,40 @@ export const VehicleRegistrationForm: React.FC = () => {
           {step === 1 && (
             <>
               <div className={styles.section}>
-                <h2>Thong tin co ban</h2>
+                <h2>{tp('sellerVehicleRegistration.basicInfo')}</h2>
                 <div className={styles.grid}>
                   <div className={styles.formGroup}>
-                    <label>Hang xe *</label>
-                    <input type="text" name="brand" required value={formData.brand} onChange={handleChange} placeholder="VD: Toyota" />
+                    <label>{tp('sellerVehicleRegistration.brand')} *</label>
+                    <input type="text" name="brand" required value={formData.brand} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.brandPlaceholder')} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Mau xe (Model) *</label>
-                    <input type="text" name="model" required value={formData.model} onChange={handleChange} placeholder="VD: Camry" />
+                    <label>{tp('sellerVehicleRegistration.model')} *</label>
+                    <input type="text" name="model" required value={formData.model} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.modelPlaceholder')} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Mau son *</label>
-                    <input type="text" name="color" required value={formData.color} onChange={handleChange} placeholder="VD: Do" />
+                    <label>{tp('sellerVehicleRegistration.color')} *</label>
+                    <input type="text" name="color" required value={formData.color} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.colorPlaceholder')} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>So may *</label>
-                    <input type="text" name="engineNumber" required value={formData.engineNumber} onChange={handleChange} placeholder="VD: 2AR-XXXXXXX" />
+                    <label>{tp('sellerVehicleRegistration.engineNumber')} *</label>
+                    <input type="text" name="engineNumber" required value={formData.engineNumber} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.engineNumberPlaceholder')} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Bien so xe *</label>
-                    <input type="text" name="licensePlate" required value={formData.licensePlate} onChange={handleChange} placeholder="VD: 60-AA123.45" />
+                    <label>{tp('sellerVehicleRegistration.licensePlate')} *</label>
+                    <input type="text" name="licensePlate" required value={formData.licensePlate} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.licensePlatePlaceholder')} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Nam san xuat *</label>
+                    <label>{tp('sellerVehicleRegistration.year')} *</label>
                     <input type="number" name="year" required value={formData.year} onChange={handleChange} min={1900} max={new Date().getFullYear() + 1} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>So Khung (VIN) *</label>
-                    <input type="text" name="vinNumber" required value={formData.vinNumber} onChange={handleChange} placeholder="17 ky tu VIN" />
+                    <label>{tp('sellerVehicleRegistration.vin')} *</label>
+                    <input type="text" name="vinNumber" required value={formData.vinNumber} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.vinPlaceholder')} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Danh muc (Category) *</label>
+                    <label>{tp('sellerVehicleRegistration.category')} *</label>
                     <select name="categoryId" value={formData.categoryId} onChange={handleChange} required>
-                      <option value="">-- Chon Danh Muc --</option>
+                      <option value="">{tp('sellerVehicleRegistration.selectCategory')}</option>
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
@@ -312,8 +314,8 @@ export const VehicleRegistrationForm: React.FC = () => {
               </div>
 
               <div className={styles.actions}>
-                <Button type="button" variant="outline" onClick={() => navigate('/seller/dashboard')}>Huy bo</Button>
-                <Button type="button" variant="primary" onClick={goToStepTwo}>Tiep tuc</Button>
+                <Button type="button" variant="outline" onClick={() => navigate('/seller/dashboard')}>{tp('sellerVehicleRegistration.cancel')}</Button>
+                <Button type="button" variant="primary" onClick={goToStepTwo}>{tp('sellerVehicleRegistration.continue')}</Button>
               </div>
             </>
           )}
@@ -321,44 +323,44 @@ export const VehicleRegistrationForm: React.FC = () => {
           {step === 2 && (
             <>
               <div className={styles.section}>
-                <h2>Thong so ky thuat va gia</h2>
+                <h2>{tp('sellerVehicleRegistration.specAndPrice')}</h2>
                 <div className={styles.grid}>
                   <div className={styles.formGroup}>
-                    <label>So ODO (mileage) *</label>
+                    <label>{tp('sellerVehicleRegistration.mileage')} *</label>
                     <input type="number" name="mileage" required value={formData.mileage} onChange={handleChange} min={0} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Hop so *</label>
+                    <label>{tp('sellerVehicleRegistration.transmission')} *</label>
                     <select name="transmission" value={formData.transmission} onChange={handleChange} required>
-                      <option value="Automatic">Tu dong (Automatic)</option>
-                      <option value="Manual">So san (Manual)</option>
-                      <option value="CVT">Vo cap (CVT)</option>
+                      <option value="Automatic">{tp('sellerVehicleRegistration.transmissionAutomatic')}</option>
+                      <option value="Manual">{tp('sellerVehicleRegistration.transmissionManual')}</option>
+                      <option value="CVT">{tp('sellerVehicleRegistration.transmissionCvt')}</option>
                     </select>
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Nhien lieu *</label>
+                    <label>{tp('sellerVehicleRegistration.fuelType')} *</label>
                     <select name="fuelType" value={formData.fuelType} onChange={handleChange} required>
-                      <option value="Gasoline">Xang (Gasoline)</option>
-                      <option value="Diesel">Dau (Diesel)</option>
-                      <option value="Electric">Dien (Electric)</option>
-                      <option value="Hybrid">Lai (Hybrid)</option>
+                      <option value="Gasoline">{tp('sellerVehicleRegistration.fuelGasoline')}</option>
+                      <option value="Diesel">{tp('sellerVehicleRegistration.fuelDiesel')}</option>
+                      <option value="Electric">{tp('sellerVehicleRegistration.fuelElectric')}</option>
+                      <option value="Hybrid">{tp('sellerVehicleRegistration.fuelHybrid')}</option>
                     </select>
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Gia khoi diem de xuat (VND) *</label>
+                    <label>{tp('sellerVehicleRegistration.basePrice')} *</label>
                     <input type="number" name="basePrice" required value={formData.basePrice || ''} onChange={handleChange} min={1000000} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>Mo ta xe</label>
-                    <input type="text" name="description" value={formData.description || ''} onChange={handleChange} placeholder="Mo ta tinh trang xe..." />
+                    <label>{tp('sellerVehicleRegistration.description')}</label>
+                    <input type="text" name="description" value={formData.description || ''} onChange={handleChange} placeholder={tp('sellerVehicleRegistration.descriptionPlaceholder')} />
                   </div>
                 </div>
               </div>
 
               <div className={styles.section}>
-                <h2>Add Photos</h2>
+                <h2>{tp('sellerVehicleRegistration.photos')}</h2>
                 <div className={styles.formGroup}>
-                  <label>Tai len toi da 6 anh xe *</label>
+                  <label>{tp('sellerVehicleRegistration.uploadPhotos')} *</label>
                   <input type="file" accept="image/*" onChange={handleImageChange} multiple required={imageFiles.length === 0} />
                 </div>
 
@@ -372,7 +374,7 @@ export const VehicleRegistrationForm: React.FC = () => {
                           className={styles.removePhotoBtn}
                           onClick={() => removeImageAt(index)}
                         >
-                          Xoa
+                          {tp('sellerVehicleRegistration.removePhoto')}
                         </button>
                       </div>
                     ))}
@@ -380,12 +382,12 @@ export const VehicleRegistrationForm: React.FC = () => {
                 )}
 
                 {imagePreviews.length === 0 && (
-                  <div className={styles.uploadHint}>If modified: ban co the xoa anh va tai lai de sap xep bo anh truoc khi gui.</div>
+                  <div className={styles.uploadHint}>{tp('sellerVehicleRegistration.uploadHint')}</div>
                 )}
               </div>
 
               <div className={styles.section}>
-                <h2>Recent Sales</h2>
+                <h2>{tp('sellerVehicleRegistration.recentSales')}</h2>
                 <div className={styles.recentSalesGrid}>
                   {recentSales.map((sale) => (
                     <article key={sale.model} className={styles.saleCard}>
@@ -401,9 +403,9 @@ export const VehicleRegistrationForm: React.FC = () => {
               </div>
 
               <div className={styles.actions}>
-                <Button type="button" variant="outline" onClick={() => setStep(1)}>Quay lai</Button>
+                <Button type="button" variant="outline" onClick={() => setStep(1)}>{tp('sellerVehicleRegistration.back')}</Button>
                 <Button type="submit" variant="primary" disabled={loading}>
-                  {loading ? 'Dang gui...' : 'Xac nhan Dang ky'}
+                  {loading ? tp('sellerVehicleRegistration.submitting') : tp('sellerVehicleRegistration.confirmRegister')}
                 </Button>
               </div>
             </>
@@ -411,29 +413,29 @@ export const VehicleRegistrationForm: React.FC = () => {
         </form>
 
         <aside className={styles.summaryCard}>
-          <h3>Tong quan ho so</h3>
+          <h3>{tp('sellerVehicleRegistration.summaryTitle')}</h3>
           <div className={styles.summaryItem}>
-            <span>Xe</span>
-            <strong>{formData.brand && formData.model ? `${formData.brand} ${formData.model}` : 'Chua cap nhat'}</strong>
+            <span>{tp('sellerVehicleRegistration.vehicle')}</span>
+            <strong>{formData.brand && formData.model ? `${formData.brand} ${formData.model}` : tp('sellerVehicleRegistration.notUpdated')}</strong>
           </div>
           <div className={styles.summaryItem}>
-            <span>Nam san xuat</span>
-            <strong>{formData.year || 'N/A'}</strong>
+            <span>{tp('sellerVehicleRegistration.year')}</span>
+            <strong>{formData.year || tp('sellerVehicleRegistration.notAvailable')}</strong>
           </div>
           <div className={styles.summaryItem}>
-            <span>Danh muc</span>
-            <strong>{selectedCategory?.name || 'Chua chon'}</strong>
+            <span>{tp('sellerVehicleRegistration.category')}</span>
+            <strong>{selectedCategory?.name || tp('sellerVehicleRegistration.notSelected')}</strong>
           </div>
           <div className={styles.summaryItem}>
-            <span>Gia khoi diem</span>
-            <strong>{formData.basePrice ? `${formData.basePrice.toLocaleString('vi-VN')} VND` : 'Chua cap nhat'}</strong>
+            <span>{tp('sellerVehicleRegistration.basePrice')}</span>
+            <strong>{formData.basePrice ? `${formData.basePrice.toLocaleString('vi-VN')} VND` : tp('sellerVehicleRegistration.notUpdated')}</strong>
           </div>
         </aside>
       </div>
 
       <section className={styles.howItWorksSection}>
-        <h2>How it works!</h2>
-        <p className={styles.howLead}>Learn more about how selling works on Car Deposit.</p>
+        <h2>{tp('sellerVehicle.howItWorksTitle')}</h2>
+        <p className={styles.howLead}>{tp('sellerVehicle.howItWorksDescription')}</p>
         <div className={styles.howGrid}>
           {howItWorksItems.map((item, index) => (
             <article key={item.title} className={styles.howCard}>

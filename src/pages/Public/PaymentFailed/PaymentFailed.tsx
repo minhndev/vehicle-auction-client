@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 
 export const PaymentFailed: React.FC = () => {
+  const { tp } = usePageI18n();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
 
@@ -31,24 +33,24 @@ export const PaymentFailed: React.FC = () => {
         </div>
 
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#dc2626', marginBottom: '0.5rem' }}>
-          Thanh toán thất bại
+          {tp('paymentFailed.title')}
         </h1>
         <p style={{ color: '#6b7280', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-          Giao dịch không được xử lý hoặc bị huỷ. Đơn hàng của bạn vẫn còn hiệu lực — bạn có thể thử lại.
+          {tp('paymentFailed.description')}
         </p>
 
         {ref && (
           <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '1.5rem' }}>
-            Mã tham chiếu: <strong>{ref}</strong>
+            {tp('paymentFailed.referenceCode')}: <strong>{ref}</strong>
           </p>
         )}
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/user/orders">
-            <Button variant="primary">Thử thanh toán lại</Button>
+            <Button variant="primary">{tp('paymentFailed.retryPayment')}</Button>
           </Link>
           <Link to="/">
-            <Button variant="outline">Về trang chủ</Button>
+            <Button variant="outline">{tp('paymentFailed.goHome')}</Button>
           </Link>
         </div>
       </div>

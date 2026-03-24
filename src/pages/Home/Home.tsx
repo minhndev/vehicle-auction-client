@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { ContactTopBar } from './components/ContactTopBar';
 import { HeroBannerText } from './components/HeroBannerText';
 import { SearchFilterBar } from './components/SearchFilterBar';
 import { ProductCategoryList } from './components/ProductCategoryList';
@@ -17,7 +16,6 @@ import styles from './Home.module.css';
 export const Home: React.FC = () => {
   return (
     <div className={styles.page}>
-      <ContactTopBar />
 
       <section className={styles.heroSection}>
         <div className={styles.heroInner}>

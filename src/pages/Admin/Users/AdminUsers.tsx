@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from '../../../components/ui/Button/Button';
 import { adminApi, type UserResponse } from '../../../api/adminApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import type { RootState } from '../../../store';
 import styles from './AdminUsers.module.css';
 
 export const AdminUsers: React.FC = () => {
-  const canChangeUserRole = import.meta.env.VITE_ENABLE_USER_ROLE_UPDATE === 'true';
+  const { tp, getUserStatusLabel } = usePageI18n();
   const authUser = useSelector((state: RootState) => state.auth.user);
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,31 +74,38 @@ export const AdminUsers: React.FC = () => {
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 403) {
-        setError('API `/users` đã hoạt động nhưng tài khoản hiện tại thiếu quyền `USER_VIEW`. Hãy đăng nhập lại bằng tài khoản có authority phù hợp hoặc cấp quyền từ backend.');
+        setError(tp('adminUsers.permissionError'));
       } else {
-        setError(getErrorMessage(err, 'Lỗi tải danh sách người dùng. Nếu API /users chưa hỗ trợ, danh sách sẽ trống.'));
+        setError(getErrorMessage(err, tp('adminUsers.loadError')));
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRoleChange = async (userId: string, currentRole: string) => {
-    if (!canChangeUserRole) {
-      alert('Chưa có endpoint gán Role cho user cụ thể từ màn này.');
-      return;
-    }
-
+  const handleRoleChange = async (user: UserResponse) => {
     const roles = ['USER', 'MEMBER', 'BUYER', 'SELLER', 'ADMIN'];
-    const targetRole = window.prompt(`Nhập Role mới (hiện tại: ${currentRole}).\nChọn: ${roles.join(', ')}`, currentRole);
+    const currentRole = user.role || 'USER';
+    const targetRole = window.prompt(tp('adminUsers.rolePrompt', { currentRole, roles: roles.join(', ') }), currentRole);
     if (!targetRole || targetRole === currentRole || !roles.includes(targetRole.toUpperCase())) return;
 
     try {
-      await adminApi.updateUserRole(userId, targetRole.toUpperCase());
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: targetRole.toUpperCase() } : u));
-      alert('Đổi quyền thành công!');
+      // Lấy đầy đủ bản ghi user để tránh ghi đè làm mất thông tin (ví dụ phoneNumber, address)
+      const fullUser = await adminApi.getUserById(user.id);
+      
+      const payload = {
+        firstName: fullUser.firstName || '',
+        lastName: fullUser.lastName || '',
+        phoneNumber: (fullUser as any).phoneNumber || (fullUser as any).phone || '',
+        address: (fullUser as any).address || '',
+        roleNames: [targetRole.toUpperCase()]
+      };
+
+      await adminApi.updateUserRole(user.id, payload);
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: targetRole.toUpperCase() } : u));
+      alert(tp('adminUsers.roleChangeSuccess'));
     } catch (err) {
-      alert('Đổi quyền thất bại: ' + getErrorMessage(err, 'Lỗi không xác định'));
+      alert(`${tp('adminUsers.roleChangeFailed')}: ${getErrorMessage(err, tp('adminUsers.unknownError'))}`);
     }
   };
 
@@ -105,13 +113,13 @@ export const AdminUsers: React.FC = () => {
     const isActive = typeof user.active === 'boolean' ? user.active : user.status !== 'BANNED';
     const nextActive = !isActive;
     const nextLabel = nextActive ? 'ACTIVE' : 'BANNED';
-    if (!window.confirm(`Bạn có chắc muốn chuyển trạng thái tài khoản ${user.email} thành ${nextLabel}?`)) return;
+    if (!window.confirm(tp('adminUsers.toggleStatusConfirm', { email: user.email, status: getUserStatusLabel(nextLabel) }))) return;
 
     try {
       await adminApi.updateUserStatus(user.id, nextActive);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, active: nextActive, status: nextLabel } : u));
     } catch (err) {
-      alert('Đổi trạng thái thất bại: ' + getErrorMessage(err, 'Lỗi không xác định'));
+      alert(`${tp('adminUsers.toggleStatusFailed')}: ${getErrorMessage(err, tp('adminUsers.unknownError'))}`);
     }
   };
 
@@ -123,17 +131,17 @@ export const AdminUsers: React.FC = () => {
     const existingRoles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toUpperCase()) : [];
     const effectiveRole = String(user.role || '').toUpperCase();
     if (effectiveRole === 'SELLER' || existingRoles.includes('SELLER')) {
-      alert('Tài khoản này đã có quyền SELLER.');
+      alert(tp('adminUsers.alreadySeller'));
       return;
     }
 
-    if (!window.confirm(`Cấp quyền SELLER cho tài khoản ${user.email}?`)) return;
+    if (!window.confirm(tp('adminUsers.grantSellerConfirm', { email: user.email }))) return;
 
     try {
       setGrantingUserId(user.id);
       const updated = await adminApi.grantSellerRole(user.id);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, ...updated, role: 'SELLER', roles: Array.from(new Set([...(updated.roles || []), 'SELLER'])) } : u));
-      alert('Cấp quyền SELLER thành công!');
+      alert(tp('adminUsers.grantSellerSuccess'));
     } catch (err: any) {
       // Verify exact user state by id. If role already became SELLER, treat as success.
       try {
@@ -145,14 +153,14 @@ export const AdminUsers: React.FC = () => {
 
         if (verifiedRole === 'SELLER' || verifiedRoles.includes('SELLER')) {
           setUsers(prev => prev.map(u => u.id === user.id ? { ...u, ...verifiedUser, role: 'SELLER', roles: Array.from(new Set([...(verifiedUser.roles || []), 'SELLER'])) } : u));
-          alert('Đã cấp quyền SELLER thành công.');
+          alert(tp('adminUsers.grantSellerSuccess'));
           return;
         }
       } catch {
         // fall through to default error message
       }
 
-      alert('Cấp quyền SELLER thất bại: ' + getErrorMessage(err, 'Lỗi không xác định'));
+      alert(`${tp('adminUsers.grantSellerFailed')}: ${getErrorMessage(err, tp('adminUsers.unknownError'))}`);
     } finally {
       setGrantingUserId(null);
     }
@@ -175,29 +183,24 @@ export const AdminUsers: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Quản Lý Người Dùng</h1>
-      <p className={styles.subtitle}>Xem, quản lý và phân quyền tài khoản người dùng trong hệ thống.</p>
+      <h1 className={styles.title}>{tp('adminUsers.title')}</h1>
+      <p className={styles.subtitle}>{tp('adminUsers.subtitle')}</p>
       <div style={{ marginBottom: '1rem', fontWeight: 600 }}>
-        Current role from token: <span className={styles.roleBadge}>{currentRole}</span>
+        {tp('adminUsers.currentRole')}: <span className={styles.roleBadge}>{currentRole}</span>
       </div>
-      {!canChangeUserRole && (
-        <div style={{ marginBottom: '1rem', color: '#92400e', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px', padding: '0.75rem 1rem' }}>
-          Chưa mô tả endpoint gán Role cho 1 User trong màn này. Nếu backend đã mở endpoint gán role user, đặt biến môi trường `VITE_ENABLE_USER_ROLE_UPDATE=true` để bật lại nút Đổi Quyền.
-        </div>
-      )}
 
       {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
       <div className={styles.filters}>
         <input 
           type="text" 
-          placeholder="Tìm theo tên hoặc email..." 
+          placeholder={tp('adminUsers.searchPlaceholder')} 
           className={styles.searchInput}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
         />
         <select className={styles.filterSelect} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
-          <option value="all">Tất Cả Quyền</option>
+          <option value="all">{tp('adminUsers.allRoles')}</option>
           <option value="user">USER</option>
           <option value="member">MEMBER</option>
           <option value="buyer">BUYER</option>
@@ -210,18 +213,18 @@ export const AdminUsers: React.FC = () => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Họ Tên</th>
+            <th>{tp('adminUsers.fullName')}</th>
             <th>Email</th>
-            <th>Quyền</th>
-            <th>Trạng Thái</th>
-            <th>Hành Động</th>
+            <th>{tp('adminUsers.role')}</th>
+            <th>{tp('adminUsers.status')}</th>
+            <th>{tp('adminUsers.action')}</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Đang tải dữ liệu...</td></tr>
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>{tp('adminUsers.loading')}</td></tr>
           ) : filteredUsers.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Không tìm thấy người dùng nào.</td></tr>
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>{tp('adminUsers.empty')}</td></tr>
           ) : (
             filteredUsers.map(user => (
               <tr key={user.id}>
@@ -231,7 +234,7 @@ export const AdminUsers: React.FC = () => {
                 <td><span className={styles.roleBadge}>{user.role || 'USER'}</span></td>
                 <td>
                   <span className={(typeof user.active === 'boolean' ? !user.active : user.status === 'BANNED') ? styles.statusBanned : styles.statusActive}>
-                    {(typeof user.active === 'boolean' ? (user.active ? 'ACTIVE' : 'BANNED') : (user.status || 'ACTIVE'))}
+                    {getUserStatusLabel(typeof user.active === 'boolean' ? (user.active ? 'ACTIVE' : 'BANNED') : (user.status || 'ACTIVE'))}
                   </span>
                 </td>
                 <td style={{ display: 'flex', gap: '8px' }}>
@@ -246,10 +249,10 @@ export const AdminUsers: React.FC = () => {
                     }
                     style={{ borderColor: '#2563eb', color: '#2563eb' }}
                   >
-                    {grantingUserId === user.id ? 'Đang cấp...' : 'Cấp SELLER'}
+                    {grantingUserId === user.id ? tp('adminUsers.granting') : tp('adminUsers.grantSeller')}
                   </Button>
-                  <Button variant="outline" size="small" onClick={() => handleRoleChange(user.id, user.role)} disabled={!canChangeUserRole}>
-                    Đổi Quyền
+                  <Button variant="outline" size="small" onClick={() => handleRoleChange(user)}>
+                    {tp('adminUsers.changeRole')}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -257,7 +260,7 @@ export const AdminUsers: React.FC = () => {
                     style={{ borderColor: ((typeof user.active === 'boolean' ? !user.active : user.status === 'BANNED') ? '#10b981' : '#ef4444'), color: ((typeof user.active === 'boolean' ? !user.active : user.status === 'BANNED') ? '#10b981' : '#ef4444') }}
                     onClick={() => handleStatusToggle(user)}
                   >
-                    {(typeof user.active === 'boolean' ? !user.active : user.status === 'BANNED') ? 'Mở Khóa' : 'Khóa'}
+                    {(typeof user.active === 'boolean' ? !user.active : user.status === 'BANNED') ? tp('adminUsers.unban') : tp('adminUsers.ban')}
                   </Button>
                 </td>
               </tr>

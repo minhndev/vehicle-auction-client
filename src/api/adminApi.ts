@@ -136,10 +136,9 @@ export const adminApi = {
     throw lastError;
   },
   
-  updateUserRole: async (userId: string, targetRole: string) => {
-    // Some implementations might be /users/{id}/role or /roles/assign
-    // Depending on backend, we will try PUT /users/{id}/role 
-    const response = await axiosClient.put(`/users/${userId}/role`, { role: targetRole });
+  updateUserRole: async (userId: string, payload: any) => {
+    // Uses the documented user update endpoint: PUT /users/{id}
+    const response = await axiosClient.put(`/users/${userId}`, payload);
     // @ts-ignore
     return response.data || response;
   },

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi } from '../../../features/seller/api/sellerApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { ProductResponse } from '../../../types/index';
 import styles from './SellerAuctions.module.css';
 
@@ -11,6 +12,7 @@ const formatVND = (amount?: number) =>
     : '—';
 
 export const SellerProducts: React.FC = () => {
+  const { getProductStatusLabel } = usePageI18n();
   const [vehicles, setVehicles] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,19 +47,19 @@ export const SellerProducts: React.FC = () => {
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'PENDING':
-        return <span className={styles.badgePending}>Chờ Duyệt</span>;
+        return <span className={styles.badgePending}>{getProductStatusLabel('PENDING')}</span>;
       case 'APPROVED':
-        return <span style={{ backgroundColor: '#10b981', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Đã Duyệt</span>;
+        return <span style={{ backgroundColor: '#10b981', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('APPROVED')}</span>;
       case 'IN_AUCTION':
-        return <span className={styles.badgeActive}>Đang Đấu Giá</span>;
+        return <span className={styles.badgeActive}>{getProductStatusLabel('IN_AUCTION')}</span>;
       case 'REJECTED':
-        return <span style={{ backgroundColor: '#ef4444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Bị Từ Chối</span>;
+        return <span style={{ backgroundColor: '#ef4444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('REJECTED')}</span>;
       case 'SOLD':
-        return <span style={{ backgroundColor: '#6b7280', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Đã Bán</span>;
+        return <span style={{ backgroundColor: '#6b7280', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('SOLD')}</span>;
       case 'CANCELLED':
-        return <span style={{ backgroundColor: '#9ca3af', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Đã Xóa Mềm</span>;
+        return <span style={{ backgroundColor: '#9ca3af', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('CANCELLED')}</span>;
       default:
-        return <span className={styles.badgePending}>{status || 'N/A'}</span>;
+        return <span className={styles.badgePending}>{getProductStatusLabel(status)}</span>;
     }
   };
 
@@ -106,21 +108,21 @@ export const SellerProducts: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Quản Lý Product</h1>
+        <h1 className={styles.title}>Quản lý sản phẩm</h1>
         <Link to="/seller/products/new" style={{ textDecoration: 'none' }}>
-          <Button variant="primary">Đăng Product Mới</Button>
+          <Button variant="primary">Đăng sản phẩm mới</Button>
         </Link>
       </div>
 
       <div className={styles.filters}>
         <select className={styles.filterSelect} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="all">Tất cả trạng thái</option>
-          <option value="PENDING">Chờ Duyệt</option>
-          <option value="APPROVED">Đã Duyệt</option>
-          <option value="IN_AUCTION">Đang Đấu Giá</option>
-          <option value="REJECTED">Bị Từ Chối</option>
-          <option value="SOLD">Đã Bán</option>
-          <option value="CANCELLED">Đã Xóa Mềm</option>
+          <option value="all">{getProductStatusLabel('ALL')}</option>
+          <option value="PENDING">{getProductStatusLabel('PENDING')}</option>
+          <option value="APPROVED">{getProductStatusLabel('APPROVED')}</option>
+          <option value="IN_AUCTION">{getProductStatusLabel('IN_AUCTION')}</option>
+          <option value="REJECTED">{getProductStatusLabel('REJECTED')}</option>
+          <option value="SOLD">{getProductStatusLabel('SOLD')}</option>
+          <option value="CANCELLED">{getProductStatusLabel('CANCELLED')}</option>
         </select>
         <input
           type="text"
@@ -137,7 +139,7 @@ export const SellerProducts: React.FC = () => {
         <thead>
           <tr>
             <th>Hình Ảnh</th>
-            <th>Thông Tin Product</th>
+            <th>Thông tin sản phẩm</th>
             <th>Trạng Thái</th>
             <th>Giá Đề Xuất</th>
             <th>Ngày Đăng</th>
@@ -148,7 +150,7 @@ export const SellerProducts: React.FC = () => {
           {loading ? (
             <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Đang tải dữ liệu...</td></tr>
           ) : filteredVehicles.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Không tìm thấy product nào.</td></tr>
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Không tìm thấy sản phẩm nào.</td></tr>
           ) : (
             filteredVehicles.map(v => (
               <tr key={v.id}>
@@ -156,12 +158,12 @@ export const SellerProducts: React.FC = () => {
                   {Array.isArray(v.images) && v.images.length > 0 ? (
                     <img src={typeof v.images[0] === 'string' ? v.images[0] : v.images[0]?.url} alt={v.model} className={styles.vehicleImage} />
                   ) : (
-                    <div className={styles.placeholderImage}>No Image</div>
+                      <div className={styles.placeholderImage}>Không có ảnh</div>
                   )}
                 </td>
                 <td>
                   <strong>{v.name || `${v.brand} ${v.model}`}</strong>
-                  <div className={styles.subtext}>VIN: {v.vinNumber || 'N/A'}</div>
+                    <div className={styles.subtext}>VIN: {v.vinNumber || 'Không có'}</div>
                 </td>
                 <td>{getStatusBadge(v.status)}</td>
                 <td>

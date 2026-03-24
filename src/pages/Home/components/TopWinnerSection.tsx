@@ -1,37 +1,68 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { ShoppingBag } from 'lucide-react';
+import { auctionApi } from '../../../features/bidding/api/auctionApi';
+import type { AuctionResponse } from '../../../types';
 import styles from '../Home.module.css';
 
-// Data Mock định nghĩa các Item cho Top Winner
 interface Winner {
   id: string;
   name: string;
   image: string;
+  wins: number;
+  totalValue: number;
 }
 
-const MOCK_WINNERS: Winner[] = [
-  {
-    id: "0195608",
-    name: "Albert Flores",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=200&h=200&q=80"
-  },
-  {
-    id: "0195608",
-    name: "Albert Flores",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=200&h=200&q=80"
-  },
-  {
-    id: "0195608",
-    name: "Albert Flores",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=200&h=200&q=80"
-  },
-  {
-    id: "0195608",
-    name: "Albert Flores",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=200&h=200&q=80"
-  }
-];
+const maskId = (value: string) => {
+  if (value.length <= 6) return value;
+  return `${value.slice(0, 3)}***${value.slice(-3)}`;
+};
 
-// Sub-component thẻ Top Winner
+const formatVND = (amount: number) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, amount));
+};
+
+const toAvatarUrl = (name: string) => {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2E3D83&color=ffffff&size=240`;
+};
+
+const normalizeWinners = (auctions: AuctionResponse[]): Winner[] => {
+  const winnerMap = new Map<string, Winner>();
+
+  auctions.forEach((item) => {
+    const winnerId = String(item.winnerId ?? item.winnerEmail ?? '').trim();
+    const winnerName = String(item.winnerName ?? item.winnerUsername ?? item.winnerEmail ?? '').trim();
+    if (!winnerId || !winnerName) return;
+
+    const existing = winnerMap.get(winnerId);
+    const amount = Number(item.currentPrice ?? item.startPrice ?? 0);
+
+    if (existing) {
+      existing.wins += 1;
+      existing.totalValue += Number.isFinite(amount) ? Math.max(0, amount) : 0;
+      return;
+    }
+
+    winnerMap.set(winnerId, {
+      id: winnerId,
+      name: winnerName,
+      image: toAvatarUrl(winnerName),
+      wins: 1,
+      totalValue: Number.isFinite(amount) ? Math.max(0, amount) : 0,
+    });
+  });
+
+  return Array.from(winnerMap.values())
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.totalValue - a.totalValue;
+    })
+    .slice(0, 4);
+};
+
 const TopWinnerCard: React.FC<{ data: Winner }> = ({ data }) => {
   return (
     <div className={styles.topWinnerCard}>
@@ -47,21 +78,43 @@ const TopWinnerCard: React.FC<{ data: Winner }> = ({ data }) => {
             {data.name}
           </h3>
           <p className={styles.topWinnerId}>
-            ID: {data.id}
+            {maskId(data.id)} · {data.wins} phiên thắng · {formatVND(data.totalValue)}
           </p>
         </div>
       </div>
 
       <button className={styles.topWinnerBagButton}>
-        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=200&h=200&q=80" alt="Add" className={styles.topWinnerBagIcon} />
+        <ShoppingBag className={styles.topWinnerBagIcon} size={24} strokeWidth={2} color="#ffffff" />
       </button>
 
     </div>
   );
 };
 
-// Component Chính
 const TopWinnerSection: React.FC = () => {
+  const [winners, setWinners] = useState<Winner[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchTopWinners = async () => {
+      try {
+        const page = await auctionApi.getPublicAuctions({ status: 'COMPLETED', page: 0, size: 30, sort: 'updatedAt,desc' });
+        const completedAuctions = Array.isArray(page?.content) ? page.content : [];
+        if (!mounted) return;
+        setWinners(normalizeWinners(completedAuctions));
+      } catch {
+        if (!mounted) return;
+        setWinners([]);
+      }
+    };
+
+    fetchTopWinners();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <section className={`${styles.section} ${styles.sectionLight} ${styles.topWinnerSection}`}>
       <div className={styles.container}>
@@ -70,7 +123,7 @@ const TopWinnerSection: React.FC = () => {
         {/* Header Title */}
         <div className={`${styles.titleBlock} ${styles.topWinnerTitleBlock}`}>
           <h2 className={`${styles.title} ${styles.topWinnerTitle}`}>
-            Top Winner
+            Người thắng nổi bật
           </h2>
           <div className={styles.divider}>
             <div className={styles.dividerLine}></div>
@@ -87,9 +140,13 @@ const TopWinnerSection: React.FC = () => {
           </button>
 
           <div className={styles.topWinnerCards}>
-            {MOCK_WINNERS.map((winner, index) => (
-              <TopWinnerCard key={index} data={winner} />
-            ))}
+            {winners.length === 0 ? (
+              <p className={styles.activityEmpty}>Chưa có dữ liệu người thắng để hiển thị.</p>
+            ) : (
+              winners.map((winner) => (
+                <TopWinnerCard key={winner.id} data={winner} />
+              ))
+            )}
           </div>
 
           <button className={`${styles.carouselArrowButton} ${styles.carouselArrowRight}`}>

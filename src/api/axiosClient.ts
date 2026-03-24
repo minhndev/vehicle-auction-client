@@ -30,8 +30,8 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 // Request Interceptor: Attach access token from Redux store
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Access token from Redux store
-    const token = store.getState().auth.accessToken;
+    // Access token from Redux store, fallback to localStorage for page-refresh edge cases.
+    const token = store.getState().auth.accessToken ?? localStorage.getItem('accessToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -79,17 +79,16 @@ axiosClient.interceptors.response.use(
         const { accessToken, refreshToken: newRefreshToken } = response;
 
         // Update tokens in Redux and localStorage
-        const user = store.getState().auth.user;
-        if (user) {
-          store.dispatch(setCredentials({
-            user,
-            tokens: {
-              accessToken,
-              refreshToken: newRefreshToken || refreshToken,
-              tokenType: 'Bearer' // Assume Bearer since it's standard or extract if backend sends it varying
-            }
-          }));
-        }
+        const currentUser = store.getState().auth.user;
+        const refreshedUser = currentUser ?? authService.getCurrentUserFromToken(accessToken);
+        store.dispatch(setCredentials({
+          user: refreshedUser,
+          tokens: {
+            accessToken,
+            refreshToken: newRefreshToken || refreshToken,
+            tokenType: 'Bearer' // Assume Bearer since it's standard or extract if backend sends it varying
+          }
+        }));
 
         // Process queued requests with the new token
         processQueue(null, accessToken);

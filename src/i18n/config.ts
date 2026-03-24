@@ -7,11 +7,13 @@ import commonEN from './locales/en/common.json';
 import authEN from './locales/en/auth.json';
 import validationEN from './locales/en/validation.json';
 import errorsEN from './locales/en/errors.json';
+import pagesEN from './locales/en/pages.json';
 
 import commonVI from './locales/vi/common.json';
 import authVI from './locales/vi/auth.json';
 import validationVI from './locales/vi/validation.json';
 import errorsVI from './locales/vi/errors.json';
+import pagesVI from './locales/vi/pages.json';
 
 const resources = {
   en: {
@@ -19,12 +21,14 @@ const resources = {
     auth: authEN,
     validation: validationEN,
     errors: errorsEN,
+    pages: pagesEN,
   },
   vi: {
     common: commonVI,
     auth: authVI,
     validation: validationVI,
     errors: errorsVI,
+    pages: pagesVI,
   },
 };
 
@@ -37,7 +41,7 @@ i18n
     supportedLngs: ['vi', 'en'],
     
     // Have a common namespace used around the full app
-    ns: ['common', 'auth', 'validation', 'errors'],
+    ns: ['common', 'auth', 'validation', 'errors', 'pages'],
     defaultNS: 'common',
 
     interpolation: {

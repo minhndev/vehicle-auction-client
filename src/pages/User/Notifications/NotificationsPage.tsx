@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { notificationApi } from '../../../api/notificationApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { NotificationModel } from '../../../types/index';
 
-const notifTypeLabel: Record<string, string> = {
-  AUCTION_WON: '🏆 Thắng đấu giá',
-  OUTBID: '📢 Bị vượt giá',
-  PAYMENT_SUCCESS: '✅ Thanh toán thành công',
-  PAYMENT_FAILED: '❌ Thanh toán thất bại',
-  SYSTEM: '🔔 Thông báo hệ thống',
-};
-
 export const NotificationsPage: React.FC = () => {
+  const { tp } = usePageI18n();
+  const notifTypeLabel: Record<string, string> = {
+    AUCTION_WON: tp('notifications.typeAuctionWon'),
+    OUTBID: tp('notifications.typeOutbid'),
+    PAYMENT_SUCCESS: tp('notifications.typePaymentSuccess'),
+    PAYMENT_FAILED: tp('notifications.typePaymentFailed'),
+    SYSTEM: tp('notifications.typeSystem'),
+  };
   const [notifications, setNotifications] = useState<NotificationModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export const NotificationsPage: React.FC = () => {
       const data = await notificationApi.getNotifications({ page: 0, size: 20 });
       setNotifications(Array.isArray(data) ? data : []);
     } catch {
-      setError('Không thể tải thông báo. Vui lòng thử lại.');
+      setError(tp('notifications.loadError'));
     } finally {
       setLoading(false);
     }
@@ -46,16 +47,16 @@ export const NotificationsPage: React.FC = () => {
   if (loading) {
     return (
       <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
-        Đang tải thông báo...
+        {tp('notifications.loading')}
       </div>
     );
   }
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1rem' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '0.5rem' }}>Thông báo</h1>
+      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '0.5rem' }}>{tp('notifications.title')}</h1>
       <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
-        {notifications.filter((n) => !n.read).length} thông báo chưa đọc
+        {tp('notifications.unreadCount', { count: notifications.filter((n) => !n.read).length })}
       </p>
 
       {error && (
@@ -67,7 +68,7 @@ export const NotificationsPage: React.FC = () => {
       {notifications.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
           <p style={{ fontSize: '48px' }}>🔔</p>
-          <p>Chưa có thông báo nào</p>
+          <p>{tp('notifications.empty')}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -97,7 +98,7 @@ export const NotificationsPage: React.FC = () => {
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: notif.read ? 400 : 700, fontSize: '14px', marginBottom: '4px' }}>
-                  {notif.title || (notif.type && notifTypeLabel[notif.type]) || 'Thông báo'}
+                  {notif.title || (notif.type && notifTypeLabel[notif.type]) || tp('notifications.titleFallback')}
                 </p>
                 {notif.content && (
                   <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '6px' }}>{notif.content}</p>

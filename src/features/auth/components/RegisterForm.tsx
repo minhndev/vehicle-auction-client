@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { authService } from '../api/authService';
-import { setCredentials, setLoading, setError } from '../../../store/slices/authSlice';
+import { setLoading, setError } from '../../../store/slices/authSlice';
 import type { RootState } from '../../../store';
 import { Button } from '../../../components/ui/Button/Button';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,23 @@ export const RegisterForm: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+  const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!registerSuccess) return;
+
+    const timer = window.setTimeout(() => {
+      navigate('/login', {
+        state: {
+          registerNotice: 'Tài khoản đã được tạo. Vui lòng kiểm tra email và bấm link xác thực trước khi đăng nhập.',
+        },
+      });
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [registerSuccess, navigate]);
 
   // Define schema inside the component so it has access to `t`
   const registerSchema = z.object({
@@ -53,8 +70,10 @@ export const RegisterForm: React.FC = () => {
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       dispatch(setLoading(true));
+      dispatch(setError(''));
+      setRegisterSuccess(null);
       const normalizedEmail = data.email.trim().toLowerCase();
-      const response = await authService.register({
+      await authService.register({
         email: normalizedEmail,
         password: data.password,
         confirmPassword: data.confirmPassword,
@@ -66,16 +85,8 @@ export const RegisterForm: React.FC = () => {
         phoneNumber: data.phoneNumber,
         address: 'Chua cap nhat',
       });
-      
-      // Extract user profile from token since /users/me doesn't exist
-      const userProfile = authService.getCurrentUserFromToken(response.accessToken);
 
-      dispatch(setCredentials({
-        user: userProfile,
-        tokens: response,
-      }));
-      
-      navigate(`/${(userProfile.role || 'user').toLowerCase()}/dashboard`);
+      setRegisterSuccess('Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập. Tự động chuyển sang trang đăng nhập sau 3 giây...');
     } catch (err: unknown) {
       dispatch(setError(getErrorMessage(err, t('errors:fallback'))));
     } finally {
@@ -105,6 +116,7 @@ export const RegisterForm: React.FC = () => {
           <p className={styles.subtitle}>{t('auth:register.subtitle')}</p>
 
           {error && <div className={styles.formErrorBox}>{error}</div>}
+          {registerSuccess && <div className={styles.formSuccessBox}>{registerSuccess}</div>}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className={styles.formGroup}>
@@ -170,6 +182,21 @@ export const RegisterForm: React.FC = () => {
             <Button type="submit" variant="primary" className={styles.submitBtn} disabled={loading}>
               {loading ? t('common:loading') : t('auth:register.submit_btn')}
             </Button>
+
+            {registerSuccess && (
+              <Button
+                type="button"
+                variant="secondary"
+                className={styles.submitBtn}
+                onClick={() => navigate('/login', {
+                  state: {
+                    registerNotice: 'Tài khoản đã được tạo. Vui lòng kiểm tra email và bấm link xác thực trước khi đăng nhập.',
+                  },
+                })}
+              >
+                Đi tới đăng nhập
+              </Button>
+            )}
           </form>
 
           <p className={styles.linkText}>

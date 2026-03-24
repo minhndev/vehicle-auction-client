@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi } from '../../../features/seller/api/sellerApi';
 import { auctionApi } from '../../../features/bidding/api/auctionApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { AuctionRequest, AuctionResponse, ProductResponse } from '../../../types/index';
 import styles from './SellerAuctions.module.css';
 
@@ -11,7 +12,15 @@ const formatVND = (amount?: number) =>
     ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
     : '—';
 
+const toBackendLocalDateTime = (input: string): string => {
+  // Input from datetime-local is usually: 2026-03-24T21:30
+  // Backend contract expects local datetime: 2026-03-24T21:30:00 (no timezone suffix).
+  if (!input) return input;
+  return input.length === 16 ? `${input}:00` : input;
+};
+
 export const SellerAuctions: React.FC = () => {
+  const { tp, getAuctionStatusLabel } = usePageI18n();
   const [vehicles, setVehicles] = useState<ProductResponse[]>([]);
   const [auctions, setAuctions] = useState<AuctionResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,14 +66,14 @@ export const SellerAuctions: React.FC = () => {
 
       setAuctions(myAuctions);
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Lỗi khi tải dữ liệu seller');
+      setError(err?.response?.data?.message || err.message || tp('sellerAuctions.loadError'));
     } finally {
       setLoading(false);
     }
   };
 
   const getProductName = (productId?: string) => {
-    if (!productId) return 'N/A';
+    if (!productId) return tp('shared.status.unknown');
     const product = vehicles.find((vehicle) => String(vehicle.id) === String(productId));
     return product?.name || `${product?.brand || ''} ${product?.model || ''}`.trim() || productId;
   };
@@ -102,25 +111,25 @@ export const SellerAuctions: React.FC = () => {
     e.preventDefault();
 
     if (!formData.productId) {
-      setError('Vui lòng chọn product đã được duyệt để tạo phiên đấu giá.');
+      setError(tp('sellerAuctions.selectProductRequired'));
       return;
     }
 
     if (!formData.startTime || !formData.endTime) {
-      setError('Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc.');
+      setError(tp('sellerAuctions.timeRequired'));
       return;
     }
 
     const start = new Date(formData.startTime).getTime();
     const end = new Date(formData.endTime).getTime();
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
-      setError('Thời gian kết thúc phải lớn hơn thời gian bắt đầu.');
+      setError(tp('sellerAuctions.invalidTimeRange'));
       return;
     }
 
     const effectiveDeposit = depositMode === 'MANUAL' ? Number(formData.depositAmount) : computedDepositAmount;
     if (!Number.isFinite(effectiveDeposit) || effectiveDeposit <= 0) {
-      setError('Tiền đặt cọc phải lớn hơn 0.');
+      setError(tp('sellerAuctions.invalidDeposit'));
       return;
     }
 
@@ -130,8 +139,8 @@ export const SellerAuctions: React.FC = () => {
 
       await auctionApi.createAuction({
         productId: formData.productId,
-        startTime: new Date(formData.startTime).toISOString(),
-        endTime: new Date(formData.endTime).toISOString(),
+        startTime: toBackendLocalDateTime(formData.startTime),
+        endTime: toBackendLocalDateTime(formData.endTime),
         startPrice: Number(formData.startPrice),
         bidIncrement: Number(formData.bidIncrement),
         depositAmount: effectiveDeposit,
@@ -150,26 +159,9 @@ export const SellerAuctions: React.FC = () => {
 
       await fetchData();
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Không thể tạo phiên đấu giá.');
+      setError(err?.response?.data?.message || err.message || tp('sellerAuctions.createFailed'));
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'UPCOMING':
-        return <span className={styles.badgePending}>Sắp Bắt Đầu</span>;
-      case 'ACTIVE':
-        return <span className={styles.badgeActive}>Đang Đấu Giá</span>;
-      case 'COMPLETED':
-        return <span style={{ backgroundColor: '#10b981', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Hoàn Thành</span>;
-      case 'CANCELLED':
-        return <span style={{ backgroundColor: '#ef4444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Đã Huỷ</span>;
-      case 'FAILED':
-        return <span style={{ backgroundColor: '#6b7280', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Thất Bại</span>;
-      default:
-        return <span className={styles.badgePending}>{status || 'N/A'}</span>;
     }
   };
 
@@ -183,14 +175,14 @@ export const SellerAuctions: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Quản Lý Auction</h1>
+        <h1 className={styles.title}>{tp('sellerAuctions.title')}</h1>
         <Link to="/seller/products" style={{ textDecoration: 'none' }}>
-           <Button variant="outline">Mở Trang Product</Button>
+           <Button variant="outline">{tp('sellerAuctions.openProductsPage')}</Button>
         </Link>
       </div>
 
       <form onSubmit={handleCreateAuction} style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff' }}>
-        <h3 style={{ marginTop: 0 }}>Tạo phiên đấu giá mới</h3>
+        <h3 style={{ marginTop: 0 }}>{tp('sellerAuctions.createTitle')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
           <select
             className={styles.filterSelect}
@@ -207,7 +199,7 @@ export const SellerAuctions: React.FC = () => {
             }}
             required
           >
-            <option value="">-- Chọn product đã duyệt --</option>
+            <option value="">{tp('sellerAuctions.selectApprovedProduct')}</option>
             {eligibleProducts.map((product) => (
               <option key={product.id} value={String(product.id)}>
                 {product.name || `${product.brand} ${product.model}`}
@@ -237,7 +229,7 @@ export const SellerAuctions: React.FC = () => {
             min={1000000}
             value={formData.startPrice || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, startPrice: Number(e.target.value) }))}
-            placeholder="Giá khởi điểm"
+            placeholder={tp('sellerAuctions.startPrice')}
             required
           />
 
@@ -247,7 +239,7 @@ export const SellerAuctions: React.FC = () => {
             min={1000}
             value={formData.bidIncrement || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, bidIncrement: Number(e.target.value) }))}
-            placeholder="Bước giá"
+            placeholder={tp('sellerAuctions.bidIncrement')}
             required
           />
 
@@ -257,7 +249,7 @@ export const SellerAuctions: React.FC = () => {
             min={0}
             value={depositMode === 'MANUAL' ? formData.depositAmount || '' : computedDepositAmount || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, depositAmount: Number(e.target.value) }))}
-            placeholder="Tiền cọc"
+            placeholder={tp('sellerAuctions.deposit')}
             required
             disabled={depositMode !== 'MANUAL'}
           />
@@ -265,21 +257,21 @@ export const SellerAuctions: React.FC = () => {
 
         <div style={{ marginTop: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Cách tính tiền cọc</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{tp('sellerAuctions.depositMode')}</label>
             <select
               className={styles.filterSelect}
               value={depositMode}
               onChange={(e) => setDepositMode(e.target.value as typeof depositMode)}
             >
-              <option value="PERCENT_OF_AUCTION">% của giá khởi điểm phiên</option>
-              <option value="PERCENT_OF_PRODUCT">% của giá trị product</option>
-              <option value="MANUAL">Nhập tay tiền cọc</option>
+              <option value="PERCENT_OF_AUCTION">{tp('sellerAuctions.depositModeAuction')}</option>
+              <option value="PERCENT_OF_PRODUCT">{tp('sellerAuctions.depositModeProduct')}</option>
+              <option value="MANUAL">{tp('sellerAuctions.depositModeManual')}</option>
             </select>
           </div>
 
           {depositMode !== 'MANUAL' && (
             <div>
-              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Tỷ lệ đặt cọc (%)</label>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>{tp('sellerAuctions.depositPercent')}</label>
               <input
                 type="range"
                 min={5}
@@ -305,7 +297,7 @@ export const SellerAuctions: React.FC = () => {
                 }}
               />
               <div style={{ marginTop: 4, fontSize: 12, color: '#64748b' }}>
-                Kéo nhanh trong dải khuyến nghị 5%-20%.
+                {tp('sellerAuctions.depositHint')}
               </div>
             </div>
           )}
@@ -313,40 +305,43 @@ export const SellerAuctions: React.FC = () => {
 
         {selectedProduct && (
           <div style={{ marginTop: '0.75rem', padding: '0.75rem', borderRadius: 8, background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Thông tin giá của product</div>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>{tp('sellerAuctions.productPriceInfo')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
-              <div>Product: <strong>{selectedProduct.name || `${selectedProduct.brand || ''} ${selectedProduct.model || ''}`.trim()}</strong></div>
-              <div>Giá product hiện tại: <strong>{formatVND(productValue)}</strong></div>
-              <div>Giá khởi điểm phiên: <strong>{formatVND(formData.startPrice)}</strong></div>
+              <div>{tp('sellerAuctions.product')}: <strong>{selectedProduct.name || `${selectedProduct.brand || ''} ${selectedProduct.model || ''}`.trim()}</strong></div>
+              <div>{tp('sellerAuctions.productPrice')}: <strong>{formatVND(productValue)}</strong></div>
+              <div>{tp('sellerAuctions.auctionStartPrice')}: <strong>{formatVND(formData.startPrice)}</strong></div>
               <div>
-                Tiền cọc áp dụng: <strong>{formatVND(depositMode === 'MANUAL' ? formData.depositAmount : computedDepositAmount)}</strong>
+                {tp('sellerAuctions.appliedDeposit')}: <strong>{formatVND(depositMode === 'MANUAL' ? formData.depositAmount : computedDepositAmount)}</strong>
               </div>
             </div>
             <div style={{ marginTop: 6, color: '#334155', fontSize: 13 }}>
-              Gợi ý an toàn: tiền cọc thường nằm trong khoảng <strong>{formatVND(suggestedDepositMin)}</strong> đến <strong>{formatVND(suggestedDepositMax)}</strong> (5%-20% theo mức giá cơ sở).
+              {tp('sellerAuctions.safeRange', {
+                min: formatVND(suggestedDepositMin),
+                max: formatVND(suggestedDepositMax),
+              })}
             </div>
           </div>
         )}
 
         <div style={{ marginTop: '0.75rem' }}>
           <Button type="submit" variant="primary" disabled={submitting || eligibleProducts.length === 0}>
-            {submitting ? 'Đang tạo...' : eligibleProducts.length === 0 ? 'Không có product đủ điều kiện' : 'Tạo auction'}
+            {submitting ? tp('sellerAuctions.creating') : eligibleProducts.length === 0 ? tp('sellerAuctions.noEligibleProduct') : tp('sellerAuctions.createAuction')}
           </Button>
         </div>
       </form>
 
       <div className={styles.filters}>
         <select className={styles.filterSelect} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="UPCOMING">UPCOMING</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
-          <option value="FAILED">FAILED</option>
+          <option value="ALL">{getAuctionStatusLabel('ALL')}</option>
+          <option value="UPCOMING">{getAuctionStatusLabel('UPCOMING')}</option>
+          <option value="ACTIVE">{getAuctionStatusLabel('ACTIVE')}</option>
+          <option value="COMPLETED">{getAuctionStatusLabel('COMPLETED')}</option>
+          <option value="CANCELLED">{getAuctionStatusLabel('CANCELLED')}</option>
+          <option value="FAILED">{getAuctionStatusLabel('FAILED')}</option>
         </select>
         <input 
           type="text" 
-          placeholder="Tìm theo tên product..." 
+          placeholder={tp('sellerAuctions.searchPlaceholder')} 
           className={styles.searchInput}
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -358,19 +353,19 @@ export const SellerAuctions: React.FC = () => {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>Mã Auction</th>
-            <th>Product</th>
-            <th>Trạng Thái</th>
-            <th>Giá Hiện Tại</th>
-            <th>Kết Thúc</th>
-            <th>Hành Động</th>
+            <th>{tp('sellerAuctions.auctionId')}</th>
+            <th>{tp('sellerAuctions.auctionProduct')}</th>
+            <th>{tp('sellerAuctions.auctionStatus')}</th>
+            <th>{tp('sellerAuctions.auctionPrice')}</th>
+            <th>{tp('sellerAuctions.auctionEnd')}</th>
+            <th>{tp('sellerAuctions.auctionAction')}</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Đang tải dữ liệu...</td></tr>
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>{tp('sellerAuctions.loading')}</td></tr>
           ) : filteredAuctions.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Không tìm thấy auction nào.</td></tr>
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>{tp('sellerAuctions.empty')}</td></tr>
           ) : (
             filteredAuctions.map(auction => (
               <tr key={auction.id}>
@@ -380,7 +375,11 @@ export const SellerAuctions: React.FC = () => {
                 <td>
                   <strong>{getProductName(auction.productId)}</strong>
                 </td>
-                <td>{getStatusBadge(auction.status)}</td>
+                <td>
+                  <span className={auction.status === 'ACTIVE' ? styles.badgeActive : styles.badgePending}>
+                    {getAuctionStatusLabel(auction.status)}
+                  </span>
+                </td>
                 <td>
                   <div style={{ fontWeight: 600 }}>{formatVND(auction.currentPrice || auction.startPrice)}</div>
                 </td>
@@ -389,7 +388,7 @@ export const SellerAuctions: React.FC = () => {
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {auction.id && (
                       <Link to={`/auctions/${auction.id}`} style={{ textDecoration: 'none' }}>
-                        <Button variant="outline" size="small">Xem chi tiết</Button>
+                        <Button variant="outline" size="small">{tp('sellerAuctions.viewDetail')}</Button>
                       </Link>
                     )}
                   </div>

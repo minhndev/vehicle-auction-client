@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { SellerLayout } from '../layouts/SellerLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
+import { UserLayout } from '../layouts/UserLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 
 // Auth Pages
@@ -24,17 +25,18 @@ import { OAuth2Redirect } from '../pages/Public/OAuth2Redirect/OAuth2Redirect';
 
 // User Pages
 import { UserDashboard } from '../pages/User/Dashboard/UserDashboard';
-import { DepositPage } from '../pages/User/Wallet/DepositPage';
 import { CheckoutPage } from '../pages/User/Orders/CheckoutPage';
 import { MyOrders } from '../pages/User/Orders/MyOrders';
 import { Watchlist } from '../pages/User/Dashboard/Watchlist';
 import { NotificationsPage } from '../pages/User/Notifications/NotificationsPage';
 import { MyBids } from '../pages/User/Bids/MyBids';
 import { MyProfilePage } from '../pages/User/Profile/MyProfilePage';
+import { UpdateProfilePage } from '../pages/User/Profile/UpdateProfilePage';
+import { ChangePasswordPage } from '../pages/User/Profile/ChangePasswordPage';
 
 // Placeholder components to verify routing works
-const Unauthorized = () => <div><h2>403 - Unauthorized Access</h2></div>;
-const NotFound = () => <div><h2>404 - Page Not Found</h2></div>;
+const Unauthorized = () => <div><h2>403 - Bạn không có quyền truy cập</h2></div>;
+const NotFound = () => <div><h2>404 - Không tìm thấy trang</h2></div>;
 
 // Seller Pages
 import { SellerDashboard } from '../pages/Seller/Dashboard/SellerDashboard';
@@ -76,14 +78,18 @@ export const AppRoutes: React.FC = () => {
       {/* User Protected Routes with MainLayout */}
       <Route element={<ProtectedRoute allowedRoles={['USER', 'MEMBER', 'BUYER']} />}>
         <Route element={<MainLayout />}>
-          <Route path="/user/dashboard" element={<UserDashboard />} />
-          <Route path="/user/wallet/deposit" element={<DepositPage />} />
-          <Route path="/user/orders/:id/checkout" element={<CheckoutPage />} />
-          <Route path="/user/orders" element={<MyOrders />} />
-          <Route path="/user/watchlist" element={<Watchlist />} />
-          <Route path="/user/bids" element={<MyBids />} />
-          <Route path="/user/profile" element={<MyProfilePage />} />
-          <Route path="/user/notifications" element={<NotificationsPage />} />
+          <Route path="/user" element={<UserLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="orders/:id/checkout" element={<CheckoutPage />} />
+            <Route path="orders" element={<MyOrders />} />
+            <Route path="watchlist" element={<Watchlist />} />
+            <Route path="bids" element={<MyBids />} />
+            <Route path="profile" element={<MyProfilePage />} />
+            <Route path="profile/edit" element={<UpdateProfilePage />} />
+            <Route path="profile/change-password" element={<ChangePasswordPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+          </Route>
         </Route>
       </Route>
 
@@ -106,7 +112,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="auctions" element={<SellerAuctions />} />
           <Route path="auctions/new" element={<VehicleRegistrationForm />} />
           <Route path="auctions/:id/edit" element={<VehicleEditForm />} />
-          <Route path="settings" element={<div>Seller Settings</div>} />
+          <Route path="settings" element={<div>Cài đặt người bán</div>} />
         </Route>
       </Route>
 

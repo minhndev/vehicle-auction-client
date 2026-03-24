@@ -50,9 +50,9 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.isAuthenticated = false;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+      state.error = null;
+      localStorage.clear();
+      sessionStorage.clear();
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;

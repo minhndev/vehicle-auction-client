@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button/Button';
 import { paymentApi } from '../../../api/paymentApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import { WalletHistory } from './WalletHistory';
 import type { DepositRequest } from '../../../types/index';
 import styles from './DepositPage.module.css';
@@ -11,6 +12,7 @@ const formatVND = (amount: number) =>
 const PRESET_AMOUNTS = [500_000, 1_000_000, 5_000_000, 10_000_000, 50_000_000];
 
 export const DepositPage: React.FC = () => {
+  const { tp } = usePageI18n();
   const [auctionId, setAuctionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export const DepositPage: React.FC = () => {
    */
   const handleDeposit = async () => {
     if (!auctionId.trim()) {
-      setError('Vui lòng nhập mã phiên đấu giá');
+      setError(tp('deposit.auctionIdRequired'));
       return;
     }
 
@@ -47,10 +49,10 @@ export const DepositPage: React.FC = () => {
       if (url) {
         window.location.href = url;
       } else {
-        setError('Không nhận được đường dẫn thanh toán từ server.');
+        setError(tp('deposit.noPaymentUrl'));
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Lỗi khi khởi tạo thanh toán';
+      const msg = err?.response?.data?.message ?? err?.message ?? tp('deposit.initError');
       setError(msg);
     } finally {
       setLoading(false);
@@ -60,29 +62,29 @@ export const DepositPage: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Nộp tiền cọc đấu giá</h1>
+        <h1 className={styles.title}>{tp('deposit.title')}</h1>
         <p className={styles.subtitle}>
-          Tiền cọc được nộp cho từng phiên đấu giá cụ thể để xác nhận tư cách tham gia. Thanh toán qua VNPay.
+          {tp('deposit.subtitle')}
         </p>
 
         <div className={styles.inputGroup} style={{ marginTop: '1.5rem' }}>
-          <label>Mã phiên đấu giá (Auction ID) *</label>
+          <label>{tp('deposit.auctionId')} *</label>
           <input
             type="text"
             value={auctionId}
             onChange={(e) => { setAuctionId(e.target.value); setError(null); }}
-            placeholder="Dán UUID của phiên đấu giá vào đây"
+            placeholder={tp('deposit.auctionIdPlaceholder')}
             className={styles.input}
           />
           <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
-            Bạn có thể tìm mã này trên trang chi tiết đấu giá.
+            {tp('deposit.auctionIdHint')}
           </p>
         </div>
 
         {/* Preset quick amounts (informational only) */}
         <div style={{ marginTop: '1rem' }}>
           <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
-            Mức cọc thường gặp:
+            {tp('deposit.commonAmounts')}:
           </p>
           <div className={styles.quickSelect}>
             {PRESET_AMOUNTS.map((p) => (
@@ -103,7 +105,7 @@ export const DepositPage: React.FC = () => {
           disabled={loading || !auctionId.trim()}
           style={{ width: '100%', marginTop: 'var(--space-xl)' }}
         >
-          {loading ? 'Đang khởi tạo...' : 'Nộp cọc qua VNPay'}
+          {loading ? tp('deposit.initializing') : tp('deposit.payWithVnpay')}
         </Button>
       </div>
 

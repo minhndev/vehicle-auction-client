@@ -3,31 +3,26 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../store';
 import { orderApi } from '../../../api/orderApi';
-import { notificationApi } from '../../../api/notificationApi';
-import styles from './UserDashboard.module.css';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 
 export const UserDashboard: React.FC = () => {
+  const { tp } = usePageI18n();
   const user = useSelector((state: RootState) => state.auth.user);
 
   const [pendingOrders, setPendingOrders] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [ordersRes, unreadRes] = await Promise.allSettled([
-          orderApi.getMyOrders({ page: 0, size: 1 }),
-          notificationApi.getUnreadCount(),
+        const [ordersRes] = await Promise.allSettled([
+          orderApi.getMyOrders({ page: 0, size: 1 })
         ]);
 
         if (ordersRes.status === 'fulfilled') {
           const orders = ordersRes.value.content ?? [];
           const pending = orders.filter((o) => o.status === 'PENDING_PAYMENT').length;
           setPendingOrders(ordersRes.value.totalElements ?? pending);
-        }
-        if (unreadRes.status === 'fulfilled') {
-          setUnreadNotifications(Number(unreadRes.value) || 0);
         }
       } catch {
         // fail silently — UI degrades gracefully
@@ -41,28 +36,21 @@ export const UserDashboard: React.FC = () => {
   const statCards = [
     {
       icon: '📦',
-      label: 'Đơn hàng chờ thanh toán',
+      label: tp('userDashboard.pendingOrders'),
       value: loadingStats ? '…' : pendingOrders,
       to: '/user/orders',
       highlight: pendingOrders > 0,
     },
     {
-      icon: '🔔',
-      label: 'Thông báo chưa đọc',
-      value: loadingStats ? '…' : unreadNotifications,
-      to: '/user/notifications',
-      highlight: unreadNotifications > 0,
-    },
-    {
       icon: '❤️',
-      label: 'Danh sách quan tâm',
+      label: tp('userDashboard.watchlist'),
       value: '—',
       to: '/user/watchlist',
       highlight: false,
     },
     {
       icon: '⚖️',
-      label: 'Lịch sử đặt giá',
+      label: tp('userDashboard.bidHistory'),
       value: '—',
       to: '/user/bids',
       highlight: false,
@@ -70,26 +58,23 @@ export const UserDashboard: React.FC = () => {
   ];
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Dashboard</h1>
-      <p className={styles.welcome}>
-        Chào mừng trở lại, <strong>{user?.firstName} {user?.lastName}</strong>!
+    <div className="w-full">
+      <h1 className="text-2xl font-bold text-slate-800 mb-2">{tp('userDashboard.title')}</h1>
+      <p className="text-slate-500 mb-8">
+        {tp('userDashboard.welcome')}, <strong className="text-slate-700">{user?.firstName} {user?.lastName}</strong>!
       </p>
 
       {/* Stats Grid */}
-      <div className={styles.statsGrid}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((card) => (
-          <Link key={card.label} to={card.to} style={{ textDecoration: 'none' }}>
+          <Link key={card.label} to={card.to} className="group">
             <div
-              className={styles.statCard}
-              style={card.highlight ? { borderColor: '#dc2626', borderWidth: '2px' } : undefined}
+              className={`flex flex-col items-center justify-center p-6 border rounded-2xl bg-white shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${card.highlight ? 'border-red-500' : 'border-slate-100'
+                }`}
             >
-              <span style={{ fontSize: '28px' }}>{card.icon}</span>
-              <h3 style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 4px' }}>{card.label}</h3>
-              <p
-                className={styles.statValue}
-                style={card.highlight ? { color: '#dc2626' } : undefined}
-              >
+              <span className="text-3xl mb-3">{card.icon}</span>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">{card.label}</h3>
+              <p className={`text-2xl font-bold ${card.highlight ? 'text-red-500' : 'text-slate-800'}`}>
                 {card.value}
               </p>
             </div>
@@ -97,27 +82,14 @@ export const UserDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className={styles.actionsGrid}>
-        <Link to="/user/profile" className={styles.actionCard}>
-          <div className={styles.actionIcon}>👤</div>
-          <h3>Hồ sơ của tôi</h3>
-          <p>Xem và quản lý thông tin tài khoản đấu giá</p>
-        </Link>
-        <Link to="/user/wallet/deposit" className={styles.actionCard}>
-          <div className={styles.actionIcon}>💳</div>
-          <h3>Nộp tiền cọc</h3>
-          <p>Nộp cọc để tham gia phiên đấu giá qua VNPay</p>
-        </Link>
-        <Link to="/user/orders" className={styles.actionCard}>
-          <div className={styles.actionIcon}>📦</div>
-          <h3>Đơn hàng của tôi</h3>
-          <p>Thanh toán và theo dõi xe đã thắng đấu giá</p>
-        </Link>
-        <Link to="/auctions" className={styles.actionCard}>
-          <div className={styles.actionIcon}>🔨</div>
-          <h3>Tham gia đấu giá</h3>
-          <p>Xem các phiên đấu giá đang diễn ra</p>
+      {/* Informative placeholder to fill space */}
+      <div className="mt-12 bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
+        <h3 className="text-lg font-bold text-slate-700 mb-2">Bắt đầu đấu giá ngay!</h3>
+        <p className="text-slate-500 mb-4 max-w-md mx-auto">
+          Tại Vehicle Auction, hàng trăm chiếc xe chất lượng đang chờ bạn khám phá. Hãy duyệt qua danh sách xe và đặt giá ngay hôm nay.
+        </p>
+        <Link to="/auctions" className="inline-flex items-center justify-center px-6 py-2.5 bg-[#2e3d83] text-white font-medium rounded-lg hover:bg-opacity-90 transition-colors">
+          Xem danh sách xe
         </Link>
       </div>
     </div>

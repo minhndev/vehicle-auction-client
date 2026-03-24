@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
+import { usePageI18n } from '../../../i18n/usePageI18n';
+
+const DEPOSIT_PENDING_AUCTION_ID_KEY = 'deposit.pendingAuctionId';
+const DEPOSIT_PAID_AUCTION_KEY_PREFIX = 'deposit.paidAuctionId.';
 
 export const PaymentSuccess: React.FC = () => {
+  const { tp } = usePageI18n();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
+
+  useEffect(() => {
+    const auctionIdFromQuery =
+      searchParams.get('auctionId') ||
+      searchParams.get('referenceId') ||
+      searchParams.get('ref') ||
+      '';
+    const pendingAuctionId = sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || '';
+    const resolvedAuctionId = auctionIdFromQuery || pendingAuctionId;
+
+    if (resolvedAuctionId) {
+      sessionStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
+    }
+    sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
+  }, [searchParams]);
 
   return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
@@ -30,24 +50,24 @@ export const PaymentSuccess: React.FC = () => {
         </div>
 
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#16a34a', marginBottom: '0.5rem' }}>
-          Thanh toán thành công!
+          {tp('paymentSuccess.title')}
         </h1>
         <p style={{ color: '#6b7280', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-          Giao dịch của bạn đã được xử lý thành công. Chúng tôi sẽ liên hệ với bạn để sắp xếp giao xe.
+          {tp('paymentSuccess.description')}
         </p>
 
         {ref && (
           <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '1.5rem' }}>
-            Mã giao dịch: <strong>{ref}</strong>
+            {tp('paymentSuccess.transactionCode')}: <strong>{ref}</strong>
           </p>
         )}
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/user/orders">
-            <Button variant="primary">Xem đơn hàng</Button>
+            <Button variant="primary">{tp('paymentSuccess.viewOrders')}</Button>
           </Link>
           <Link to="/auctions">
-            <Button variant="outline">Tiếp tục đấu giá</Button>
+            <Button variant="outline">{tp('paymentSuccess.continueAuction')}</Button>
           </Link>
         </div>
       </div>

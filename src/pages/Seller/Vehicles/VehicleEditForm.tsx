@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { catalogApi } from '../../../api/catalogApi';
 import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi, type ProductRequest } from '../../../features/seller/api/sellerApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { CategoryResponse, ProductResponse } from '../../../types/index';
 import styles from './VehicleRegistrationForm.module.css';
 
@@ -13,6 +14,7 @@ const toNumber = (value?: number | string) => {
 };
 
 export const VehicleEditForm: React.FC = () => {
+  const { tp } = usePageI18n();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -48,7 +50,7 @@ export const VehicleEditForm: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
-        setError('Thiếu mã sản phẩm.');
+        setError(tp('sellerVehicleEdit.missingProductId'));
         setInitializing(false);
         return;
       }
@@ -95,7 +97,7 @@ export const VehicleEditForm: React.FC = () => {
           images: urls,
         });
       } catch (err: any) {
-        setError(err?.response?.data?.message || err?.message || 'Không thể tải dữ liệu sản phẩm.');
+        setError(err?.response?.data?.message || err?.message || tp('sellerVehicleEdit.loadError'));
       } finally {
         setInitializing(false);
       }
@@ -130,7 +132,7 @@ export const VehicleEditForm: React.FC = () => {
     if (!id) return;
 
     if (!formData.categoryId) {
-      setError('Vui lòng chọn danh mục xe');
+      setError(tp('sellerVehicleEdit.categoryRequired'));
       return;
     }
 
@@ -154,32 +156,32 @@ export const VehicleEditForm: React.FC = () => {
         images: imageUrls,
       });
 
-      alert('Cập nhật sản phẩm thành công!');
+      alert(tp('sellerVehicleEdit.updateSuccess'));
       navigate('/seller/products');
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || 'Lỗi cập nhật sản phẩm');
+      setError(err?.response?.data?.message || err?.message || tp('sellerVehicleEdit.updateError'));
     } finally {
       setLoading(false);
     }
   };
 
   if (initializing) {
-    return <div className={styles.container}>Đang tải dữ liệu sản phẩm...</div>;
+    return <div className={styles.container}>{tp('sellerVehicleEdit.loading')}</div>;
   }
 
   if (isEditLocked) {
     return (
       <div className={styles.container}>
         <div className={styles.heroBlock}>
-          <p className={styles.eyebrow}>Sell Your Car</p>
-          <h1 className={styles.title}>Không thể chỉnh sửa sản phẩm</h1>
+          <p className={styles.eyebrow}>{tp('sellerVehicleEdit.eyebrow')}</p>
+          <h1 className={styles.title}>{tp('sellerVehicleEdit.cannotEditTitle')}</h1>
           <p className={styles.subtitle}>
-            Sản phẩm đang ở trạng thái <strong>{lockedStatus}</strong>. Theo rule nghiệp vụ, sản phẩm IN_AUCTION/SOLD không được phép chỉnh sửa.
+            {tp('sellerVehicleEdit.cannotEditSubtitle', { status: lockedStatus })}
           </p>
         </div>
         <div className={styles.actions} style={{ justifyContent: 'flex-start' }}>
           <Link to="/seller/products" style={{ textDecoration: 'none' }}>
-            <Button variant="primary">Quay lại danh sách</Button>
+            <Button variant="primary">{tp('sellerVehicleEdit.backToList')}</Button>
           </Link>
         </div>
       </div>
@@ -189,9 +191,9 @@ export const VehicleEditForm: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.heroBlock}>
-        <p className={styles.eyebrow}>Sell Your Car</p>
-        <h1 className={styles.title}>Chỉnh sửa sản phẩm</h1>
-        <p className={styles.subtitle}>Cập nhật thông tin xe để tiếp tục quy trình duyệt hoặc đấu giá.</p>
+        <p className={styles.eyebrow}>{tp('sellerVehicleEdit.eyebrow')}</p>
+        <h1 className={styles.title}>{tp('sellerVehicleEdit.title')}</h1>
+        <p className={styles.subtitle}>{tp('sellerVehicleEdit.subtitle')}</p>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -199,40 +201,40 @@ export const VehicleEditForm: React.FC = () => {
       <div className={styles.layout}>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.section}>
-            <h2>Thông tin cơ bản</h2>
+            <h2>{tp('sellerVehicleEdit.basicInfo')}</h2>
             <div className={styles.grid}>
               <div className={styles.formGroup}>
-                <label>Hãng xe *</label>
+                <label>{tp('sellerVehicleEdit.brand')} *</label>
                 <input type="text" name="brand" required value={formData.brand} onChange={handleChange} />
               </div>
               <div className={styles.formGroup}>
-                <label>Mẫu xe *</label>
+                <label>{tp('sellerVehicleEdit.model')} *</label>
                 <input type="text" name="model" required value={formData.model} onChange={handleChange} />
               </div>
               <div className={styles.formGroup}>
-                <label>Màu xe *</label>
+                <label>{tp('sellerVehicleEdit.color')} *</label>
                 <input type="text" name="color" required value={formData.color} onChange={handleChange} />
               </div>
               <div className={styles.formGroup}>
-                <label>Số máy *</label>
+                <label>{tp('sellerVehicleEdit.engineNumber')} *</label>
                 <input type="text" name="engineNumber" required value={formData.engineNumber} onChange={handleChange} />
               </div>
               <div className={styles.formGroup}>
-                <label>Biển số *</label>
+                <label>{tp('sellerVehicleEdit.licensePlate')} *</label>
                 <input type="text" name="licensePlate" required value={formData.licensePlate} onChange={handleChange} />
               </div>
               <div className={styles.formGroup}>
-                <label>Năm sản xuất *</label>
+                <label>{tp('sellerVehicleEdit.year')} *</label>
                 <input type="number" name="year" required value={formData.year} onChange={handleChange} min={1900} max={new Date().getFullYear() + 1} />
               </div>
               <div className={styles.formGroup}>
-                <label>Số khung (VIN) *</label>
+                <label>{tp('sellerVehicleEdit.vin')} *</label>
                 <input type="text" name="vinNumber" required value={formData.vinNumber} onChange={handleChange} />
               </div>
               <div className={styles.formGroup}>
-                <label>Danh mục *</label>
+                <label>{tp('sellerVehicleEdit.category')} *</label>
                 <select name="categoryId" value={formData.categoryId} onChange={handleChange} required>
-                  <option value="">-- Chọn danh mục --</option>
+                  <option value="">{tp('sellerVehicleEdit.selectCategory')}</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
@@ -242,44 +244,44 @@ export const VehicleEditForm: React.FC = () => {
           </div>
 
           <div className={styles.section}>
-            <h2>Thông số & Giá</h2>
+            <h2>{tp('sellerVehicleEdit.specAndPrice')}</h2>
             <div className={styles.grid}>
               <div className={styles.formGroup}>
-                <label>ODO (km) *</label>
+                <label>{tp('sellerVehicleEdit.mileage')} *</label>
                 <input type="number" name="mileage" required value={formData.mileage} onChange={handleChange} min={0} />
               </div>
               <div className={styles.formGroup}>
-                <label>Hộp số *</label>
+                <label>{tp('sellerVehicleEdit.transmission')} *</label>
                 <select name="transmission" value={formData.transmission} onChange={handleChange} required>
-                  <option value="Automatic">Tự động (Automatic)</option>
-                  <option value="Manual">Số sàn (Manual)</option>
-                  <option value="CVT">Vô cấp (CVT)</option>
+                  <option value="Automatic">{tp('sellerVehicleEdit.transmissionAutomatic')}</option>
+                  <option value="Manual">{tp('sellerVehicleEdit.transmissionManual')}</option>
+                  <option value="CVT">{tp('sellerVehicleEdit.transmissionCvt')}</option>
                 </select>
               </div>
               <div className={styles.formGroup}>
-                <label>Nhiên liệu *</label>
+                <label>{tp('sellerVehicleEdit.fuelType')} *</label>
                 <select name="fuelType" value={formData.fuelType} onChange={handleChange} required>
-                  <option value="Gasoline">Xăng (Gasoline)</option>
-                  <option value="Diesel">Dầu (Diesel)</option>
-                  <option value="Electric">Điện (Electric)</option>
-                  <option value="Hybrid">Lai (Hybrid)</option>
+                  <option value="Gasoline">{tp('sellerVehicleEdit.fuelGasoline')}</option>
+                  <option value="Diesel">{tp('sellerVehicleEdit.fuelDiesel')}</option>
+                  <option value="Electric">{tp('sellerVehicleEdit.fuelElectric')}</option>
+                  <option value="Hybrid">{tp('sellerVehicleEdit.fuelHybrid')}</option>
                 </select>
               </div>
               <div className={styles.formGroup}>
-                <label>Giá khởi điểm (VND) *</label>
+                <label>{tp('sellerVehicleEdit.basePrice')} *</label>
                 <input type="number" name="basePrice" required value={formData.basePrice || ''} onChange={handleChange} min={1000000} />
               </div>
               <div className={styles.formGroup}>
-                <label>Mô tả xe</label>
+                <label>{tp('sellerVehicleEdit.description')}</label>
                 <input type="text" name="description" value={formData.description || ''} onChange={handleChange} />
               </div>
             </div>
           </div>
 
           <div className={styles.section}>
-            <h2>Hình ảnh</h2>
+            <h2>{tp('sellerVehicleEdit.images')}</h2>
             <div className={styles.formGroup}>
-              <label>Tải ảnh mới (tuỳ chọn, thay thế toàn bộ ảnh cũ)</label>
+              <label>{tp('sellerVehicleEdit.uploadNewImages')}</label>
               <input type="file" accept="image/*" multiple onChange={handleImageChange} />
             </div>
 
@@ -296,31 +298,31 @@ export const VehicleEditForm: React.FC = () => {
 
           <div className={styles.actions}>
             <Link to="/seller/products" style={{ textDecoration: 'none' }}>
-              <Button type="button" variant="outline">Hủy</Button>
+              <Button type="button" variant="outline">{tp('sellerVehicleEdit.cancel')}</Button>
             </Link>
             <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+              {loading ? tp('sellerVehicleEdit.saving') : tp('sellerVehicleEdit.saveChanges')}
             </Button>
           </div>
         </form>
 
         <aside className={styles.summaryCard}>
-          <h3>Tổng quan</h3>
+          <h3>{tp('sellerVehicleEdit.summaryTitle')}</h3>
           <div className={styles.summaryItem}>
-            <span>Xe</span>
-            <strong>{formData.brand && formData.model ? `${formData.brand} ${formData.model}` : 'Chưa cập nhật'}</strong>
+            <span>{tp('sellerVehicleEdit.vehicle')}</span>
+            <strong>{formData.brand && formData.model ? `${formData.brand} ${formData.model}` : tp('sellerVehicleEdit.notUpdated')}</strong>
           </div>
           <div className={styles.summaryItem}>
-            <span>Năm</span>
-            <strong>{formData.year || 'N/A'}</strong>
+            <span>{tp('sellerVehicleEdit.year')}</span>
+            <strong>{formData.year || tp('sellerVehicleEdit.notAvailable')}</strong>
           </div>
           <div className={styles.summaryItem}>
-            <span>Danh mục</span>
-            <strong>{selectedCategory?.name || 'Chưa chọn'}</strong>
+            <span>{tp('sellerVehicleEdit.category')}</span>
+            <strong>{selectedCategory?.name || tp('sellerVehicleEdit.notSelected')}</strong>
           </div>
           <div className={styles.summaryItem}>
-            <span>Giá khởi điểm</span>
-            <strong>{formData.basePrice ? `${formData.basePrice.toLocaleString('vi-VN')} VND` : 'Chưa cập nhật'}</strong>
+            <span>{tp('sellerVehicleEdit.basePrice')}</span>
+            <strong>{formData.basePrice ? `${formData.basePrice.toLocaleString('vi-VN')} VND` : tp('sellerVehicleEdit.notUpdated')}</strong>
           </div>
         </aside>
       </div>

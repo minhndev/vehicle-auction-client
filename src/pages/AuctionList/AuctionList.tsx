@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { auctionApi, type AuctionQueryParams } from '../../features/bidding/api/auctionApi';
 import { AuctionCard } from '../../features/bidding/components/AuctionCard/AuctionCard';
 import { Button } from '../../components/ui/Button/Button';
@@ -27,15 +28,18 @@ const formatCompactVND = (amount: number) => {
 };
 
 export const AuctionList: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [auctions, setAuctions] = useState<AuctionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
-  const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  const [keyword, setKeyword] = useState(() => searchParams.get('keyword') ?? searchParams.get('year') ?? '');
+  const [status, setStatus] = useState(() => searchParams.get('status') ?? '');
+  const [categoryId, setCategoryId] = useState(() => searchParams.get('categoryId') ?? '');
+  const [minPrice, setMinPrice] = useState(() => searchParams.get('minPrice') ?? '');
+  const [maxPrice, setMaxPrice] = useState(() => searchParams.get('maxPrice') ?? '');
   const [sortBy, setSortBy] = useState('createdAt,desc');
 
   // Pagination
@@ -54,6 +58,7 @@ export const AuctionList: React.FC = () => {
       };
       if (keyword.trim()) params.keyword = keyword.trim();
       if (status) params.status = status;
+      if (categoryId) params.categoryId = categoryId;
       if (minPrice) params.minPrice = Number(minPrice);
       if (maxPrice) params.maxPrice = Number(maxPrice);
 
@@ -66,7 +71,17 @@ export const AuctionList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [keyword, status, minPrice, maxPrice, sortBy]);
+  }, [keyword, status, categoryId, minPrice, maxPrice, sortBy]);
+
+  const syncSearchParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (keyword.trim()) params.set('keyword', keyword.trim());
+    if (status) params.set('status', status);
+    if (categoryId) params.set('categoryId', categoryId);
+    if (minPrice) params.set('minPrice', minPrice);
+    if (maxPrice) params.set('maxPrice', maxPrice);
+    setSearchParams(params, { replace: true });
+  }, [keyword, status, categoryId, minPrice, maxPrice, setSearchParams]);
 
   useEffect(() => {
     fetchAuctions(page);
@@ -75,6 +90,7 @@ export const AuctionList: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(0);
+    syncSearchParams();
     fetchAuctions(0);
   };
 
@@ -83,7 +99,7 @@ export const AuctionList: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const activeFilters = [keyword, status, minPrice, maxPrice].filter((v) => `${v}`.trim()).length;
+  const activeFilters = [keyword, status, categoryId, minPrice, maxPrice].filter((v) => `${v}`.trim()).length;
   const maxVisiblePages = 10;
   const startPage = Math.max(0, Math.min(page - Math.floor(maxVisiblePages / 2), Math.max(0, totalPages - maxVisiblePages)));
   const endPageExclusive = Math.min(totalPages, startPage + maxVisiblePages);
@@ -103,7 +119,7 @@ export const AuctionList: React.FC = () => {
     <div className={styles.page}>
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>Live Vehicle Marketplace</p>
+          <p className={styles.eyebrow}>Sàn đấu giá xe trực tuyến</p>
           <h1 className={styles.title}>Danh sách đấu giá xe</h1>
           <p className={styles.subtitle}>
             Theo dõi các phiên đấu giá đang mở và lọc nhanh theo mức giá, trạng thái và từ khóa phương tiện.
@@ -176,8 +192,10 @@ export const AuctionList: React.FC = () => {
               onClick={() => {
                 setKeyword('');
                 setStatus('');
+                setCategoryId('');
                 setMinPrice('');
                 setMaxPrice('');
+                setSearchParams({}, { replace: true });
                 setPage(0);
                 fetchAuctions(0);
               }}
@@ -190,19 +208,19 @@ export const AuctionList: React.FC = () => {
 
       <section className={styles.quickStats}>
         <article className={styles.quickStatCard}>
-          <span>Dang dau gia</span>
+          <span>Đang đấu giá</span>
           <strong>{loading ? '...' : stats.active}</strong>
         </article>
         <article className={styles.quickStatCard}>
-          <span>Sap dien ra</span>
+          <span>Sắp diễn ra</span>
           <strong>{loading ? '...' : stats.upcoming}</strong>
         </article>
         <article className={styles.quickStatCard}>
-          <span>Da ket thuc</span>
+          <span>Đã kết thúc</span>
           <strong>{loading ? '...' : stats.completed}</strong>
         </article>
         <article className={styles.quickStatCard}>
-          <span>Gia trung binh</span>
+          <span>Giá trung bình</span>
           <strong>{loading ? '...' : `${formatCompactVND(stats.avgCurrentPrice)} VND`}</strong>
         </article>
       </section>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
 import { bidApi, type BidResponse } from '../../../features/bidding/api/bidApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './MyBids.module.css';
 
@@ -15,6 +16,7 @@ const formatCurrency = (amount?: number) => {
 };
 
 export const MyBids: React.FC = () => {
+  const { tp } = usePageI18n();
   const [bids, setBids] = useState<BidResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export const MyBids: React.FC = () => {
         if (err?.response?.status === 404) {
           setBids([]);
         } else {
-          setError(getErrorMessage(err, 'Lỗi kết nối khi tải lịch sử đấu giá.'));
+          setError(getErrorMessage(err, tp('myBids.loadError')));
         }
       } finally {
         setLoading(false);
@@ -59,21 +61,21 @@ export const MyBids: React.FC = () => {
   return (
     <div className={styles.container}>
       <section className={styles.hero}>
-        <p className={styles.eyebrow}>Bidding History</p>
-        <h1 className={styles.title}>Theo doi toan bo luot tra gia cua ban</h1>
-        <p className={styles.subtitle}>Kiem tra vi tri dan dau, luot bi vuot gia va truy cap nhanh den phien dau gia dang quan tam.</p>
+        <p className={styles.eyebrow}>{tp('myBids.eyebrow')}</p>
+        <h1 className={styles.title}>{tp('myBids.title')}</h1>
+        <p className={styles.subtitle}>{tp('myBids.subtitle')}</p>
 
         <div className={styles.metrics}>
           <article className={styles.metricCard}>
-            <span>Total bids</span>
+            <span>{tp('myBids.totalBids')}</span>
             <strong>{bids.length}</strong>
           </article>
           <article className={styles.metricCard}>
-            <span>Winning bids</span>
+            <span>{tp('myBids.winningBids')}</span>
             <strong>{winningCount}</strong>
           </article>
           <article className={styles.metricCard}>
-            <span>Outbid bids</span>
+            <span>{tp('myBids.outbidBids')}</span>
             <strong>{outbidCount}</strong>
           </article>
         </div>
@@ -87,72 +89,72 @@ export const MyBids: React.FC = () => {
           className={`${styles.filterBtn} ${statusFilter === 'all' ? styles.filterBtnActive : ''}`}
           onClick={() => setStatusFilter('all')}
         >
-          All
+          {tp('myBids.filterAll')}
         </button>
         <button
           type="button"
           className={`${styles.filterBtn} ${statusFilter === 'winning' ? styles.filterBtnActive : ''}`}
           onClick={() => setStatusFilter('winning')}
         >
-          Winning
+          {tp('myBids.filterWinning')}
         </button>
         <button
           type="button"
           className={`${styles.filterBtn} ${statusFilter === 'outbid' ? styles.filterBtnActive : ''}`}
           onClick={() => setStatusFilter('outbid')}
         >
-          Outbid
+          {tp('myBids.filterOutbid')}
         </button>
       </div>
 
       <div className={styles.tableCard}>
         {loading ? (
-          <div className={styles.loadingState}>Dang tai lich su tra gia...</div>
+          <div className={styles.loadingState}>{tp('myBids.loading')}</div>
         ) : filteredBids.length === 0 ? (
           <div className={styles.emptyState}>
-            <h3>My Bids Empty State</h3>
+            <h3>{tp('myBids.emptyTitle')}</h3>
             <p>
-              Ban chua co du lieu phu hop voi bo loc hien tai. Hay tham gia mot phien dau gia de bat dau ghi nhan lich su bid.
+              {tp('myBids.emptySubtitle')}
             </p>
             <Link to="/auctions" className={styles.emptyAction}>
-              Kham pha phien dang mo
+              {tp('myBids.exploreAuctions')}
             </Link>
           </div>
         ) : (
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Phương Tiện</th>
-                <th>Mức Giá Đã Đặt</th>
-                <th>Thời Gian</th>
-                <th>Tình Trạng</th>
-                <th>Hành Động</th>
+                <th>{tp('myBids.vehicle')}</th>
+                <th>{tp('myBids.bidAmount')}</th>
+                <th>{tp('myBids.time')}</th>
+                <th>{tp('myBids.state')}</th>
+                <th>{tp('myBids.action')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredBids.map((bid) => {
-                const vehicleName = bid.productName || (bid.vehicle ? `${bid.vehicle.brand} ${bid.vehicle.model}` : `ID Dau Gia: #${bid.auctionId.substring(0, 8)}`);
+                const vehicleName = bid.productName || (bid.vehicle ? `${bid.vehicle.brand} ${bid.vehicle.model}` : tp('myBids.auctionIdFallback', { id: bid.auctionId.substring(0, 8) }));
 
                 return (
                   <tr key={bid.id}>
                     <td>
                       <strong>{vehicleName}</strong>
-                      <div className={styles.infoText}>Ma Bid: #{bid.id.substring(0, 8)}</div>
+                      <div className={styles.infoText}>{tp('myBids.bidId')}: #{bid.id.substring(0, 8)}</div>
                     </td>
                     <td className={styles.amount}>{formatCurrency(bid.amount)}</td>
                     <td>{new Date(bid.createdAt).toLocaleString('vi-VN')}</td>
                     <td>
                       {bid.isWinning === true ? (
-                        <span className={styles.badgeWinning}>Dang dan dau</span>
+                        <span className={styles.badgeWinning}>{tp('myBids.winning')}</span>
                       ) : bid.isWinning === false ? (
-                        <span className={styles.badgeOutbid}>Bi vuot gia</span>
+                        <span className={styles.badgeOutbid}>{tp('myBids.outbid')}</span>
                       ) : (
-                        <span className={styles.infoText}>Da ghi nhan</span>
+                        <span className={styles.infoText}>{tp('myBids.recorded')}</span>
                       )}
                     </td>
                     <td>
                       <Link to={`/auctions/${bid.auctionId}`} className={styles.tableActionLink}>
-                        <Button variant="outline" size="small">Xem phien</Button>
+                        <Button variant="outline" size="small">{tp('myBids.viewAuction')}</Button>
                       </Link>
                     </td>
                   </tr>

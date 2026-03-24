@@ -46,6 +46,27 @@
   z-index: 10;
 }
 
+.countdownChip {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  background: rgba(18, 25, 56, 0.76);
+  color: #ffffff;
+  padding: 0.24rem 0.52rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  z-index: 10;
+}
+
+.countdownSoon {
+  background: #d97706;
+}
+
+.countdownEnded {
+  background: #475569;
+}
+
 .ACTIVE {
   background-color: #1ea971;
 }
@@ -84,7 +105,7 @@
 }
 
 .metaRow {
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
@@ -115,9 +136,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: auto;
-  padding-bottom: var(--space-md);
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  padding-bottom: 0.72rem;
   border-bottom: 1px solid #edf2f7;
+}
+
+.priceSection {
+  margin-top: auto;
 }
 
 .priceLabel {
@@ -134,36 +160,25 @@
   color: var(--color-primary);
 }
 
-.bidsCount {
-  font-size: var(--font-size-small);
-  color: var(--color-secondary);
-  font-weight: 500;
+.startPriceWrap {
+  text-align: right;
+}
+
+.startPriceLabel {
+  display: block;
+  font-size: 0.72rem;
+  color: #7a879f;
+  margin-bottom: 2px;
+}
+
+.startPriceValue {
+  display: block;
+  font-size: 0.85rem;
+  color: #30466f;
 }
 
 .footer {
-  padding: 0.68rem 0.78rem 0.8rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f8fafc;
-}
-
-.timer {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-error);
-}
-
-.timer.ended {
-  color: var(--color-text-light);
-}
-
-.ctaWrap {
-  flex: 1;
-  margin-left: var(--space-md);
+  padding-top: 0.72rem;
 }
 
 .bidBtn {

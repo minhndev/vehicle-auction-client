@@ -5,19 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../../../components/ui/Button/Button';
 import { orderApi } from '../../../api/orderApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { OrderResponse } from '../../../types/index';
 import styles from './CheckoutPage.module.css';
 
-const shippingSchema = z.object({
-  recipientName: z.string().min(2, 'Vui lòng nhập tên người nhận (ít nhất 2 ký tự)'),
-  recipientPhone: z
-    .string()
-    .regex(/^(\+84|0)[0-9]{8,10}$/, 'Số điện thoại không hợp lệ (VD: 0912345678)'),
-  shippingAddress: z.string().min(10, 'Địa chỉ phải ít nhất 10 ký tự'),
-  shippingNote: z.string().optional(),
-});
-
-type ShippingFormValues = z.infer<typeof shippingSchema>;
+type ShippingFormValues = {
+  recipientName: string;
+  recipientPhone: string;
+  shippingAddress: string;
+  shippingNote?: string;
+};
 
 const formatVND = (amount?: number | null) => {
   if (amount == null) return '—';
@@ -29,7 +26,17 @@ const formatVND = (amount?: number | null) => {
 };
 
 export const CheckoutPage: React.FC = () => {
+  const { tp } = usePageI18n();
   const { id } = useParams<{ id: string }>();
+
+  const shippingSchema = z.object({
+    recipientName: z.string().min(2, tp('checkout.validationRecipientName')),
+    recipientPhone: z
+      .string()
+      .regex(/^(\+84|0)[0-9]{8,10}$/, tp('checkout.validationRecipientPhone')),
+    shippingAddress: z.string().min(10, tp('checkout.validationAddress')),
+    shippingNote: z.string().optional(),
+  });
 
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [orderLoading, setOrderLoading] = useState(true);
@@ -74,29 +81,29 @@ export const CheckoutPage: React.FC = () => {
       if (url) {
         window.location.href = url;
       } else {
-        setSubmitError('Không nhận được URL thanh toán từ máy chủ. Vui lòng thử lại.');
+        setSubmitError(tp('checkout.noPaymentUrl'));
       }
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      setSubmitError(axiosErr.response?.data?.message ?? 'Lỗi khi xử lý thanh toán, vui lòng thử lại.');
+      setSubmitError(axiosErr.response?.data?.message ?? tp('checkout.payError'));
     }
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.checkoutForm}>
-        <h1 className={styles.title}>Thanh toán đơn hàng</h1>
-        <p className={styles.subtitle}>Vui lòng điền thông tin giao hàng trước khi thanh toán.</p>
+        <h1 className={styles.title}>{tp('checkout.title')}</h1>
+        <p className={styles.subtitle}>{tp('checkout.subtitle')}</p>
 
         {submitError && <div className={styles.error}>{submitError}</div>}
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className={styles.formGroup}>
-            <label>Tên người nhận *</label>
+            <label>{tp('checkout.recipientName')} *</label>
             <input
               type="text"
               className={styles.input}
-              placeholder="Nguyễn Văn A"
+              placeholder={tp('checkout.recipientNamePlaceholder')}
               {...register('recipientName')}
             />
             {errors.recipientName && (
@@ -105,11 +112,11 @@ export const CheckoutPage: React.FC = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Số điện thoại *</label>
+            <label>{tp('checkout.recipientPhone')} *</label>
             <input
               type="tel"
               className={styles.input}
-              placeholder="0912345678"
+              placeholder={tp('checkout.recipientPhonePlaceholder')}
               {...register('recipientPhone')}
             />
             {errors.recipientPhone && (
@@ -118,10 +125,10 @@ export const CheckoutPage: React.FC = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Địa chỉ giao hàng *</label>
+            <label>{tp('checkout.shippingAddress')} *</label>
             <textarea
               className={styles.textarea}
-              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+              placeholder={tp('checkout.shippingAddressPlaceholder')}
               rows={3}
               {...register('shippingAddress')}
             />
@@ -131,10 +138,10 @@ export const CheckoutPage: React.FC = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Ghi chú (tuỳ chọn)</label>
+            <label>{tp('checkout.shippingNote')}</label>
             <textarea
               className={styles.textarea}
-              placeholder="Yêu cầu đặc biệt về giao hàng..."
+              placeholder={tp('checkout.shippingNotePlaceholder')}
               rows={2}
               {...register('shippingNote')}
             />
@@ -142,28 +149,28 @@ export const CheckoutPage: React.FC = () => {
 
           {/* Order Summary */}
           <div className={styles.summary}>
-            <h3>Tóm tắt đơn hàng</h3>
+            <h3>{tp('checkout.summaryTitle')}</h3>
             {orderLoading ? (
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>Đang tải...</p>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>{tp('checkout.loading')}</p>
             ) : order ? (
               <>
                 <div className={styles.summaryRow}>
-                  <span>Tên xe</span>
-                  <span style={{ fontWeight: 600 }}>{order.productName ?? '—'}</span>
+                  <span>{tp('checkout.vehicleName')}</span>
+                  <span style={{ fontWeight: 600 }}>{order.productName ?? tp('checkout.notAvailable')}</span>
                 </div>
                 <div className={styles.summaryRow}>
-                  <span>Giá thắng</span>
+                  <span>{tp('checkout.winningPrice')}</span>
                   <span>{formatVND(order.winningPrice)}</span>
                 </div>
                 <div className={styles.summaryRow}>
-                  <span>Tiền cọc đã nộp</span>
+                  <span>{tp('checkout.depositPaid')}</span>
                   <span>- {formatVND(order.depositAmount)}</span>
                 </div>
                 <div
                   className={styles.summaryRow}
                   style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', marginTop: '4px' }}
                 >
-                  <span style={{ fontWeight: 700 }}>Số tiền cần thanh toán</span>
+                  <span style={{ fontWeight: 700 }}>{tp('checkout.totalPayment')}</span>
                   <span style={{ fontWeight: 700, color: '#dc2626', fontSize: '18px' }}>
                     {formatVND(order.remainingAmount)}
                   </span>
@@ -171,8 +178,8 @@ export const CheckoutPage: React.FC = () => {
               </>
             ) : (
               <div className={styles.summaryRow}>
-                <span>Tổng cộng</span>
-                <span>Đang xử lý</span>
+                <span>{tp('checkout.total')}</span>
+                <span>{tp('checkout.processing')}</span>
               </div>
             )}
           </div>
@@ -184,7 +191,7 @@ export const CheckoutPage: React.FC = () => {
             disabled={isSubmitting}
             style={{ width: '100%', marginTop: 'var(--space-lg)' }}
           >
-            {isSubmitting ? 'Đang xử lý...' : 'Thanh toán qua VNPay →'}
+            {isSubmitting ? tp('checkout.processing') : tp('checkout.payWithVnpay')}
           </Button>
         </form>
       </div>

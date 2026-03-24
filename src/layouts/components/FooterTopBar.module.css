@@ -94,12 +94,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: background-color 0.22s ease, transform 0.22s ease;
 }
 
 .socialItem:hover {
   background: #ffffff;
-  transform: translateY(-4px);
+  transform: translateY(-1px);
 }
 
 .socialIcon {

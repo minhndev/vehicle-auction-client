@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button/Button';
 import { adminApi } from '../../../api/adminApi';
 import { auctionApi } from '../../../features/bidding/api/auctionApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { AuctionResponse } from '../../../types/index';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './AdminAuctions.module.css';
@@ -16,6 +17,7 @@ const formatCurrency = (amount?: number) => {
 };
 
 export const AdminAuctions: React.FC = () => {
+  const { tp, getAuctionStatusLabel } = usePageI18n();
   const [auctions, setAuctions] = useState<AuctionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,52 +41,52 @@ export const AdminAuctions: React.FC = () => {
       const list = response?.content || response || [];
       setAuctions(Array.isArray(list) ? list : []);
     } catch (err) {
-      setError(getErrorMessage(err, 'Lỗi tải danh sách phiên đấu giá trực tiếp.'));
+      setError(getErrorMessage(err, tp('adminAuctions.loadError')));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = async (id: string) => {
-    if (!window.confirm("CẢNH BÁO: Hành động này sẽ HỦY BỎ ngay lập tức phiên đấu giá đang diễn ra. Chức năng này sẽ thông báo cho tất cả người tham gia và huỷ kết quả hiện tại. Bạn có chắc chắn?")) return;
+    if (!window.confirm(tp('adminAuctions.cancelConfirm'))) return;
     
-    const reason = window.prompt("Nhập lý do huỷ bỏ phiên (bắt buộc, sẽ hiển thị cho user):");
+    const reason = window.prompt(tp('adminAuctions.cancelReasonPrompt'));
     if (!reason) return;
 
     try {
       await adminApi.cancelAuction(id, reason);
       setAuctions(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a));
-      setTimeout(() => alert('Đã huỷ phiên đấu giá thành công!'), 100);
+      setTimeout(() => alert(tp('adminAuctions.cancelSuccess')), 100);
     } catch (err) {
-      alert('Không thể huỷ phiên: ' + getErrorMessage(err, 'Lỗi hệ thống'));
+      alert(`${tp('adminAuctions.cancelFailed')}: ${getErrorMessage(err, tp('adminAuctions.systemError'))}`);
     }
   };
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Quản Lý Phiên Đấu Giá (Live)</h1>
-      <p className={styles.subtitle}>Giám sát và quản lý các phiên đấu giá đang diễn ra trên toàn hệ thống.</p>
+      <h1 className={styles.title}>{tp('adminAuctions.title')}</h1>
+      <p className={styles.subtitle}>{tp('adminAuctions.subtitle')}</p>
 
       {error && <div className={styles.error} style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
       <div className={styles.tableCard}>
         {loading ? (
-          <div className="loadingSpinner" style={{ padding: '2rem' }}>Đang tải danh sách trực tiếp...</div>
+          <div className="loadingSpinner" style={{ padding: '2rem' }}>{tp('adminAuctions.loading')}</div>
         ) : (
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Mã Đấu Giá</th>
-                <th>Thông Tin Phương Tiện</th>
-                <th>Giá Hiện Tại</th>
-                <th>Thời Gian Kết Thúc</th>
-                <th>Trạng Thái</th>
-                <th>Hành Động</th>
+                <th>{tp('adminAuctions.auctionCode')}</th>
+                <th>{tp('adminAuctions.vehicleInfo')}</th>
+                <th>{tp('adminAuctions.currentPrice')}</th>
+                <th>{tp('adminAuctions.endTime')}</th>
+                <th>{tp('adminAuctions.status')}</th>
+                <th>{tp('adminAuctions.action')}</th>
               </tr>
             </thead>
             <tbody>
               {auctions.length === 0 ? (
-                <tr><td colSpan={6} className={styles.emptyRow} style={{ textAlign: 'center', padding: '2rem' }}>Không có phiên đấu giá nào theo bộ lọc hiện tại</td></tr>
+                <tr><td colSpan={6} className={styles.emptyRow} style={{ textAlign: 'center', padding: '2rem' }}>{tp('adminAuctions.empty')}</td></tr>
               ) : (
                 auctions.map(auction => {
                   const canCancel = auction.status === 'ACTIVE' || auction.status === 'UPCOMING';
@@ -92,7 +94,7 @@ export const AdminAuctions: React.FC = () => {
                   return (
                     <tr key={auction.id} className={!canCancel ? styles.rowEnded : ''}>
                       <td><span className={styles.mono}>#{String(auction.id).substring(0, 8)}</span></td>
-                      <td><strong>{auction.productName || 'Không rõ xe'}</strong></td>
+                      <td><strong>{auction.productName || tp('adminAuctions.unknownVehicle')}</strong></td>
                       <td className={styles.money} style={{ fontWeight: 'bold' }}>
                         {formatCurrency(auction.currentPrice)}
                       </td>
@@ -105,7 +107,7 @@ export const AdminAuctions: React.FC = () => {
                           borderRadius: '4px',
                           fontSize: '12px'
                         }}>
-                           {auction.status || 'N/A'}
+                           {getAuctionStatusLabel(auction.status)}
                         </span>
                       </td>
                       <td>
@@ -116,10 +118,10 @@ export const AdminAuctions: React.FC = () => {
                             onClick={() => handleCancel(auction.id as string)}
                             style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', color: 'white' }}
                           >
-                            Ép Buộc Huỷ
+                            {tp('adminAuctions.forceCancel')}
                           </Button>
                         )}
-                        {!canCancel && <span className={styles.textMuted} style={{ color: '#9ca3af' }}>Đã đóng</span>}
+                        {!canCancel && <span className={styles.textMuted} style={{ color: '#9ca3af' }}>{tp('adminAuctions.closed')}</span>}
                       </td>
                     </tr>
                   )
@@ -131,19 +133,19 @@ export const AdminAuctions: React.FC = () => {
       </div>
 
       <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <label htmlFor="auction-status-filter" style={{ fontWeight: 600 }}>Lọc trạng thái:</label>
+        <label htmlFor="auction-status-filter" style={{ fontWeight: 600 }}>{tp('adminAuctions.filterLabel')}</label>
         <select
           id="auction-status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
           style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
         >
-          <option value="ALL">Tất cả</option>
-          <option value="UPCOMING">UPCOMING</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
-          <option value="FAILED">FAILED</option>
+          <option value="ALL">{getAuctionStatusLabel('ALL')}</option>
+          <option value="UPCOMING">{getAuctionStatusLabel('UPCOMING')}</option>
+          <option value="ACTIVE">{getAuctionStatusLabel('ACTIVE')}</option>
+          <option value="COMPLETED">{getAuctionStatusLabel('COMPLETED')}</option>
+          <option value="CANCELLED">{getAuctionStatusLabel('CANCELLED')}</option>
+          <option value="FAILED">{getAuctionStatusLabel('FAILED')}</option>
         </select>
       </div>
     </div>

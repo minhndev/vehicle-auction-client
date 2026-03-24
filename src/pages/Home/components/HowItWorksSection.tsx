@@ -1,45 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Users, Gavel, Trophy } from 'lucide-react';
+import { getAuctionList, getHomeCategories, getUpcomingAuctions } from './homeDataService';
 import styles from '../Home.module.css';
 
-// Giả lập cấu trúc dữ liệu cho luồng quy trình (Process Steps)
 interface ProcessStep {
   id: number;
   title: string;
   description: string;
-  iconUrl: string;
+  icon: React.ElementType;
 }
 
-const MOCK_PROCESS_STEPS: ProcessStep[] = [
-  {
-    id: 1,
-    title: "Sign Up",
-    description: "No credit card requried",
-    iconUrl: "https://img.icons8.com/color/96/000000/add-user-group-man-man.png"
-  },
-  {
-    id: 2,
-    title: "Bid",
-    description: "Bidding is free only pay if you win",
-    iconUrl: "https://img.icons8.com/color/96/000000/auction.png"
-  },
-  {
-    id: 3,
-    title: "Win",
-    description: "Fun - Excitment - Great Deals",
-    iconUrl: "https://img.icons8.com/color/96/000000/trophy.png"
-  }
-];
+const getProcessSteps = (stats: {
+  categoryCount: number;
+  scheduledCount: number;
+  activeCount: number;
+  completedCount: number;
+}): ProcessStep[] => {
+  return [
+    {
+      id: 1,
+      title: 'Tạo tài khoản & chọn xe',
+      description: `${stats.categoryCount} danh mục xe, ${stats.scheduledCount} phiên sắp mở.`,
+      icon: Users,
+    },
+    {
+      id: 2,
+      title: 'Đặt cọc & đấu giá',
+      description: `${stats.activeCount} phiên đang diễn ra realtime.`,
+      icon: Gavel,
+    },
+    {
+      id: 3,
+      title: 'Thắng phiên & hoàn tất đơn',
+      description: `${stats.completedCount} phiên đã hoàn thành thành công.`,
+      icon: Trophy,
+    },
+  ];
+};
 
-// Sub-component hiển thị từng bước
 const ProcessStepCard: React.FC<{ data: ProcessStep }> = ({ data }) => {
+  const Icon = data.icon;
   return (
     <div className={styles.workStepCard}>
       <div className={styles.workStepIconWrap}>
-        <img 
-          src={data.iconUrl} 
-          alt={data.title} 
-          className={styles.workStepIcon} 
-        />
+        <Icon className={styles.workStepIcon} size={48} strokeWidth={1.5} color="#2e3d83" />
       </div>
 
       <h3 className={styles.workStepTitle}>
@@ -52,14 +56,63 @@ const ProcessStepCard: React.FC<{ data: ProcessStep }> = ({ data }) => {
   );
 };
 
-// Component Chính
 const HowItWorksSection: React.FC = () => {
+  const [steps, setSteps] = useState<ProcessStep[]>(
+    getProcessSteps({
+      categoryCount: 0,
+      scheduledCount: 0,
+      activeCount: 0,
+      completedCount: 0,
+    }),
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchStats = async () => {
+      try {
+        const [categories, activeList, upcomingList, completedList] = await Promise.all([
+          getHomeCategories(),
+          getAuctionList({ status: 'ACTIVE', page: 0, size: 200 }),
+          getUpcomingAuctions(200),
+          getAuctionList({ status: 'COMPLETED', page: 0, size: 200 }),
+        ]);
+
+        if (!mounted) return;
+
+        setSteps(
+          getProcessSteps({
+            categoryCount: Array.isArray(categories) ? categories.length : 0,
+            activeCount: activeList.length,
+            scheduledCount: upcomingList.length,
+            completedCount: completedList.length,
+          }),
+        );
+      } catch {
+        if (!mounted) return;
+        setSteps(
+          getProcessSteps({
+            categoryCount: 0,
+            activeCount: 0,
+            scheduledCount: 0,
+            completedCount: 0,
+          }),
+        );
+      }
+    };
+
+    fetchStats();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <section className={`${styles.section} ${styles.sectionLight} ${styles.howSection}`}>
       <div className={styles.container}>
         <div className={`${styles.titleBlock} ${styles.titleBlockNarrow} ${styles.howTitleBlock}`}>
           <h2 className={`${styles.title} ${styles.howTitle}`}>
-            How it work
+            Cách thức hoạt động
           </h2>
 
           <div className={styles.divider}>
@@ -68,16 +121,16 @@ const HowItWorksSection: React.FC = () => {
           </div>
 
           <p className={`${styles.subtitle} ${styles.howSubtitle}`}>
-            Get the best deals on verified vehicles with transparent history reports and expert support. Get the best deals on verified vehicles with transparent history reports and expert support.
+            Chọn xe đã được xác minh, theo dõi lịch sử minh bạch và tham gia đấu giá trực tuyến với cập nhật thời gian thực.
           </p>
         </div>
 
         <div className={styles.workStepsRow}>
-          {MOCK_PROCESS_STEPS.map((step, index) => (
+          {steps.map((step, index) => (
             <React.Fragment key={step.id}>
               <ProcessStepCard data={step} />
               
-              {index < MOCK_PROCESS_STEPS.length - 1 && (
+              {index < steps.length - 1 && (
                 <div className={styles.workArrowWrap}>
                   <svg viewBox="0 0 72 18" fill="none" className={styles.workArrowIcon} aria-hidden="true">
                     <path d="M1 9H68" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>

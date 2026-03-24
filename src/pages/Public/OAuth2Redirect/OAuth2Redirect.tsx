@@ -34,7 +34,7 @@ export const OAuth2Redirect: React.FC = () => {
     const tokenType = readFirstParam(params, ['tokenType', 'token_type']) || 'Bearer';
 
     if (!accessToken) {
-      setError('OAuth2 callback is missing access token.');
+      setError('Thiếu access token trong dữ liệu trả về OAuth2.');
       return;
     }
 
@@ -57,9 +57,9 @@ export const OAuth2Redirect: React.FC = () => {
     return (
       <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', padding: '1rem' }}>
         <div style={{ maxWidth: 560, textAlign: 'center' }}>
-          <h2>Google login failed</h2>
+          <h2>Đăng nhập Google thất bại</h2>
           <p>{error}</p>
-          <Link to="/login">Back to login</Link>
+          <Link to="/login">Quay lại đăng nhập</Link>
         </div>
       </div>
     );
@@ -68,8 +68,8 @@ export const OAuth2Redirect: React.FC = () => {
   return (
     <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', padding: '1rem' }}>
       <div style={{ textAlign: 'center' }}>
-        <h2>Signing you in...</h2>
-        <p>Processing OAuth2 callback.</p>
+        <h2>Đang đăng nhập...</h2>
+        <p>Đang xử lý dữ liệu trả về từ OAuth2.</p>
       </div>
     </div>
   );

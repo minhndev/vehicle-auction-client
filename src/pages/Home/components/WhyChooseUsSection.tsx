@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShieldCheck, Award, Headset } from 'lucide-react';
 import styles from '../Home.module.css';
 
 // Data Mock cho các phần tử lặp lại (Các lý do chọn dịch vụ)
@@ -7,7 +8,7 @@ interface ReasonItem {
   id: number;
   title: string;
   description: string;
-  icon: string;
+  icon: React.ElementType;
 }
 
 const MOCK_REASONS: ReasonItem[] = [
@@ -15,32 +16,29 @@ const MOCK_REASONS: ReasonItem[] = [
     id: 1,
     title: "Best Secure",
     description: "Get the best deals on verified vehicles with transparent history reports and expert support.",
-    icon: "https://img.icons8.com/color/96/000000/quality.png"
+    icon: ShieldCheck
   },
   {
     id: 2,
     title: "High Quality",
     description: "Get the best deals on verified vehicles with transparent history reports and expert support.",
-    icon: "https://img.icons8.com/color/96/000000/customer-support.png"
+    icon: Award
   },
   {
     id: 3,
     title: "24/7 Support",
     description: "Get the best deals on verified vehicles with transparent history reports and expert support.",
-    icon: "https://img.icons8.com/color/96/000000/shield.png"
+    icon: Headset
   }
 ];
 
 // Sub-component cho từng Card hiển thị
 const ReasonCard: React.FC<{ data: ReasonItem }> = ({ data }) => {
+  const Icon = data.icon;
   return (
     <div className={styles.whyCard}>
       <div className={styles.whyIconWrap}>
-        <img 
-          src={data.icon} 
-          alt={data.title} 
-          className={styles.whyIcon} 
-        />
+        <Icon className={styles.whyIcon} size={48} strokeWidth={1.5} color="#2e3d83" />
       </div>
       <h3 className={styles.whyTitle}>
         {data.title}

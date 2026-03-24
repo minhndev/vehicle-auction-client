@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button/Button';
 import { adminApi } from '../../../api/adminApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { ProductResponse } from '../../../types/index';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './AdminProducts.module.css';
@@ -23,12 +24,12 @@ const getBadgeColor = (status?: string) => {
       return '#64748b';
   }
 };
-
 const formatVND = (value?: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0);
 
 export const AdminProducts: React.FC = () => {
   const [items, setItems] = useState<ProductResponse[]>([]);
+  const { getProductStatusLabel } = usePageI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState('all');
@@ -48,7 +49,7 @@ export const AdminProducts: React.FC = () => {
       });
       setItems(data);
     } catch (err) {
-      setError(getErrorMessage(err, 'Không thể tải danh sách product.'));
+      setError(getErrorMessage(err, 'Không thể tải danh sách xe.'));
     } finally {
       setLoading(false);
     }
@@ -59,13 +60,13 @@ export const AdminProducts: React.FC = () => {
   }, [status]);
 
   const handleApprove = async (id: string) => {
-    if (!window.confirm('Duyệt product này?')) return;
+    if (!window.confirm('Duyệt xe này?')) return;
     try {
       setActionLoadingId(id);
       await adminApi.approveVehicle(id);
       await fetchItems();
     } catch (err) {
-      setError(getErrorMessage(err, 'Không thể duyệt product.'));
+      setError(getErrorMessage(err, 'Không thể duyệt xe.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -79,33 +80,33 @@ export const AdminProducts: React.FC = () => {
       await adminApi.rejectVehicle(id, reason);
       await fetchItems();
     } catch (err) {
-      setError(getErrorMessage(err, 'Không thể từ chối product.'));
+      setError(getErrorMessage(err, 'Không thể từ chối xe.'));
     } finally {
       setActionLoadingId(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Xóa mềm product này?')) return;
+    if (!window.confirm('Xóa mềm xe này?')) return;
     try {
       setActionLoadingId(id);
       await adminApi.deleteProduct(id);
       await fetchItems();
     } catch (err) {
-      setError(getErrorMessage(err, 'Không thể xóa product.'));
+      setError(getErrorMessage(err, 'Không thể xóa xe.'));
     } finally {
       setActionLoadingId(null);
     }
   };
 
   const handleRestore = async (id: string) => {
-    if (!window.confirm('Khôi phục product này?')) return;
+    if (!window.confirm('Khôi phục xe này?')) return;
     try {
       setActionLoadingId(id);
       await adminApi.restoreProduct(id);
       await fetchItems();
     } catch (err) {
-      setError(getErrorMessage(err, 'Không thể khôi phục product.'));
+      setError(getErrorMessage(err, 'Không thể khôi phục xe.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -113,24 +114,24 @@ export const AdminProducts: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Quản Lý Product Đã Đăng</h1>
-      <p className={styles.subtitle}>Theo dõi toàn bộ product của seller, không chỉ hàng chờ duyệt.</p>
+      <h1 className={styles.title}>Quản Lý Xe Đã Đăng</h1>
+      <p className={styles.subtitle}>Theo dõi toàn bộ xe của người bán, không chỉ hàng chờ duyệt.</p>
 
       <div className={styles.filters}>
         <select className={styles.select} value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="all">Tất cả trạng thái</option>
-          <option value="PENDING">PENDING</option>
-          <option value="APPROVED">APPROVED</option>
-          <option value="IN_AUCTION">IN_AUCTION</option>
-          <option value="REJECTED">REJECTED</option>
-          <option value="SOLD">SOLD</option>
-          <option value="CANCELLED">CANCELLED</option>
+          <option value="all">{getProductStatusLabel('ALL')}</option>
+          <option value="PENDING">{getProductStatusLabel('PENDING')}</option>
+          <option value="APPROVED">{getProductStatusLabel('APPROVED')}</option>
+          <option value="IN_AUCTION">{getProductStatusLabel('IN_AUCTION')}</option>
+          <option value="REJECTED">{getProductStatusLabel('REJECTED')}</option>
+          <option value="SOLD">{getProductStatusLabel('SOLD')}</option>
+          <option value="CANCELLED">{getProductStatusLabel('CANCELLED')}</option>
         </select>
         <input
           className={styles.input}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="Tìm theo tên/brand/model"
+          placeholder="Tìm theo tên/hãng/mẫu"
         />
         <Button variant="outline" onClick={fetchItems}>Tìm</Button>
       </div>
@@ -142,8 +143,8 @@ export const AdminProducts: React.FC = () => {
           <thead>
             <tr>
               <th>Ảnh</th>
-              <th>Product</th>
-              <th>Seller</th>
+              <th>Xe</th>
+              <th>Người bán</th>
               <th>Trạng thái</th>
               <th>Giá đề xuất</th>
               <th>Ngày đăng</th>
@@ -154,25 +155,25 @@ export const AdminProducts: React.FC = () => {
             {loading ? (
               <tr><td colSpan={7} className={styles.empty}>Đang tải dữ liệu...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={7} className={styles.empty}>Không có product nào.</td></tr>
+              <tr><td colSpan={7} className={styles.empty}>Không có xe nào.</td></tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id}>
                   <td>
                     {item.images?.[0]?.url ? (
-                      <img className={styles.thumb} src={item.images[0].url} alt={item.name || 'product'} />
+                      <img className={styles.thumb} src={item.images[0].url} alt={item.name || 'xe'} />
                     ) : (
                       <div className={styles.thumb} />
                     )}
                   </td>
                   <td>
-                    <strong>{item.name || `${item.brand || ''} ${item.model || ''}`.trim() || 'N/A'}</strong>
-                    <div style={{ color: '#64748b', fontSize: 12 }}>VIN: {item.vinNumber || 'N/A'}</div>
+                    <strong>{item.name || `${item.brand || ''} ${item.model || ''}`.trim() || 'Không có tên'}</strong>
+                    <div style={{ color: '#64748b', fontSize: 12 }}>VIN: {item.vinNumber || 'Không có'}</div>
                   </td>
-                  <td>{item.sellerId ? String(item.sellerId).slice(0, 8) : 'N/A'}</td>
+                  <td>{item.sellerId ? String(item.sellerId).slice(0, 8) : 'Không có'}</td>
                   <td>
                     <span className={styles.badge} style={{ background: getBadgeColor(item.status) }}>
-                      {item.status || 'N/A'}
+                      {getProductStatusLabel(item.status)}
                     </span>
                   </td>
                   <td>{formatVND(item.startPrice || item.basePrice)}</td>
