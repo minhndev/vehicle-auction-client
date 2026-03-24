@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search, ChevronDown } from 'lucide-react';
 import type { AuctionResponse } from '../../../types';
 import { getAuctionList, getHomeCategories, getUpcomingAuctions } from './homeDataService';
-import styles from '../Home.module.css';
 
 interface CategoryOption {
   id: string;
@@ -73,22 +73,24 @@ const FilterDropdown = ({
   emptyLabel: string;
 }) => {
   return (
-    <div className={styles.filterItem}>
-      <span className={styles.filterLabel}>
+    <div className="flex-1 min-w-[140px] border-r border-slate-200/60 last:border-r-0 px-5 py-3 hover:bg-slate-50/50 transition-colors group cursor-pointer relative">
+      <span className="block text-slate-500 text-[13px] font-bold uppercase tracking-wider mb-1">
         {label}
       </span>
-      <div className={styles.filterValueRow}>
-        <select className={styles.filterSelect} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">{emptyLabel}</option>
+      <div className="flex justify-between items-center gap-2 relative">
+        <select 
+          className="flex-1 w-full bg-transparent border-none text-slate-900 text-base font-extrabold outline-none appearance-none cursor-pointer z-10" 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="" className="text-slate-500 font-medium">{emptyLabel}</option>
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} className="text-slate-900 font-medium">
               {opt.label}
             </option>
           ))}
         </select>
-        <svg className={styles.filterIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown size={18} className="text-slate-400 group-hover:text-[#2e3d83] transition-colors absolute right-0 pointer-events-none" />
       </div>
     </div>
   );
@@ -188,17 +190,17 @@ export const SearchFilterBar: React.FC = () => {
   };
 
   return (
-    <div className={`${styles.filterShell} bg-white/90 backdrop-blur-xl border border-white shadow-2xl shadow-[#2e3d83]/15 rounded-[24px] overflow-hidden transition-all duration-300 transform hover:-translate-y-1 relative z-10 p-2 sm:p-4`}>
-      <div className={styles.filterRow}>
+    <div className="w-[calc(100%-2rem)] max-w-5xl mx-auto bg-white/95 backdrop-blur-xl shadow-2xl shadow-[#2e3d83]/20 rounded-full border border-white/50 p-2.5 flex flex-col md:flex-row items-center gap-2 transform transition-all duration-300 hover:shadow-3xl">
+      <div className="flex-1 w-full flex flex-col sm:flex-row rounded-3xl overflow-hidden divide-y sm:divide-y-0 sm:divide-x divide-slate-200/60">
         <FilterDropdown
-          label="Danh mục"
+          label="Dòng xe"
           value={selectedCategory}
           onChange={setSelectedCategory}
           options={categoryOptions}
-          emptyLabel="Tất cả danh mục"
+          emptyLabel="Tất cả hãng xe"
         />
         <FilterDropdown
-          label="Năm"
+          label="Năm sản xuất"
           value={selectedYear}
           onChange={setSelectedYear}
           options={yearOptions}
@@ -213,11 +215,12 @@ export const SearchFilterBar: React.FC = () => {
         />
       </div>
 
-      <button className={`${styles.filterCta} hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-[#2e3d83]/30 rounded-xl bg-gradient-to-r from-[#2e3d83] to-[#1e293b] border-0`} onClick={handleSearch}>
-        <svg className={styles.filterIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <span className={`${styles.filterSearchText} font-bold tracking-wide`}>Tìm kiếm</span>
+      <button 
+        className="w-full md:w-[180px] h-[64px] rounded-full text-white bg-gradient-to-r from-[#2e3d83] to-[#1e293b] text-lg font-extrabold flex items-center justify-center gap-2.5 shadow-lg shadow-[#2e3d83]/30 hover:shadow-[#2e3d83]/50 hover:scale-[1.02] active:scale-95 transition-all outline-none border-none shrink-0" 
+        onClick={handleSearch}
+      >
+        <Search size={22} strokeWidth={3} />
+        <span>Tìm Kiếm</span>
       </button>
     </div>
   );

@@ -11,17 +11,29 @@ export interface NavItem {
   label: string;
   url: string;
   isActive?: boolean;
+  isButton?: boolean;
 }
 
 const MENU_ITEMS: NavItem[] = [
   { id: '1', label: 'Trang chủ', url: '/', isActive: true },
   { id: '2', label: 'Xe đấu giá', url: '/auctions' },
-  { id: '3', label: 'Đăng bán xe', url: '/sell' },
+  { id: '3', label: 'Đăng bán xe', url: '/sell', isButton: true },
   { id: '4', label: 'Về chúng tôi', url: '/about' },
   { id: '5', label: 'Liên hệ', url: '/contact' },
 ];
 
 const NavLink = ({ item }: { item: NavItem }) => {
+  if (item.isButton) {
+    return (
+      <Link 
+        to={item.url}
+        className="flex items-center justify-center bg-[#f4c23d] hover:bg-[#ffcf4c] text-slate-900 font-extrabold px-6 py-2.5 rounded-full text-[15px] tracking-wide uppercase transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
+      >
+        {item.label}
+      </Link>
+    );
+  }
+
   return (
     <div className="relative flex flex-col items-center">
       <Link 

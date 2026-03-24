@@ -36,21 +36,21 @@ export const UserDashboard: React.FC = () => {
   const statCards = [
     {
       icon: '📦',
-      label: tp('userDashboard.pendingOrders'),
+      label: tp('userDashboard.pendingOrders', 'Đơn hàng chờ xử lý'),
       value: loadingStats ? '…' : pendingOrders,
       to: '/user/orders',
       highlight: pendingOrders > 0,
     },
     {
       icon: '❤️',
-      label: tp('userDashboard.watchlist'),
+      label: tp('userDashboard.watchlist', 'Xe đang theo dõi'),
       value: '—',
       to: '/user/watchlist',
       highlight: false,
     },
     {
       icon: '⚖️',
-      label: tp('userDashboard.bidHistory'),
+      label: tp('userDashboard.bidHistory', 'Lịch sử đấu giá'),
       value: '—',
       to: '/user/bids',
       highlight: false,
@@ -59,9 +59,9 @@ export const UserDashboard: React.FC = () => {
 
   return (
     <div className="w-full">
-      <h1 className="text-2xl font-bold text-slate-800 mb-2">{tp('userDashboard.title')}</h1>
+      <h1 className="text-2xl font-bold text-slate-800 mb-2">{tp('userDashboard.title', 'Bảng điều khiển')}</h1>
       <p className="text-slate-500 mb-8">
-        {tp('userDashboard.welcome')}, <strong className="text-slate-700">{user?.firstName} {user?.lastName}</strong>!
+        {tp('userDashboard.welcome', 'Chào mừng trở lại')}, <strong className="text-slate-700">{user?.firstName} {user?.lastName}</strong>!
       </p>
 
       {/* Stats Grid */}
@@ -71,7 +71,7 @@ export const UserDashboard: React.FC = () => {
             <div
               className={`flex flex-col items-center justify-center p-6 border rounded-2xl bg-white shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md ${card.highlight ? 'border-red-500' : 'border-slate-100'
                 }`}
-            >
+             >
               <span className="text-3xl mb-3">{card.icon}</span>
               <h3 className="text-sm font-medium text-slate-500 mb-1">{card.label}</h3>
               <p className={`text-2xl font-bold ${card.highlight ? 'text-red-500' : 'text-slate-800'}`}>

@@ -59,11 +59,31 @@ export const AdminDashboard: React.FC = () => {
   const formatVND = (v: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{tp('adminDashboard.title', 'Bảng điều khiển Admin')}</h1>
-        <p className="text-slate-500 mt-1">{tp('adminDashboard.subtitle', 'Tổng quan về hoạt động của nền tảng')}</p>
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-br from-[#1e293b] to-[#2e3d83] rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-black mb-2">Trung tâm Điều hành ODA Cấp Cao</h1>
+            <p className="text-blue-100 max-w-xl leading-relaxed">
+              Giám sát hệ thống, theo dõi lượt giao dịch và kiểm duyệt các hồ sơ đấu giá chờ công khai.
+            </p>
+          </div>
+          {stats.pending > 0 && (
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4 shadow-lg">
+              <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center animate-bounce shadow-lg shadow-amber-500/20">
+                <AlertCircle className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="font-bold text-amber-300">Cần Xử Lý Gấp</p>
+                <p className="text-sm font-medium">{stats.pending} hồ sơ xe đang chờ duyệt</p>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute left-1/4 bottom-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl translate-y-1/2 translate-x-1/2"></div>
       </div>
 
       {/* Stats Grid */}

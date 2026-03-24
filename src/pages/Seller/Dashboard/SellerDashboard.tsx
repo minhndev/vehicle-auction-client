@@ -1,182 +1,142 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sellerApi } from '../../../features/seller/api/sellerApi';
-import { usePageI18n } from '../../../i18n/usePageI18n';
-import type { ProductResponse } from '../../../types/index';
-import { Car, Clock, DollarSign, CheckCircle2, ChevronRight, Settings, AlertCircle, Plus, Activity } from 'lucide-react';
-
-const formatVND = (amount?: number) =>
-  amount
-    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
-    : '—';
+import { auctionApi } from '../../../features/bidding/api/auctionApi';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../../store';
+import { Car, Gavel, DollarSign, ArrowRight, Loader2, Activity } from 'lucide-react';
 
 export const SellerDashboard: React.FC = () => {
-  const { tp, getProductStatusLabel } = usePageI18n();
-  const [vehicles, setVehicles] = useState<ProductResponse[]>([]);
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  const [stats, setStats] = useState({
+    totalCars: 0,
+    activeAuctions: 0,
+    totalValue: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchVehicles();
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [vehicles, auctions] = await Promise.all([
+          sellerApi.getMyVehicles().catch(() => []),
+          auctionApi.getPublicAuctions({ size: 100, status: 'ACTIVE' }).catch(() => ({ content: [] }))
+        ]);
+
+        const myVehiclesList = Array.isArray(vehicles) ? vehicles : (vehicles as any).content || [];
+        const activeAuctionsList = Array.isArray((auctions as any)?.content) ? (auctions as any).content : [];
+
+        const myProductIds = new Set(myVehiclesList.map((v: any) => String(v.id)));
+        const myActiveAuctions = activeAuctionsList.filter((a: any) => myProductIds.has(String(a.productId)));
+
+        const estValue = myActiveAuctions.reduce((sum: number, a: any) => sum + (a.currentPrice || a.startPrice || 0), 0);
+
+        setStats({
+          totalCars: myVehiclesList.length,
+          activeAuctions: myActiveAuctions.length,
+          totalValue: estValue
+        });
+      } catch (err) {
+        console.error('Lỗi khi tải dữ liệu trang chủ Seller:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
   }, []);
 
-  const fetchVehicles = async () => {
-    try {
-      setLoading(true);
-      const data = await sellerApi.getMyVehicles();
-      const list = Array.isArray(data) ? data : (data as any)?.content || [];
-      // Sort to show newest first
-      const sorted = list.sort((a: any, b: any) => 
-        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-      );
-      setVehicles(sorted);
-    } catch (err) {
-      // silent fail
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'PENDING': 
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider rounded-md border border-amber-200"><Clock size={12}/>{getProductStatusLabel(status)}</span>;
-      case 'APPROVED': 
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider rounded-md border border-emerald-200"><CheckCircle2 size={12}/>{getProductStatusLabel(status)}</span>;
-      case 'IN_AUCTION': 
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider rounded-md border border-indigo-200"><Activity size={12}/>{getProductStatusLabel(status)}</span>;
-      case 'REJECTED': 
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 text-xs font-bold uppercase tracking-wider rounded-md border border-rose-200"><AlertCircle size={12}/>{getProductStatusLabel(status)}</span>;
-      case 'SOLD': 
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-md border border-slate-300"><DollarSign size={12}/>{getProductStatusLabel(status)}</span>;
-      default: 
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider rounded-md border border-slate-200">{status || tp('sellerDashboard.notAvailable', 'Không có')}</span>;
-    }
-  };
-
-  const activeCount = vehicles.filter(v => v.status === 'IN_AUCTION').length;
-  const pendingCount = vehicles.filter(v => v.status === 'PENDING').length;
-  const soldCount = vehicles.filter(v => v.status === 'SOLD').length;
-  // Giả sử doanh thu là tổng startPrice (hoặc winningPrice nếu có API detail) của xe đã SOLD
-  const totalSales = vehicles.filter(v => v.status === 'SOLD').reduce((sum, v) => sum + (v.startPrice || 0), 0);
+  const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{tp('sellerDashboard.title', 'Bảng điều khiển Người Bán')}</h1>
-          <p className="text-slate-500 mt-1">{tp('sellerDashboard.subtitle', 'Quản lý xe và theo dõi hoạt động bán hàng')}</p>
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-black mb-4">Xin chào, {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'nhà phân phối'}</h1>
+          <p className="text-slate-300 max-w-xl text-lg leading-relaxed mb-8">
+            Chào mừng trở lại V-Auction. Tại đây, bạn có thể dễ dàng quản lý kho xe, khởi tạo và theo dõi các phiên đấu giá trực tuyến.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <Link to="/seller/products/new" className="px-6 py-3 bg-emerald-500 text-white hover:bg-emerald-400 font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+              <Car size={20} /> Đăng Ký Kiểm Định Xe Mới
+            </Link>
+            <Link to="/seller/auctions/new" className="px-6 py-3 bg-white/10 text-white hover:bg-white/20 font-bold rounded-xl transition-all backdrop-blur-md flex items-center gap-2">
+              <Gavel size={20} /> Mở Phiên Đấu Giá
+            </Link>
+          </div>
         </div>
-        <Link 
-          to="/seller/products/new" 
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2e3d83] hover:bg-[#1e293b] text-white font-semibold rounded-xl shadow-md shadow-[#2e3d83]/20 active:scale-95 transition-all"
-        >
-          <Plus size={20} />
-          {tp('sellerDashboard.newVehicle', 'Đăng bán xe mới')}
-        </Link>
+
+        {/* Decorative elements */}
+        <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute left-1/2 bottom-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-y-1/2 translate-x-1/2"></div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Active in Auction */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-500">
-            <Car size={64} className="text-[#2e3d83]" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h3 className="text-slate-500 font-bold uppercase tracking-widest text-sm">Tổng xe đang quản lý</h3>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform"><Car size={24} /></div>
           </div>
-          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{tp('sellerDashboard.inAuction', 'Đang đấu giá')}</p>
-          <h3 className="text-3xl font-black text-slate-800 mt-2">{loading ? '...' : activeCount}</h3>
+          <div className="relative z-10">
+            {loading ? <Loader2 className="animate-spin text-slate-300" size={32} /> : <p className="text-4xl font-black text-slate-800">{stats.totalCars}</p>}
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
         </div>
 
-        {/* Pending Approval */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-500">
-            <Clock size={64} className="text-amber-500" />
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h3 className="text-slate-500 font-bold uppercase tracking-widest text-sm">Đấu giá đang diễn ra</h3>
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform"><Activity size={24} /></div>
           </div>
-          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{tp('sellerDashboard.pending', 'Chờ duyệt')}</p>
-          <h3 className={`text-3xl font-black mt-2 ${pendingCount > 0 ? 'text-amber-500' : 'text-slate-800'}`}>
-            {loading ? '...' : pendingCount}
-          </h3>
+          <div className="relative z-10 flex items-baseline gap-2">
+            {loading ? <Loader2 className="animate-spin text-slate-300" size={32} /> : <p className="text-4xl font-black text-slate-800">{stats.activeAuctions}</p>}
+            {!loading && <span className="text-emerald-500 font-bold text-sm bg-emerald-50 px-2 rounded-full">LIVE</span>}
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
         </div>
 
-        {/* Total Revenue */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-500">
-            <DollarSign size={64} className="text-emerald-500" />
+        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h3 className="text-slate-500 font-bold uppercase tracking-widest text-sm">Ước tính Doanh Thu</h3>
+            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform"><DollarSign size={24} /></div>
           </div>
-          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{tp('sellerDashboard.totalRevenue', 'Doanh thu')}</p>
-          <h3 className="text-2xl font-black text-emerald-600 mt-3 truncate">{loading ? '...' : formatVND(totalSales)}</h3>
-        </div>
-
-        {/* Sold Vehicles */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-500">
-            <CheckCircle2 size={64} className="text-indigo-500" />
+          <div className="relative z-10">
+            {loading ? <Loader2 className="animate-spin text-slate-300" size={32} /> : <p className="text-3xl font-black text-[#f4c23d]">{formatVND(stats.totalValue)}</p>}
           </div>
-          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{tp('sellerDashboard.soldVehicles', 'Đã bán hoàn tất')}</p>
-          <h3 className="text-3xl font-black text-slate-800 mt-2">{loading ? '...' : soldCount}</h3>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-yellow-500"></div>
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Car size={20} className="text-[#2e3d83]"/>
-            {tp('sellerDashboard.recentVehicles', 'Danh sách xe gần đây')}
-          </h2>
-          <Link to="/seller/products" className="text-sm font-bold text-[#2e3d83] hover:underline flex items-center gap-1">
-            {tp('sellerDashboard.viewAll', 'Xem tất cả')} <ChevronRight size={16} />
+      {/* Quick Access List */}
+      <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 p-8">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-bold text-slate-800">Truy Cập Nhanh</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link to="/seller/products" className="group flex items-center justify-between p-6 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-[#10b981] hover:shadow-lg hover:shadow-emerald-500/10 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><Car size={24} /></div>
+              <div>
+                <h4 className="font-bold text-slate-800 group-hover:text-[#10b981] transition-colors">Kho Xe Của Bạn</h4>
+                <p className="text-sm text-slate-500 font-medium mt-1">Quản lý hồ sơ, thêm xe mới</p>
+              </div>
+            </div>
+            <ArrowRight className="text-slate-300 group-hover:text-[#10b981] group-hover:translate-x-1 transition-all" />
           </Link>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-bold">
-                <th className="px-6 py-4">{tp('sellerDashboard.vehicle', 'Sản phẩm')}</th>
-                <th className="px-6 py-4">{tp('sellerDashboard.status', 'Trạng thái')}</th>
-                <th className="px-6 py-4">{tp('sellerDashboard.suggestedPrice', 'Giá khởi điểm')}</th>
-                <th className="px-6 py-4">{tp('sellerDashboard.createdDate', 'Ngày đăng')}</th>
-                <th className="px-6 py-4 text-right">{tp('sellerDashboard.action', 'Thao tác')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 font-medium">Đang tải dữ liệu...</td>
-                </tr>
-              ) : vehicles.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 font-medium">Chưa có xe nào. Hãy đăng bán chiếc xe đầu tiên!</td>
-                </tr>
-              ) : (
-                vehicles.slice(0, 5).map(v => (
-                  <tr key={v.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <strong className="text-slate-800 block text-sm">{v.name || `${v.brand} ${v.model}`}</strong>
-                      <span className="text-xs text-slate-400">ID: {v.id?.slice(0, 8)}</span>
-                    </td>
-                    <td className="px-6 py-4">{getStatusBadge(v.status)}</td>
-                    <td className="px-6 py-4 font-bold text-[#2e3d83]">{formatVND(v.startPrice)}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {v.createdAt ? new Date(v.createdAt).toLocaleDateString('vi-VN') : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {v.status === 'IN_AUCTION' || v.status === 'SOLD' ? (
-                        <button title="Khóa chỉnh sửa" disabled className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 font-semibold rounded-lg text-xs cursor-not-allowed">
-                          <Settings size={14} /> Quản lý
-                        </button>
-                      ) : (
-                        <Link to={`/seller/products/${v.id}/edit`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs hover:bg-indigo-100 transition-colors">
-                          <Settings size={14} /> Quản lý
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <Link to="/seller/auctions" className="group flex items-center justify-between p-6 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-[#10b981] hover:shadow-lg hover:shadow-emerald-500/10 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><Gavel size={24} /></div>
+              <div>
+                <h4 className="font-bold text-slate-800 group-hover:text-[#10b981] transition-colors">Quản Lý Phiên Đấu Giá</h4>
+                <p className="text-sm text-slate-500 font-medium mt-1">Theo dõi tiến độ, tạo phiên</p>
+              </div>
+            </div>
+            <ArrowRight className="text-slate-300 group-hover:text-[#10b981] group-hover:translate-x-1 transition-all" />
+          </Link>
         </div>
       </div>
     </div>

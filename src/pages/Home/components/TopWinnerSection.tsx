@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { auctionApi } from '../../../features/bidding/api/auctionApi';
 import type { AuctionResponse } from '../../../types';
-import styles from '../Home.module.css';
 
 interface Winner {
   id: string;
@@ -65,28 +64,27 @@ const normalizeWinners = (auctions: AuctionResponse[]): Winner[] => {
 
 const TopWinnerCard: React.FC<{ data: Winner }> = ({ data }) => {
   return (
-    <div className={styles.topWinnerCard}>
-      <div className={styles.topWinnerPill}>
+    <div className="relative flex flex-col items-center group w-64 pb-8">
+      <div className="w-full aspect-[2.5/4] rounded-full border-8 border-white bg-slate-100 shadow-xl overflow-hidden relative transform transition-all duration-500 group-hover:-translate-y-4 group-hover:shadow-3xl group-hover:border-[#2e3d83]/10">
         <img 
           src={data.image} 
           alt={data.name} 
-          className={styles.topWinnerImage} 
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
-        
-        <div className={styles.topWinnerInfo}>
-          <h3 className={styles.topWinnerName}>
-            {data.name}
-          </h3>
-          <p className={styles.topWinnerId}>
-            {maskId(data.id)} · {data.wins} phiên thắng · {formatVND(data.totalValue)}
-          </p>
+        <div className="absolute inset-x-0 bottom-0 py-8 px-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center text-center">
+          <h3 className="text-white font-black text-xl mb-1 truncate w-full px-2">{data.name}</h3>
+          <p className="text-white/80 text-sm font-medium tracking-wide">{maskId(data.id)}</p>
+          <div className="mt-3 bg-[#f4c23d] text-slate-900 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+            {formatVND(data.totalValue)}
+          </div>
+          <div className="text-white text-xs mt-2 opacity-75 font-semibold">{data.wins} Lần Thắng</div>
         </div>
       </div>
-
-      <button className={styles.topWinnerBagButton}>
-        <ShoppingBag className={styles.topWinnerBagIcon} size={24} strokeWidth={2} color="#ffffff" />
+      
+      {/* Floating Action Badge */}
+      <button className="absolute bottom-2 w-16 h-16 bg-white rounded-full shadow-2xl flex items-center justify-center border border-slate-100 text-[#2e3d83] transition-all transform hover:scale-110 hover:bg-[#2e3d83] hover:text-white z-10">
+        <ShoppingBag size={24} strokeWidth={2.5} />
       </button>
-
     </div>
   );
 };
@@ -116,32 +114,29 @@ const TopWinnerSection: React.FC = () => {
   }, []);
 
   return (
-    <section className={`${styles.section} ${styles.sectionLight} ${styles.topWinnerSection}`}>
-      <div className={styles.container}>
-      <div className={styles.sectionColumnCenter}>
+    <section className="w-full bg-slate-50 py-24 pb-32 border-t border-slate-200">
+      <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
         
         {/* Header Title */}
-        <div className={`${styles.titleBlock} ${styles.topWinnerTitleBlock}`}>
-          <h2 className={`${styles.title} ${styles.topWinnerTitle}`}>
-            Người thắng nổi bật
+        <div className="flex flex-col items-center text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-[#2e3d83] mb-6 tracking-tight">
+            Người Thắng <span className="text-[#f4c23d]">Nổi Bật</span>
           </h2>
-          <div className={styles.divider}>
-            <div className={styles.dividerLine}></div>
-            <div className={styles.dividerDot}></div>
+          <div className="flex items-center justify-center relative w-64 h-8 mb-4">
+            <div className="absolute inset-0 top-1/2 -translate-y-1/2 h-0.5 bg-slate-300"></div>
+            <div className="w-8 h-8 rounded-full bg-slate-900 relative z-10 shadow-md"></div>
           </div>
         </div>
 
         {/* Carousel Content */}
-        <div className={styles.topWinnerCarousel}>
-          <button className={`${styles.carouselArrowButton} ${styles.carouselArrowLeft}`}>
-            <svg width="26" height="12" viewBox="0 0 26 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.iconBlack}>
-              <path d="M6 1L1 6M1 6L6 11M1 6H25" />
-            </svg>
+        <div className="flex w-full items-center justify-center gap-4 lg:gap-8">
+          <button className="hidden md:flex flex-shrink-0 w-14 h-14 bg-white rounded-full shadow-lg border border-slate-100 items-center justify-center text-slate-400 hover:text-[#2e3d83] hover:scale-110 transition-all">
+            <ChevronLeft size={28} />
           </button>
 
-          <div className={styles.topWinnerCards}>
+          <div className="flex flex-wrap justify-center gap-6 lg:gap-10">
             {winners.length === 0 ? (
-              <p className={styles.activityEmpty}>Chưa có dữ liệu người thắng để hiển thị.</p>
+              <p className="py-20 text-slate-500 font-bold">Đang tải dữ liệu người thắng...</p>
             ) : (
               winners.map((winner) => (
                 <TopWinnerCard key={winner.id} data={winner} />
@@ -149,15 +144,12 @@ const TopWinnerSection: React.FC = () => {
             )}
           </div>
 
-          <button className={`${styles.carouselArrowButton} ${styles.carouselArrowRight}`}>
-            <svg width="26" height="12" viewBox="0 0 26 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.iconBlack}>
-              <path d="M20 1L25 6M25 6L20 11M25 6H1" />
-            </svg>
+          <button className="hidden md:flex flex-shrink-0 w-14 h-14 bg-white rounded-full shadow-lg border border-slate-100 items-center justify-center text-slate-400 hover:text-[#2e3d83] hover:scale-110 transition-all">
+            <ChevronRight size={28} />
           </button>
           
         </div>
 
-      </div>
       </div>
     </section>
   );

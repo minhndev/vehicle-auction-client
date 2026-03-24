@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { CalendarDays, Settings2, Droplets, Gauge, AlertCircle, Clock, Trophy, CheckCircle2, MapPin, ImageIcon, ArrowLeft, Send, X } from 'lucide-react';
 import { catalogApi } from '../../api/catalogApi';
 import { paymentApi } from '../../api/paymentApi';
 import { auctionApi } from '../../features/bidding/api/auctionApi';
@@ -324,11 +325,33 @@ const getDisplayRank = (bid: BidResponse, index: number): number => {
   return index + 1;
 };
 
-const getRankBadgeClass = (rank: number, css: Record<string, string>): string => {
-  if (rank === 1) return `${css.rankBadge} ${css.rankGold}`;
-  if (rank === 2) return `${css.rankBadge} ${css.rankSilver}`;
-  if (rank === 3) return `${css.rankBadge} ${css.rankBronze}`;
-  return `${css.rankBadge} ${css.rankDefault}`;
+// Removed getRankBadgeClass as it used old CSS modules
+
+const CountdownDisplay: React.FC<{
+  startTime?: string | null;
+  endTime?: string | null;
+  auctionHasStarted: boolean;
+  isEnded: boolean;
+  extensionBadgeMinutes: number;
+}> = ({ startTime, endTime, auctionHasStarted, isEnded, extensionBadgeMinutes }) => {
+  const startCountdown = useCountdown(startTime ?? '');
+  const endCountdown = useCountdown(endTime ?? '');
+
+  return (
+    <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/10 grid grid-cols-2 gap-4">
+      <div className="flex flex-col">
+        <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">Thời Gian Bắt Đầu</span>
+        <span className="font-mono text-lg font-bold">{auctionHasStarted ? 'Đã bắt đầu' : (startCountdown ? `${startCountdown.hours}h ${startCountdown.minutes}m ${startCountdown.seconds}s` : '--')}</span>
+      </div>
+      <div className="flex flex-col border-l border-white/10 pl-4 relative">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-bold text-[#f4c23d] uppercase tracking-wider flex items-center gap-1"><Clock size={12}/> Kết Thúc</span>
+          {extensionBadgeMinutes > 0 && <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-sm animate-pulse">+{extensionBadgeMinutes}m HT</span>}
+        </div>
+        <span className="font-mono text-xl font-black text-white">{isEnded ? 'Đã kết thúc' : (endCountdown ? `${endCountdown.hours}h ${endCountdown.minutes}m ${endCountdown.seconds}s` : '--')}</span>
+      </div>
+    </div>
+  );
 };
 
 export const AuctionDetail: React.FC = () => {
@@ -357,6 +380,7 @@ export const AuctionDetail: React.FC = () => {
   const [checkingDeposit, setCheckingDeposit] = useState(false);
   const [recentBids, setRecentBids] = useState<BidResponse[]>([]);
   const [selectedImage, setSelectedImage] = useState<string>('');
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'auction'>('overview');
   const bidsFailCountRef = useRef(0);
   const bidsCooldownUntilRef = useRef(0);
@@ -818,13 +842,6 @@ export const AuctionDetail: React.FC = () => {
     }
   }, [mainImage]);
 
-  const statusToneClass =
-    auction?.status === 'ACTIVE'
-      ? styles.statusLive
-      : auction?.status === 'UPCOMING' || auction?.status === 'SCHEDULED'
-        ? styles.statusUpcoming
-        : styles.statusEnded;
-
   const statusLabel =
     auction?.status === 'ACTIVE'
       ? tp('auctionDetail.statusActive')
@@ -839,19 +856,18 @@ export const AuctionDetail: React.FC = () => {
     || auction?.winnerId
     || '';
 
-  const rankedBids = sortBidsByRank(recentBids);
-  const userRankIndex = rankedBids.findIndex((bid) => normalize(bid.bidderId) === normalize(currentUserId));
+  const rankedBids = useMemo(() => sortBidsByRank(recentBids), [recentBids]);
+  const userRankIndex = useMemo(() => rankedBids.findIndex((bid) => normalize(bid.bidderId) === normalize(currentUserId)), [rankedBids, currentUserId]);
   const userRank = userRankIndex >= 0 ? getDisplayRank(rankedBids[userRankIndex], userRankIndex) : null;
   const auctionHasStarted = auction?.startTime ? new Date(auction.startTime).getTime() <= Date.now() : false;
-  const startCountdown = useCountdown(auction?.startTime ?? '');
-  const endCountdown = useCountdown(auction?.endTime ?? '');
+
   const manufactureYear = product?.manufactureYear ?? product?.year;
   const derivedFromName = deriveVehicleFromName(auction?.productName || product?.name);
   const resolvedBrand = product?.brand || derivedFromName.brand;
   const resolvedModel = product?.model || derivedFromName.model;
   const resolvedYear = manufactureYear ?? derivedFromName.manufactureYear;
 
-  const technicalSpecs: Array<{ label: string; value: string }> = [
+  const technicalSpecs = useMemo(() => [
     { label: 'Tên xe', value: auction?.productName || product?.name || '—' },
     { label: 'Số VIN', value: product?.vinNumber || '—' },
     { label: 'Hãng', value: resolvedBrand || '—' },
@@ -864,14 +880,14 @@ export const AuctionDetail: React.FC = () => {
     { label: 'Nhiên liệu', value: product?.fuelType || '—' },
     { label: 'Số ODO', value: formatMileage(product?.mileage) },
     { label: 'Mô tả', value: product?.description || '—' },
-  ];
+  ], [auction?.productName, product, resolvedBrand, resolvedModel, resolvedYear]);
 
-  const rankingRows: Array<BidResponse | null> = recentBids.length >= RANKING_VISIBLE_ROWS
+  const rankingRows = useMemo(() => recentBids.length >= RANKING_VISIBLE_ROWS
     ? rankedBids
     : [
       ...rankedBids,
       ...Array.from({ length: RANKING_VISIBLE_ROWS - rankedBids.length }, () => null),
-    ];
+    ], [recentBids.length, rankedBids]);
 
   if (loading) return <div className={styles.loading}>{tp('auctionDetail.loading')}</div>;
 
@@ -888,342 +904,306 @@ export const AuctionDetail: React.FC = () => {
   }
 
   return (
-    <div className={styles.container}>
-      {bidSuccessPopup && (
-        <div className={styles.popupAlertWrap}>
-          <Alert
-            variant="success"
-            title="Thành công"
-            content={bidSuccessPopup}
-            onClose={() => setBidSuccessPopup('')}
-          />
-        </div>
-      )}
-
-      {extensionPopup && (
-        <div className={styles.popupAlertWrap} style={{ top: 154 }}>
-          <Alert
-            variant="warning"
-            title={tp('auctionDetail.liveExtensionTitle')}
-            content={extensionPopup}
-            onClose={() => setExtensionPopup('')}
-          />
-        </div>
-      )}
-
-      <div className={styles.headerRow}>
-        <Link to="/auctions" className={styles.backLink}>
-          ← {tp('auctionDetail.backToList')}
-        </Link>
-        <div className={styles.liveState}>
-          <span className={`${styles.dot} ${isConnected ? styles.dotOn : styles.dotOff}`} />
-          {isConnected ? tp('auctionDetail.autoUpdating') : tp('auctionDetail.resyncing')}
-        </div>
+    <div className="min-h-screen bg-slate-50 pt-24 pb-20 font-sans text-slate-800">
+      
+      {/* 1. NOTIFICATIONS & ALERTS */}
+      <div className="fixed top-24 right-4 z-50 flex flex-col gap-3 w-full max-w-sm pointer-events-none">
+        {bidSuccessPopup && (
+          <div className="pointer-events-auto shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-right-8">
+            <Alert variant="success" title="Thành công" content={bidSuccessPopup} onClose={() => setBidSuccessPopup('')} />
+          </div>
+        )}
+        {extensionPopup && (
+          <div className="pointer-events-auto shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-right-8">
+            <Alert variant="warning" title={tp('auctionDetail.liveExtensionTitle')} content={extensionPopup} onClose={() => setExtensionPopup('')} />
+          </div>
+        )}
+        {(latestMessage || notification?.content) && (
+          <div className="pointer-events-auto bg-[#1e293b] text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-8">
+             <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">🔔</div>
+             <p className="font-medium text-sm leading-relaxed">{notification?.content ?? latestMessage}</p>
+          </div>
+        )}
       </div>
 
-      {(latestMessage || notification?.content) && (
-        <div className={styles.toast}>
-          🔔 {notification?.content ?? latestMessage}
-        </div>
-      )}
-
-      <div className={styles.detailGrid}>
-        <div className={styles.gallerySection}>
-          <img
-            src={selectedImage || mainImage}
-            alt={auction.productName ?? 'Xe đấu giá'}
-            className={styles.mainImage}
-          />
-          {allImages && allImages.length > 1 && (
-            <div className={styles.thumbnailGrid}>
-              {allImages.slice(0, 4).map((url, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={`${styles.thumbnailButton} ${selectedImage === url ? styles.thumbnailActive : ''}`}
-                  onClick={() => setSelectedImage(url)}
-                >
-                  <img src={url} alt={`Ảnh ${idx + 1}`} className={styles.thumbnail} />
-                </button>
-              ))}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
+        
+        {/* 2. HEADER */}
+        <div className="flex items-center justify-between mb-8">
+          <Link to="/auctions" className="inline-flex items-center gap-2 text-slate-500 hover:text-[#2e3d83] font-bold tracking-wide uppercase text-sm transition-colors py-2 px-4 rounded-full hover:bg-slate-100">
+            <ArrowLeft size={16} strokeWidth={2.5} /> {tp('auctionDetail.backToList')}
+          </Link>
+          <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-sm">
+            <div className="relative flex h-3 w-3">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
             </div>
-          )}
-
-          <div className={styles.tabsRow}>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              {tp('auctionDetail.overview')}
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'specs' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('specs')}
-            >
-              {tp('auctionDetail.specs')}
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'auction' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('auction')}
-            >
-              {tp('auctionDetail.auctionInfoTab')}
-            </button>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              {isConnected ? tp('auctionDetail.autoUpdating') : tp('auctionDetail.resyncing')}
+            </span>
           </div>
-
-          {activeTab === 'overview' && (
-            <div className={styles.vehicleSpecs}>
-              <h3 className={styles.specsTitle}>{tp('auctionDetail.overviewTitle')}</h3>
-              <ul className={styles.specsList}>
-                <li><strong>{tp('auctionDetail.startPrice')}:</strong> {formatVND(auction.startPrice)}</li>
-                <li><strong>{tp('auctionDetail.currentPrice')}:</strong> {formatVND(displayPrice)}</li>
-                <li><strong>{tp('auctionDetail.bidStep')}:</strong> {formatVND(auction.bidIncrement)}</li>
-                <li><strong>{tp('auctionDetail.deposit')}:</strong> {formatVND(auction.depositAmount)}</li>
-                {auction.startTime && <li><strong>{tp('auctionDetail.startTime')}:</strong> {formatDateTime(auction.startTime)}</li>}
-                {auction.endTime && <li><strong>{tp('auctionDetail.endTime')}:</strong> {formatDateTime(auction.endTime)}</li>}
-              </ul>
-            </div>
-          )}
-
-          {activeTab === 'specs' && (
-            <div className={styles.vehicleSpecs}>
-              <h3 className={styles.specsTitle}>Thông số kỹ thuật</h3>
-              <ul className={styles.specsList}>
-                {technicalSpecs.map((spec) => (
-                  <li key={spec.label}>
-                    <strong>{spec.label}:</strong> {spec.value}
-                  </li>
-                ))}
-              </ul>
-              {!product && !productFetchError && (
-                <p className={styles.specHint}>
-                  Chưa tải được đầy đủ dữ liệu sản phẩm từ dịch vụ catalog. Các thông tin khả dụng từ phiên đấu giá vẫn đang được hiển thị.
-                </p>
-              )}
-              {productFetchError && (
-                <p className={styles.specHint} style={{ color: '#ef4444', fontWeight: 500 }}>
-                  {productFetchError} (Hệ thống chỉ hiển thị thông tin trích xuất tạm thời)
-                </p>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'auction' && (
-            <div className={styles.vehicleSpecs}>
-              <h3 className={styles.specsTitle}>{tp('auctionDetail.auctionInfo')}</h3>
-              <ul className={styles.metaList}>
-                {auction.startTime && (
-                  <li><strong>{tp('auctionDetail.startTime')}:</strong> {new Date(auction.startTime).toLocaleString('vi-VN')}</li>
-                )}
-                {auction.endTime && (
-                  <li><strong>{tp('auctionDetail.endTime')}:</strong> {new Date(auction.endTime).toLocaleString('vi-VN')}</li>
-                )}
-                {winnerDisplay && (
-                  <li><strong>{tp('auctionDetail.winner')}:</strong> {winnerDisplay}</li>
-                )}
-                {auction.createdBy && (
-                  <li><strong>{tp('auctionDetail.createdBy')}:</strong> {auction.createdBy}</li>
-                )}
-              </ul>
-            </div>
-          )}
-
-          <div className={styles.vehicleSpecs}>
-            <h3 className={styles.specsTitle}>{tp('auctionDetail.bidNotes')}</h3>
-            <ul className={styles.metaList}>
-              <li><strong>{tp('auctionDetail.noteCondition')}:</strong> {tp('auctionDetail.noteConditionValue')}</li>
-              <li><strong>{tp('auctionDetail.noteRecommendation')}:</strong> {tp('auctionDetail.noteRecommendationValue')}</li>
-              <li><strong>{tp('auctionDetail.noteRealtime')}:</strong> {tp('auctionDetail.noteRealtimeValue')}</li>
-            </ul>
-          </div>
-
         </div>
 
-        <div className={styles.biddingSection}>
-          <div className={styles.headerInfo}>
-            <h1 className={styles.title}>{auction.productName}</h1>
-            <p className={styles.subtitle}>{tp('auctionDetail.subtitle')}</p>
-            <span className={`${styles.statusBadge} ${statusToneClass}`}>{statusLabel}</span>
-            {isDepositVerified && (
-              <span className={styles.depositVerifiedBadge}>{tp('auctionDetail.depositPaid')}</span>
-            )}
-            <div className={styles.summaryChips}>
-              <span className={styles.chip}>{tp('auctionDetail.auctionCode')}: {String(auction.id).slice(0, 8)}</span>
-              <span className={styles.chip}>{tp('auctionDetail.bidStep')}: {formatVND(auction.bidIncrement)}</span>
-              <span className={styles.chip}>{tp('auctionDetail.deposit')}: {formatVND(auction.depositAmount)}</span>
-            </div>
-          </div>
-
-          <div className={`${styles.sellerInfo} ${styles.rankingCard}`}>
-            <div className={styles.activityHeader}>
-              <h3 className={styles.specsTitle}>{tp('auctionDetail.rankingTitle')}</h3>
-              <span className={styles.activityCount}>{tp('auctionDetail.recentBids', { count: rankedBids.length })}</span>
-            </div>
-            <div className={styles.activityFrame}>
-              <ul className={styles.activityList}>
-                {rankingRows.map((bid, index) => (
-                  <li
-                    key={bid ? getBidIdentity(bid) : `ranking-empty-${index + 1}`}
-                    className={`${styles.activityItem} ${!bid ? styles.activityPlaceholder : ''}`}
-                  >
-                    <div>
-                      <p className={styles.activityPrice}>
-                        <span className={getRankBadgeClass(bid ? getDisplayRank(bid, index) : index + 1, styles)}>
-                          TOP {bid ? getDisplayRank(bid, index) : index + 1}
-                        </span>
-                        {bid ? formatVND(bid.amount) : '---'}
-                      </p>
-                      <p className={styles.activityMeta}>
-                        {bid
-                          ? `${tp('auctionDetail.bidderLabel')}: ${bid.bidderMask ?? bid.bidderId?.slice(0, 8) ?? tp('auctionDetail.anonymous')}`
-                          : tp('auctionDetail.waitingBid')}
-                      </p>
-                    </div>
-                    <span className={styles.activityTime}>{bid ? formatDateTime(bid.createdAt) : '--:--'}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className={`${styles.bidBox} ${styles.auctionCard}`}>
-            <div className={styles.timerPanel}>
-              <div className={styles.timerItem}>
-                <div className={styles.timerLabelGroup}>
-                  <span className={styles.timerLabel}>{tp('auctionDetail.startCountdown')}</span>
+        {/* 3. SPLIT LAYOUT */}
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+          
+          {/* LEFT COLUMN: Gallery & Specs (60%) */}
+          <div className="flex-1 w-full lg:w-[60%] flex flex-col gap-8">
+            
+            {/* Gallery */}
+            <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden relative">
+              <div 
+                className="relative aspect-[16/10] bg-slate-900 overflow-hidden group cursor-zoom-in"
+                onClick={() => setZoomedImage(selectedImage || mainImage)}
+              >
+                <img src={selectedImage || mainImage} alt={auction.productName ?? 'Xe đấu giá'} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
+                
+                {/* Verified Badge */}
+                <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 z-10 shadow-lg border border-white/10">
+                  <ImageIcon size={14} /> V-Auction Verified
                 </div>
-                {auctionHasStarted ? (
-                  <span className={styles.timerItemEnded}>{tp('auctionDetail.started')}</span>
-                ) : startCountdown ? (
-                  <span className={styles.timerValue}>
-                    {startCountdown.hours}h {startCountdown.minutes}m {startCountdown.seconds}s
-                  </span>
-                ) : (
-                  <span className={styles.timerValue}>—</span>
-                )}
-              </div>
 
-              <div className={styles.timerItem}>
-                <div className={styles.timerLabelGroup}>
-                  <span className={styles.timerLabel}>{tp('auctionDetail.endCountdown')}</span>
-                  {extensionBadgeMinutes > 0 && (
-                    <span className={styles.extensionBadge}>{tp('auctionDetail.extendedMinutes', { minutes: extensionBadgeMinutes })}</span>
-                  )}
-                </div>
-                {isEnded ? (
-                  <span className={styles.endedText}>{tp('auctionDetail.statusEnded')}</span>
-                ) : endCountdown ? (
-                  <span className={styles.timerValue}>
-                    {endCountdown.hours}h {endCountdown.minutes}m {endCountdown.seconds}s
-                  </span>
-                ) : (
-                  <span className={styles.timerValue}>—</span>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.priceRow}>
-              <div className={styles.pricePrimary}>
-                <p className={styles.priceLabel}>{tp('auctionDetail.currentPrice')}</p>
-                <p className={styles.currentPrice}>{formatVND(displayPrice)}</p>
-              </div>
-              <div className={styles.priceMetaBlock}>
-                <p className={styles.bidsCount}>{tp('auctionDetail.startPrice')}</p>
-                <p className={styles.startPrice}>{formatVND(auction.startPrice)}</p>
-              </div>
-            </div>
-
-            {auction.bidIncrement && (
-              <p className={styles.metaLine}>
-                {tp('auctionDetail.minBidStep')}: <strong>{formatVND(auction.bidIncrement)}</strong>
-                &nbsp;|&nbsp;
-                {tp('auctionDetail.deposit')}: <strong>{formatVND(auction.depositAmount)}</strong>
-              </p>
-            )}
-
-            <div className={styles.actionRow}>
-              {!isEnded && isAuthenticated ? (
-                <div className={styles.bidForm}>
-                  {!isDepositVerified && !checkingDeposit && (
-                    <div className={styles.metaLine}>
-                      {tp('auctionDetail.needDeposit')}
-                    </div>
-                  )}
-                  {checkingDeposit ? (
-                    <Button variant="secondary" size="lg" className={styles.fullWidthBtn} disabled>
-                      {tp('auctionDetail.checkingDeposit')}
-                    </Button>
-                  ) : isDepositVerified ? (
-                    <>
-                      <div className={styles.bidPresetBlock}>
-                        <div className={styles.topRankHint}>
-                          {userRank ? tp('auctionDetail.topRank', { rank: userRank }) : tp('auctionDetail.notRanked')}
-                        </div>
-                        <p className={styles.stepLabel}>{tp('auctionDetail.chooseBidLevel')}</p>
-                        <div className={styles.stepOptions}>
-                          {stepOptions.map((step) => {
-                            const stepAmount = displayPrice + (bidStepValue * step);
-                            return (
-                              <button
-                                key={step}
-                                type="button"
-                                className={`${styles.stepBtn} ${selectedBidStep === step ? styles.stepBtnActive : ''}`}
-                                onClick={() => setSelectedBidStep(step)}
-                              >
-                                {tp('auctionDetail.plusStep', { step, amount: formatVND(stepAmount) })}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <Button
-                          variant="primary"
-                          size="lg"
-                          onClick={handlePlaceBid}
-                          disabled={bidLoading}
-                          className={styles.fullWidthBtn}
-                        >
-                          {bidLoading ? tp('auctionDetail.placing') : tp('auctionDetail.placeBid', { amount: formatVND(selectedBidAmount) })}
-                        </Button>
-                      </div>
-                      {bidError && (
-                        <p className={styles.errorText}>{bidError}</p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="primary"
-                        size="lg"
-                        onClick={handleDeposit}
-                        disabled={depositLoading}
-                        className={styles.fullWidthBtn}
+                {/* Floating Thumbnails (Vertical) */}
+                {allImages && allImages.length > 1 && (
+                  <div className="absolute top-1/2 -translate-y-1/2 right-4 flex flex-col gap-3 py-2 z-10 max-h-[90%] overflow-y-auto custom-scrollbar pr-1 hidden md:flex">
+                    {allImages.slice(0, 6).map((url, idx) => (
+                      <button 
+                        key={idx} 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); setSelectedImage(url); }} 
+                        className={`relative w-16 h-16 xl:w-20 xl:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 shadow-lg shrink-0 ${selectedImage === url ? 'border-[#f4c23d] scale-110 shadow-[#f4c23d]/40' : 'border-white/20 opacity-70 hover:opacity-100 hover:scale-105'}`}
                       >
-                        {depositLoading ? tp('auctionDetail.startingPayment') : tp('auctionDetail.depositToJoin')}
-                      </Button>
-                      {depositError && (
-                        <p className={styles.errorText}>{depositError}</p>
-                      )}
-                    </>
-                  )}
+                        <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Mobile horizontal scroll for thumbnails */}
+                {allImages && allImages.length > 1 && (
+                  <div className="absolute bottom-4 left-0 w-full px-4 flex gap-3 overflow-x-auto no-scrollbar md:hidden z-10">
+                     {allImages.slice(0, 6).map((url, idx) => (
+                      <button 
+                        key={idx} 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); setSelectedImage(url); }} 
+                        className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-300 shadow-md shrink-0 ${selectedImage === url ? 'border-[#f4c23d] scale-105' : 'border-white/40 opacity-80'}`}
+                      >
+                        <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats Ribbon */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-md flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-3"><CalendarDays size={20} /></div>
+                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Năm SX</span>
+                <span className="font-extrabold text-slate-800 text-lg">{resolvedYear || '—'}</span>
+              </div>
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-md flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-3"><Gauge size={20} /></div>
+                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Số Km</span>
+                <span className="font-extrabold text-slate-800 text-lg">{formatMileage(product?.mileage) || '—'}</span>
+              </div>
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-md flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-3"><Settings2 size={20} /></div>
+                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Hộp Số</span>
+                <span className="font-extrabold text-slate-800 text-sm mt-1">{product?.transmission || '—'}</span>
+              </div>
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-md flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-3"><Droplets size={20} /></div>
+                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Động cơ</span>
+                <span className="font-extrabold text-slate-800 text-sm mt-1">{product?.fuelType || '—'}</span>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+              <div className="flex items-center border-b border-slate-100 p-2 bg-slate-50/50">
+                <button type="button" onClick={() => setActiveTab('overview')} className={`flex-1 py-4 text-sm font-bold tracking-wide uppercase transition-all duration-300 rounded-2xl ${activeTab === 'overview' ? 'bg-[#2e3d83] text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>TỔNG QUAN</button>
+                <button type="button" onClick={() => setActiveTab('specs')} className={`flex-1 py-4 text-sm font-bold tracking-wide uppercase transition-all duration-300 rounded-2xl ${activeTab === 'specs' ? 'bg-[#2e3d83] text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>THỐNG SỐ</button>
+              </div>
+              
+              <div className="p-8">
+                {activeTab === 'overview' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-extrabold text-slate-800 mb-4 flex items-center gap-2"><CheckCircle2 className="text-[#f4c23d]" size={24} /> Giới Thiệu Chung</h3>
+                      <p className="text-slate-600 leading-relaxed max-w-3xl">{product?.description || 'Chiếc xe này chưa được cập nhật mô tả chi tiết. Vui lòng xem ở phần thông số hoặc liên hệ hỗ trợ.'}</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
+                      <h4 className="text-amber-800 font-bold mb-2 flex items-center gap-2"><AlertCircle size={18} /> Lưu ý trước khi đấu giá</h4>
+                      <p className="text-amber-700/80 text-sm leading-relaxed">{tp('auctionDetail.noteConditionValue')}. Bằng việc đặt mua, bạn đồng ý với mọi chính sách của hệ thống.</p>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'specs' && (
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2"><Settings2 className="text-[#f4c23d]" size={24} /> Bảng Thông Số Kỹ Thuật</h3>
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                      {technicalSpecs.map((spec, idx) => (
+                        <div key={spec.label} className={`flex items-center p-4 border-b border-slate-100 last:border-0 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+                           <span className="w-1/3 text-sm font-bold text-slate-500">{spec.label}</span>
+                           <span className="w-2/3 text-sm font-medium text-slate-800">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {productFetchError && (
+                      <p className="mt-4 text-red-500 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100">
+                        {productFetchError} (Hệ thống chỉ hiển thị thông tin trích xuất tạm thời)
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN: Sticky Bidding Console (40%) */}
+          <div className="w-full lg:w-[40%]">
+            <div className="sticky top-[110px] bg-white rounded-[2rem] shadow-2xl shadow-[#2e3d83]/10 border border-slate-100 overflow-hidden flex flex-col">
+              
+              {/* Header Info */}
+              <div className="p-8 bg-gradient-to-br from-[#1e293b] to-[#2e3d83] text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                <div className="relative z-10">
+                  <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-4 ${auction?.status === 'ACTIVE' ? 'bg-[#f4c23d] text-slate-900 border-2 border-transparent' : 'bg-white/10 text-white backdrop-blur-md border border-white/20'}`}>
+                    {statusLabel}
+                  </span>
+                  <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight mb-2 drop-shadow-md !text-white">{auction.productName}</h1>
+                  <p className="text-blue-100/90 text-sm font-medium opacity-90 mb-6">Mã phiên: {String(auction.id).slice(0,8).toUpperCase()} • Người tạo: {auction.createdBy}</p>
+                  
+                  {/* Countdown UI */}
+                  <CountdownDisplay 
+                    startTime={auction?.startTime} 
+                    endTime={auction?.endTime} 
+                    auctionHasStarted={auctionHasStarted} 
+                    isEnded={isEnded} 
+                    extensionBadgeMinutes={extensionBadgeMinutes} 
+                  />
                 </div>
-              ) : !isEnded && !isAuthenticated ? (
-                <Link to="/login" style={{ textDecoration: 'none', display: 'block' }}>
-                  <Button variant="secondary" size="lg" className={styles.fullWidthBtn}>
-                    {tp('auctionDetail.loginToBid')}
-                  </Button>
-                </Link>
-              ) : (
-                <Button variant="secondary" size="lg" className={styles.fullWidthBtn} disabled>
-                  {tp('auctionDetail.auctionEnded')}
-                </Button>
-              )}
+              </div>
+
+              {/* Price Row */}
+              <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-end">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{isEnded && winnerDisplay ? `🎉 Ng. Thắng: ${winnerDisplay}` : 'Giá Khởi Điểm'}</p>
+                  <p className="text-slate-500 font-semibold">{isEnded && winnerDisplay ? '' : formatVND(auction.startPrice)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-[#2e3d83] uppercase tracking-widest mb-1 flex items-center justify-end gap-1"><Trophy size={14}/> GIÁ HIỆN TẠI</p>
+                  <p className="text-3xl font-black text-[#2e3d83]">{formatVND(displayPrice)}</p>
+                </div>
+              </div>
+
+              {/* Bidding Actions */}
+              <div className="p-8 pb-6">
+                {!isEnded && isAuthenticated ? (
+                  <>
+                    {!isDepositVerified && !checkingDeposit && (
+                       <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm font-medium mb-6 flex items-start gap-3 border border-blue-100">
+                         <MapPin className="shrink-0 mt-0.5" /> Yêu cầu nộp tiền cọc {formatVND(auction.depositAmount)} trước khi thao tác đặt giá.
+                       </div>
+                    )}
+                    
+                    {checkingDeposit ? (
+                       <button className="w-full bg-slate-200 text-slate-500 font-bold py-4 rounded-xl cursor-not-allowed">Đang kiểm tra trạng thái cọc...</button>
+                    ) : isDepositVerified ? (
+                      <div className="space-y-5">
+                        <div className="flex items-center justify-between">
+                           <span className="text-sm font-bold text-slate-500 uppercase">Bước Giá: {formatVND(bidStepValue)}</span>
+                           <span className="text-xs font-bold bg-[#2e3d83] text-white px-3 py-1 rounded-full">{userRank ? `Vị trí thứ ${userRank}` : 'Chưa xếp hạng'}</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                           {stepOptions.map(step => (
+                              <button key={step} onClick={() => setSelectedBidStep(step)} className={`py-3 rounded-xl font-bold text-sm border-2 transition-all ${selectedBidStep === step ? 'bg-slate-900 border-slate-900 text-white shadow-lg -translate-y-0.5' : 'bg-white border-slate-200 text-slate-600 hover:border-[#2e3d83] hover:text-[#2e3d83]'}`}>
+                                +{step}
+                              </button>
+                           ))}
+                        </div>
+                        <button onClick={handlePlaceBid} disabled={bidLoading} className="w-full bg-gradient-to-r from-[#f4c23d] to-[#ffcf4c] hover:opacity-90 active:scale-[0.98] transition-all text-slate-900 font-black text-lg h-14 rounded-2xl uppercase tracking-widest shadow-xl shadow-[#f4c23d]/20 flex items-center justify-center gap-2">
+                          {bidLoading ? 'ĐANG THEO GIÁ...' : `ĐẶT ${formatVND(selectedBidAmount)}`} <Send size={20}/>
+                        </button>
+                        {bidError && <p className="text-red-500 text-sm font-bold mt-2 text-center bg-red-50 py-2 rounded-lg">{bidError}</p>}
+                      </div>
+                    ) : (
+                      <>
+                        <button onClick={handleDeposit} disabled={depositLoading} className="w-full bg-[#2e3d83] hover:bg-[#1f2f6d] active:scale-[0.98] transition-all text-white font-black text-lg h-14 rounded-2xl uppercase tracking-widest shadow-xl shadow-[#2e3d83]/20">
+                           {depositLoading ? 'ĐANG KHỞI TẠO...' : 'NỘP CỌC BẰNG VNPAY'}
+                        </button>
+                        {depositError && <p className="text-red-500 text-sm font-bold mt-2 text-center">{depositError}</p>}
+                      </>
+                    )}
+                  </>
+                ) : !isEnded && !isAuthenticated ? (
+                  <Link to="/login" className="flex items-center justify-center w-full bg-[#2e3d83] hover:bg-[#1f2f6d] transition-all text-white font-black text-lg h-14 rounded-2xl uppercase tracking-widest shadow-lg">
+                    ĐĂNG NHẬP ĐỂ ĐẶT GIÁ
+                  </Link>
+                ) : (
+                  <button className="w-full bg-slate-200 text-slate-500 font-black text-lg h-14 rounded-2xl uppercase tracking-widest cursor-not-allowed">
+                     PHIÊN ĐÃ KẾT THÚC
+                  </button>
+                )}
+              </div>
+
+              {/* Ranking Leaderboard Mini */}
+              <div className="bg-slate-50 flex-1 p-8 border-t border-slate-100 flex flex-col">
+                 <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-extrabold text-slate-800 flex items-center gap-2"><Trophy className="text-[#f4c23d]" size={18}/> Bảng Xếp Hạng ({rankedBids.length})</h4>
+                 </div>
+                 <div className="flex-1 overflow-y-auto max-h-[220px] pr-2 space-y-3 custom-scrollbar">
+                    {rankingRows.map((bid, index) => {
+                       const rank = bid ? getDisplayRank(bid, index) : index + 1;
+                       const isGold = rank === 1;
+                       return (
+                          <div key={bid ? getBidIdentity(bid) : `rank-${index}`} className={`flex items-center justify-between p-3 rounded-xl border ${bid ? 'bg-white border-slate-200 shadow-sm' : 'bg-transparent border-dashed border-slate-200 opacity-50'}`}>
+                             <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${isGold ? 'bg-[#f4c23d] text-slate-900 shadow-md shadow-[#f4c23d]/20' : 'bg-slate-100 text-slate-500'}`}>#{rank}</div>
+                                <div className="flex flex-col">
+                                   <span className="text-sm font-bold text-slate-800">{bid ? formatVND(bid.amount) : '---'}</span>
+                                   <span className="text-[10px] uppercase font-bold text-slate-400">{bid ? (bid.bidderMask ?? 'ẨN DANH') : 'CHỜ ĐẶT GIÁ'}</span>
+                                </div>
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">{bid ? formatDateTime(bid.createdAt).split(' ')[1] : '--:--'}</span>
+                          </div>
+                       )
+                    })}
+                 </div>
+              </div>
+
             </div>
           </div>
 
         </div>
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+      `}</style>
+
+      {/* Zoom Modal */}
+      {zoomedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setZoomedImage(null)}>
+          <button onClick={() => setZoomedImage(null)} className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-colors"><X size={24}/></button>
+          <img src={zoomedImage} alt="Zoomed" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" />
+        </div>
+      )}
+
     </div>
   );
 };

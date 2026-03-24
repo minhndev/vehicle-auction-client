@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from '../../../components/ui/Button/Button';
 import { miscApi } from '../../../api/miscApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import { getErrorMessage } from '../../../utils/errorHelpers';
-import styles from './AdminRoles.module.css';
+import { ShieldCheck, Shield, Plus, Trash2, RefreshCw, Loader2, AlertCircle, ShieldAlert } from 'lucide-react';
 
 interface Role {
   id: string | number;
@@ -42,13 +41,12 @@ export const AdminRoles: React.FC = () => {
     e.preventDefault();
     try {
       setActionLoading('create');
-      const newRole = await miscApi.createRole(formData);
+      const newRole = await miscApi.createRole({ ...formData, name: formData.name.toUpperCase() });
       setRoles(prev => [...prev, newRole]);
       setFormData({ name: '', description: '' });
     } catch (err) {
       alert(`${tp('adminRoles.createFailed')}: ${getErrorMessage(err, tp('adminRoles.unknownError'))}`);
-      // Add fake role for demo if API fails
-      setRoles(prev => [...prev, { id: 'r-'+Date.now(), ...formData }]);
+      setRoles(prev => [...prev, { id: 'r-'+Date.now(), name: formData.name.toUpperCase(), description: formData.description }]);
       setFormData({ name: '', description: '' });
     } finally {
       setActionLoading(null);
@@ -56,14 +54,13 @@ export const AdminRoles: React.FC = () => {
   };
 
   const handleDelete = async (id: string | number) => {
-    if (!window.confirm(tp('adminRoles.deleteConfirm'))) return;
+    if (!window.confirm(tp('adminRoles.deleteConfirm', 'Xác nhận thu hồi Role này?'))) return;
     try {
       setActionLoading(id);
       await miscApi.deleteRole(id);
       setRoles(prev => prev.filter(r => r.id !== id));
     } catch (err) {
       alert(tp('adminRoles.deleteFailed'));
-      setRoles(prev => prev.filter(r => r.id !== id));
     } finally {
       setActionLoading(null);
     }
@@ -82,89 +79,144 @@ export const AdminRoles: React.FC = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>{tp('adminRoles.title')}</h1>
-      <p className={styles.subtitle}>{tp('adminRoles.subtitle')}</p>
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 mb-2">Hệ Thống Phân Quyền</h1>
+          <p className="text-slate-500 max-w-xl">Quản lý và thiết lập các vai trò (Roles) sử dụng cho Security Scope trên toàn bộ nền tảng V-Auction.</p>
+        </div>
+        <div className="bg-blue-50 text-blue-600 font-bold px-4 py-2 rounded-xl flex items-center gap-2 border border-blue-100 shadow-sm">
+          <ShieldAlert size={18} /> Role Controller Active
+        </div>
+      </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-2 font-medium">
+          <AlertCircle size={18} /> {error}
+        </div>
+      )}
 
-      <div className={styles.grid}>
-        <div className={styles.formSection}>
-          <div className={styles.card}>
-            <h3>{tp('adminRoles.addNew')}</h3>
-            <form onSubmit={handleCreate}>
-              <div className={styles.formGroup}>
-                <label>{tp('adminRoles.name')}</label>
+      <div className="flex flex-col lg:flex-row gap-8">
+        
+        {/* Form Section */}
+        <div className="w-full lg:w-96 flex flex-col gap-6">
+          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/40 sticky top-8">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-blue-100">
+              <ShieldCheck size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-6">Định nghĩa Role mới</h3>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-2 uppercase tracking-wide">Mã Role (Tên)</label>
                 <input 
                   required 
                   value={formData.name} 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                  placeholder={tp('adminRoles.namePlaceholder')}
+                  onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})} 
+                  placeholder="Vd: SUPER_ADMIN"
+                  className="w-full px-5 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 ring-blue-500/20 outline-none transition-colors border border-slate-200 uppercase font-black tracking-wider text-slate-700"
                 />
               </div>
-              <div className={styles.formGroup}>
-                <label>{tp('adminRoles.description')}</label>
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-2 uppercase tracking-wide">Quyền hạn / Mô tả</label>
                 <textarea 
                   rows={3} 
                   value={formData.description} 
                   onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                  placeholder={tp('adminRoles.descriptionPlaceholder')}
+                  placeholder="Mô tả quyền truy cập của Role này..."
+                  className="w-full px-5 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 ring-blue-500/20 outline-none transition-colors border border-slate-200 resize-none text-slate-600"
                 />
               </div>
-              <Button type="submit" variant="primary" disabled={actionLoading === 'create'}>
-                {actionLoading === 'create' ? tp('adminRoles.creating') : tp('adminRoles.create')}
-              </Button>
+              <button 
+                type="submit" 
+                disabled={actionLoading === 'create' || !formData.name}
+                className="w-full py-4 mt-4 rounded-xl font-bold bg-[#2e3d83] text-white hover:bg-blue-800 shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading === 'create' ? <Loader2 size={18} className="animate-spin" /> : <><Plus size={18} /> Khởi tạo Role</>}
+              </button>
             </form>
           </div>
         </div>
 
-        <div className={styles.listSection}>
-          <div className={styles.card}>
-            <h3>{tp('adminRoles.existing')}</h3>
-            {loading ? (
-              <p>{tp('adminRoles.loading')}</p>
-            ) : (
-              <table className={styles.table}>
+        {/* Table Section */}
+        <div className="flex-1">
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800">Cấu hình Scope hiện tại</h2>
+              <span className="text-sm font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-lg">{roles.length} ROLES</span>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr>
-                    <th>{tp('adminRoles.name')}</th>
-                    <th>{tp('adminRoles.description')}</th>
-                    <th>{tp('adminRoles.status')}</th>
-                    <th>{tp('adminRoles.action')}</th>
+                  <tr className="bg-slate-50">
+                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest w-1/3">Key (Mã Role)</th>
+                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Mô Tả & Trạng Thái</th>
+                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Tác Vụ</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {roles.length === 0 ? (
-                    <tr><td colSpan={4} style={{textAlign: 'center'}}>{tp('adminRoles.empty')}</td></tr>
+                <tbody className="divide-y divide-slate-100/60">
+                  {loading ? (
+                    <tr><td colSpan={3} className="py-20 text-center text-slate-400"><Loader2 className="animate-spin text-blue-500 mx-auto mb-3" size={32}/>Đang tải Roles...</td></tr>
+                  ) : roles.length === 0 ? (
+                    <tr><td colSpan={3} className="py-20 text-center text-slate-400 font-medium">Chưa có Root Roles nào được thiết lập.</td></tr>
                   ) : (
-                    roles.map(role => (
-                      <tr key={role.id} className={role.isDeleted ? styles.rowDeleted : ''}>
-                        <td><strong>{role.name}</strong></td>
-                        <td>{role.description || '-'}</td>
-                        <td>
+                    roles.map((role) => (
+                      <tr key={role.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="px-8 py-5">
+                          <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-black tracking-widest font-mono ${
+                            role.name === 'ADMIN' ? 'bg-[#2e3d83] text-white shadow-md' : 
+                            role.name === 'SELLER' ? 'bg-amber-100 text-amber-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {role.name === 'ADMIN' && <Shield size={14}/>}
+                            {role.name}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className={`font-medium mb-1 ${role.isDeleted ? 'text-slate-300' : 'text-slate-600'}`}>
+                            {role.description || <span className="text-slate-300 italic">Không có mô tả</span>}
+                          </p>
                           {role.isDeleted ? (
-                             <span className={styles.badgeDeleted}>{tp('adminRoles.deleted')}</span>
+                            <span className="inline-flex text-[10px] font-black uppercase tracking-wider text-red-500 bg-red-50 px-2.5 py-0.5 rounded-sm">DELETED_SCOPE</span>
                           ) : (
-                             <span className={styles.badgeActive}>{tp('adminRoles.active')}</span>
+                            <span className="inline-flex text-[10px] font-black uppercase tracking-wider text-emerald-500 bg-emerald-50 px-2.5 py-0.5 rounded-sm">ACTIVE_SCOPE</span>
                           )}
                         </td>
-                        <td>
-                          {role.name !== 'ADMIN' && role.name !== 'USER' && (
-                            role.isDeleted ? (
-                              <button onClick={() => handleRestore(role.id)} className={styles.actionBtn}>{tp('adminRoles.restore')}</button>
-                            ) : (
-                              <button onClick={() => handleDelete(role.id)} className={styles.deleteBtn}>{tp('adminRoles.delete')}</button>
-                            )
-                          )}
+                        <td className="px-8 py-5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {role.name !== 'ADMIN' && role.name !== 'USER' && (
+                              role.isDeleted ? (
+                                <button 
+                                  onClick={() => handleRestore(role.id)}
+                                  disabled={actionLoading === role.id}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white font-bold transition-all disabled:opacity-50 text-xs flex items-center gap-1.5"
+                                >
+                                  {actionLoading === role.id ? <Loader2 size={14} className="animate-spin" /> : <><RefreshCw size={14}/> Khôi phục</>}
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={() => handleDelete(role.id)}
+                                  disabled={actionLoading === role.id}
+                                  className="w-8 h-8 rounded-lg bg-white text-slate-400 border border-slate-200 hover:text-red-500 hover:border-red-500 flex items-center justify-center transition-all disabled:opacity-50"
+                                  title="Gỡ Role này"
+                                >
+                                  {actionLoading === role.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14}/>}
+                                </button>
+                              )
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
-            )}
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );

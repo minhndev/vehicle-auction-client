@@ -4,6 +4,7 @@ import { catalogApi } from '../../../api/catalogApi';
 import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi, type ProductRequest } from '../../../features/seller/api/sellerApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
+import { X } from 'lucide-react';
 import type { CategoryResponse, ProductResponse } from '../../../types/index';
 import styles from './VehicleRegistrationForm.module.css';
 
@@ -28,6 +29,7 @@ export const VehicleEditForm: React.FC = () => {
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [isEditLocked, setIsEditLocked] = useState(false);
   const [lockedStatus, setLockedStatus] = useState<string | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ProductRequest>({
     brand: '',
@@ -288,7 +290,7 @@ export const VehicleEditForm: React.FC = () => {
             {imagePreviews.length > 0 && (
               <div className={styles.photoGrid}>
                 {imagePreviews.map((preview, index) => (
-                  <div key={`${preview}-${index}`} className={styles.photoCard}>
+                  <div key={`${preview}-${index}`} onClick={() => setZoomedImage(preview)} className={`${styles.photoCard} cursor-zoom-in`}>
                     <img src={preview} alt={`Vehicle ${index + 1}`} className={styles.imagePreview} />
                   </div>
                 ))}
@@ -326,6 +328,14 @@ export const VehicleEditForm: React.FC = () => {
           </div>
         </aside>
       </div>
+
+      {/* Zoom Modal */}
+      {zoomedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setZoomedImage(null)}>
+          <button onClick={() => setZoomedImage(null)} className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-colors border-0"><X size={24}/></button>
+          <img src={zoomedImage} alt="Zoomed" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" />
+        </div>
+      )}
     </div>
   );
 };

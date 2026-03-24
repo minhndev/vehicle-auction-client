@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../../../components/ui/Button/Button';
 import { sellerApi } from '../../../features/seller/api/sellerApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { ProductResponse } from '../../../types/index';
-import styles from './SellerAuctions.module.css';
+import { Plus, Search, Edit3, Trash2, RefreshCw, AlertCircle, Loader2, Image as ImageIcon, X } from 'lucide-react';
 
 const formatVND = (amount?: number) =>
-  amount
-    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
-    : '—';
+  amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount) : '—';
 
 export const SellerProducts: React.FC = () => {
   const { getProductStatusLabel } = usePageI18n();
@@ -17,12 +14,8 @@ export const SellerProducts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [confirmModal, setConfirmModal] = useState<{
-    mode: 'delete' | 'restore';
-    id: string;
-    title: string;
-    message: string;
-  } | null>(null);
+  
+  const [confirmModal, setConfirmModal] = useState<{ mode: 'delete' | 'restore'; id: string; title: string; message: string; } | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -46,20 +39,13 @@ export const SellerProducts: React.FC = () => {
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
-      case 'PENDING':
-        return <span className={styles.badgePending}>{getProductStatusLabel('PENDING')}</span>;
-      case 'APPROVED':
-        return <span style={{ backgroundColor: '#10b981', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('APPROVED')}</span>;
-      case 'IN_AUCTION':
-        return <span className={styles.badgeActive}>{getProductStatusLabel('IN_AUCTION')}</span>;
-      case 'REJECTED':
-        return <span style={{ backgroundColor: '#ef4444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('REJECTED')}</span>;
-      case 'SOLD':
-        return <span style={{ backgroundColor: '#6b7280', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('SOLD')}</span>;
-      case 'CANCELLED':
-        return <span style={{ backgroundColor: '#9ca3af', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{getProductStatusLabel('CANCELLED')}</span>;
-      default:
-        return <span className={styles.badgePending}>{getProductStatusLabel(status)}</span>;
+      case 'PENDING': return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-700">{getProductStatusLabel('PENDING')}</span>;
+      case 'APPROVED': return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-700">{getProductStatusLabel('APPROVED')}</span>;
+      case 'IN_AUCTION': return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-700">{getProductStatusLabel('IN_AUCTION')}</span>;
+      case 'REJECTED': return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-100 text-red-700">{getProductStatusLabel('REJECTED')}</span>;
+      case 'SOLD': return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500 text-white shadow-sm">{getProductStatusLabel('SOLD')}</span>;
+      case 'CANCELLED': return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-200 text-slate-600">{getProductStatusLabel('CANCELLED')}</span>;
+      default: return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-500">{getProductStatusLabel(status)}</span>;
     }
   };
 
@@ -89,159 +75,147 @@ export const SellerProducts: React.FC = () => {
 
   const confirmAction = async () => {
     if (!confirmModal) return;
-    if (confirmModal.mode === 'delete') {
-      await handleDelete(confirmModal.id);
-    } else {
-      await handleRestore(confirmModal.id);
-    }
+    if (confirmModal.mode === 'delete') await handleDelete(confirmModal.id);
+    else await handleRestore(confirmModal.id);
     setConfirmModal(null);
   };
 
   const filteredVehicles = vehicles.filter(v => {
     if (filterStatus !== 'all' && v.status !== filterStatus) return false;
-    if (search && !v.brand?.toLowerCase().includes(search.toLowerCase()) && !v.model?.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
+    if (search && !v.brand?.toLowerCase().includes(search.toLowerCase()) && !v.model?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Quản lý sản phẩm</h1>
-        <Link to="/seller/products/new" style={{ textDecoration: 'none' }}>
-          <Button variant="primary">Đăng sản phẩm mới</Button>
+    <div className="max-w-7xl mx-auto space-y-8">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 mb-2">Kho Xe Đăng Ký</h1>
+          <p className="text-slate-500 max-w-xl">Quản lý hồ sơ và tiến độ kiểm duyệt hệ thống của những chiếc xe bạn đã đăng ký.</p>
+        </div>
+        <Link to="/seller/products/new" className="px-6 py-3 bg-emerald-500 text-white hover:bg-emerald-400 font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+          <Plus size={20} /> Đăng Ký Kiểm Định Xe Mới
         </Link>
       </div>
 
-      <div className={styles.filters}>
-        <select className={styles.filterSelect} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="all">{getProductStatusLabel('ALL')}</option>
-          <option value="PENDING">{getProductStatusLabel('PENDING')}</option>
-          <option value="APPROVED">{getProductStatusLabel('APPROVED')}</option>
-          <option value="IN_AUCTION">{getProductStatusLabel('IN_AUCTION')}</option>
-          <option value="REJECTED">{getProductStatusLabel('REJECTED')}</option>
-          <option value="SOLD">{getProductStatusLabel('SOLD')}</option>
-          <option value="CANCELLED">{getProductStatusLabel('CANCELLED')}</option>
+      {error && (
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 flex items-center gap-2 font-medium">
+          <AlertCircle size={18} /> {error}
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18}/></div>
+          <input type="text" placeholder="Tìm kiếm theo Hãng xe, Model..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-12 pr-5 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 ring-emerald-500/20 outline-none transition-colors border-none" />
+        </div>
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} 
+          className="px-5 py-3 rounded-xl bg-slate-50 border-r-8 border-transparent focus:ring-2 ring-emerald-500/20 outline-none font-medium text-slate-600 cursor-pointer text-sm">
+          <option value="all">Tất cả trạng thái</option>
+          <option value="PENDING">Chờ Kiểm Duyệt</option>
+          <option value="APPROVED">Đã Duyệt (Có thể đấu giá)</option>
+          <option value="IN_AUCTION">Đang Đấu Giá</option>
+          <option value="REJECTED">Bị Từ Chối</option>
+          <option value="SOLD">Đã Giao Dịch Thành Công</option>
+          <option value="CANCELLED">Đã Hủy</option>
         </select>
-        <input
-          type="text"
-          placeholder="Tìm theo hãng xe, mẫu xe..."
-          className={styles.searchInput}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
       </div>
 
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
-
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Hình Ảnh</th>
-            <th>Thông tin sản phẩm</th>
-            <th>Trạng Thái</th>
-            <th>Giá Đề Xuất</th>
-            <th>Ngày Đăng</th>
-            <th>Hành Động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Đang tải dữ liệu...</td></tr>
-          ) : filteredVehicles.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Không tìm thấy sản phẩm nào.</td></tr>
-          ) : (
-            filteredVehicles.map(v => (
-              <tr key={v.id}>
-                <td>
-                  {Array.isArray(v.images) && v.images.length > 0 ? (
-                    <img src={typeof v.images[0] === 'string' ? v.images[0] : v.images[0]?.url} alt={v.model} className={styles.vehicleImage} />
-                  ) : (
-                      <div className={styles.placeholderImage}>Không có ảnh</div>
-                  )}
-                </td>
-                <td>
-                  <strong>{v.name || `${v.brand} ${v.model}`}</strong>
-                    <div className={styles.subtext}>VIN: {v.vinNumber || 'Không có'}</div>
-                </td>
-                <td>{getStatusBadge(v.status)}</td>
-                <td>
-                  <div style={{ fontWeight: 600 }}>{formatVND(v.startPrice)}</div>
-                </td>
-                <td>{v.createdAt ? new Date(v.createdAt).toLocaleDateString('vi-VN') : '—'}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {v.status === 'IN_AUCTION' || v.status === 'SOLD' ? (
-                      <Button variant="outline" size="small" disabled title="Không thể chỉnh sửa khi sản phẩm đang đấu giá hoặc đã bán.">
-                        Sửa (đã khóa)
-                      </Button>
-                    ) : (
-                      <Link to={`/seller/products/${v.id}/edit`} style={{ textDecoration: 'none' }}>
-                        <Button variant="outline" size="small" disabled={!v.id || actionLoadingId === v.id}>
-                          Sửa
-                        </Button>
-                      </Link>
-                    )}
-                    {v.status === 'CANCELLED' ? (
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        disabled={!v.id || actionLoadingId === v.id}
-                        onClick={() =>
-                          v.id &&
-                          setConfirmModal({
-                            mode: 'restore',
-                            id: v.id,
-                            title: 'Khôi phục sản phẩm',
-                            message: 'Sản phẩm sẽ được khôi phục và hiển thị lại trong danh sách hoạt động. Bạn muốn tiếp tục?',
-                          })
-                        }
-                      >
-                        {actionLoadingId === v.id ? 'Đang xử lý...' : 'Khôi phục'}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="danger"
-                        size="small"
-                        disabled={!v.id || actionLoadingId === v.id}
-                        onClick={() =>
-                          v.id &&
-                          setConfirmModal({
-                            mode: 'delete',
-                            id: v.id,
-                            title: 'Xóa mềm sản phẩm',
-                            message: 'Sản phẩm sẽ được chuyển sang trạng thái đã xóa mềm (CANCELLED). Bạn muốn tiếp tục?',
-                          })
-                        }
-                      >
-                        {actionLoadingId === v.id ? 'Đang xử lý...' : 'Xóa'}
-                      </Button>
-                    )}
-                  </div>
-                </td>
+      {/* Table */}
+      <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest w-24">Hình Ảnh</th>
+                <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest min-w-[200px]">Thông tin xe (Model / VIN)</th>
+                <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Trạng Thái</th>
+                <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Định Giá Tham Chiếu</th>
+                <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Thao Tác</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr><td colSpan={5} className="py-20 text-center text-slate-500 font-medium"><Loader2 className="animate-spin mx-auto mb-3 text-emerald-500" size={32} /> Đang tải danh sách tài sản...</td></tr>
+              ) : filteredVehicles.length === 0 ? (
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400 font-medium tracking-wide">Không tìm thấy xe nào phù hợp.</td></tr>
+              ) : (
+                filteredVehicles.map((v) => (
+                  <tr key={v.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="w-20 h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center relative">
+                        {Array.isArray(v.images) && v.images.length > 0 ? (
+                          <img src={typeof v.images[0] === 'string' ? v.images[0] : v.images[0]?.url} alt={v.model} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="text-slate-300" size={24} />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-slate-800 text-base mb-0.5">{v.name || `${v.brand} ${v.model}`}</p>
+                      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">VIN: {v.vinNumber || 'N/A'} • {v.year}</p>
+                    </td>
+                    <td className="px-6 py-4">{getStatusBadge(v.status)}</td>
+                    <td className="px-6 py-4">
+                      <p className="font-extrabold text-slate-700">{formatVND(v.startPrice || v.basePrice)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        {v.status === 'IN_AUCTION' || v.status === 'SOLD' ? (
+                          <button disabled className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed border border-slate-100"><Edit3 size={18} /></button>
+                        ) : (
+                          <Link to={`/seller/products/${v.id}/edit`} className="w-10 h-10 rounded-xl bg-white text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 flex items-center justify-center transition-all shadow-sm">
+                            <Edit3 size={18} />
+                          </Link>
+                        )}
+                        
+                        {v.status === 'CANCELLED' ? (
+                          <button
+                            disabled={!v.id || actionLoadingId === v.id}
+                            onClick={() => v.id && setConfirmModal({ mode: 'restore', id: v.id, title: 'Khôi phục sản phẩm', message: 'Bạn muốn đưa chiếc xe này trở lại danh sách kiểm duyệt ban đầu?' })}
+                            className="w-10 h-10 rounded-xl bg-white text-emerald-500 hover:text-white hover:bg-emerald-500 border border-slate-200 hover:border-emerald-500 flex items-center justify-center transition-all shadow-sm disabled:opacity-50"
+                          >
+                            {actionLoadingId === v.id ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+                          </button>
+                        ) : (
+                          <button
+                            disabled={!v.id || actionLoadingId === v.id}
+                            onClick={() => v.id && setConfirmModal({ mode: 'delete', id: v.id, title: 'Xác nhận Rút xe', message: 'Hồ sơ xe này sẽ bị chuyển thành trạng thái Hủy (Xóa mềm). Bạn có chắc chắn muốn bỏ đăng ký?' })}
+                            className="w-10 h-10 rounded-xl bg-white text-red-500 hover:text-white hover:bg-red-500 border border-slate-200 hover:border-red-500 flex items-center justify-center transition-all shadow-sm disabled:opacity-50"
+                          >
+                            {actionLoadingId === v.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
+      {/* Confirmation Modal */}
       {confirmModal && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <h3 className={styles.modalTitle}>{confirmModal.title}</h3>
-            <p className={styles.modalText}>{confirmModal.message}</p>
-            <div className={styles.modalActions}>
-              <Button variant="outline" onClick={() => setConfirmModal(null)} disabled={!!actionLoadingId}>
-                Hủy
-              </Button>
-              <Button
-                variant={confirmModal.mode === 'delete' ? 'danger' : 'secondary'}
-                onClick={confirmAction}
-                disabled={!!actionLoadingId}
-              >
-                {actionLoadingId ? 'Đang xử lý...' : confirmModal.mode === 'delete' ? 'Xác nhận xóa' : 'Xác nhận khôi phục'}
-              </Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setConfirmModal(null)} />
+          <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300">
+            <button onClick={() => setConfirmModal(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors"><X size={20}/></button>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg ${confirmModal.mode === 'delete' ? 'bg-red-50 text-red-500 shadow-red-500/20' : 'bg-emerald-50 text-emerald-500 shadow-emerald-500/20'}`}>
+               {confirmModal.mode === 'delete' ? <Trash2 size={32}/> : <RefreshCw size={32}/>}
+            </div>
+            <h3 className="text-xl font-black text-slate-800 mb-2">{confirmModal.title}</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-8">{confirmModal.message}</p>
+            <div className="flex gap-3">
+              <button disabled={!!actionLoadingId} onClick={() => setConfirmModal(null)} className="flex-1 py-3 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">Đóng</button>
+              <button disabled={!!actionLoadingId} onClick={confirmAction} className={`flex-1 py-3 font-bold text-white rounded-xl shadow-lg transition-all flex items-center justify-center ${confirmModal.mode === 'delete' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/30' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'}`}>
+                {actionLoadingId ? <Loader2 size={18} className="animate-spin" /> : 'Xác Nhận'}
+              </button>
             </div>
           </div>
         </div>

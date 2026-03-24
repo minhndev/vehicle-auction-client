@@ -15,6 +15,7 @@ import { ResetPasswordForm } from '../features/auth/components/ResetPasswordForm
 // Public Pages
 import { Home } from '../pages/Home/Home';
 import { About } from '../pages/About/About';
+import { Contact } from '../pages/Contact/Contact';
 import { AuctionList } from '../pages/AuctionList/AuctionList';
 import { AuctionDetail } from '../pages/AuctionDetail/AuctionDetail';
 import { PaymentReturn } from '../pages/Public/PaymentReturn/PaymentReturn';
@@ -39,11 +40,13 @@ const Unauthorized = () => <div><h2>403 - Bạn không có quyền truy cập</h
 const NotFound = () => <div><h2>404 - Không tìm thấy trang</h2></div>;
 
 // Seller Pages
+import { SellRouter } from '../pages/Seller/Onboarding/SellRouter';
 import { SellerDashboard } from '../pages/Seller/Dashboard/SellerDashboard';
 import { SellerAuctions } from '../pages/Seller/Vehicles/SellerAuctions';
 import { SellerProducts } from '../pages/Seller/Vehicles/SellerProducts';
 import { VehicleRegistrationForm } from '../pages/Seller/Vehicles/VehicleRegistrationForm';
 import { VehicleEditForm } from '../pages/Seller/Vehicles/VehicleEditForm';
+import { SellerAuctionCreateForm } from '../pages/Seller/Vehicles/SellerAuctionCreateForm';
 
 // Admin Pages
 import { AdminDashboard } from '../pages/Admin/Dashboard/AdminDashboard';
@@ -61,6 +64,7 @@ export const AppRoutes: React.FC = () => {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/auctions" element={<AuctionList />} />
         <Route path="/auctions/:id" element={<AuctionDetail />} />
         <Route path="/payment-return" element={<PaymentReturn />} />
@@ -96,7 +100,7 @@ export const AppRoutes: React.FC = () => {
       {/* Sell entry route for authenticated users */}
       <Route element={<ProtectedRoute allowedRoles={['USER', 'MEMBER', 'BUYER', 'SELLER']} />}>
         <Route element={<MainLayout />}>
-          <Route path="/sell" element={<VehicleRegistrationForm />} />
+          <Route path="/sell" element={<SellRouter />} />
           <Route path="/sell/*" element={<Navigate to="/sell" replace />} />
         </Route>
       </Route>
@@ -110,7 +114,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="products/new" element={<VehicleRegistrationForm />} />
           <Route path="products/:id/edit" element={<VehicleEditForm />} />
           <Route path="auctions" element={<SellerAuctions />} />
-          <Route path="auctions/new" element={<VehicleRegistrationForm />} />
+          <Route path="auctions/new" element={<SellerAuctionCreateForm />} />
           <Route path="auctions/:id/edit" element={<VehicleEditForm />} />
           <Route path="settings" element={<div>Cài đặt người bán</div>} />
         </Route>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Star, Quote } from 'lucide-react';
 import { auctionApi } from '../../../features/bidding/api/auctionApi';
 import type { AuctionResponse } from '../../../types';
-import styles from '../Home.module.css';
 
 interface Testimonial {
   id: string;
@@ -36,7 +36,7 @@ const toTestimonials = (completedAuctions: AuctionResponse[]): Testimonial[] => 
         id: String(item.id ?? index),
         name: winnerName,
         role: `Người thắng #${index + 1}`,
-        feedback: `Tôi đã thắng ${auctionName} với mức giá ${formatVND(price)}. Hệ thống đấu giá minh bạch, cập nhật realtime rõ ràng và thao tác rất nhanh.`,
+        feedback: `Tôi đã thắng ${auctionName} với mức giá ${formatVND(price)}. Hệ thống đấu giá tự động rất minh bạch, giao diện thân thiện và hỗ trợ nhiệt tình.`,
         image: toAvatarUrl(winnerName),
       };
     });
@@ -44,29 +44,34 @@ const toTestimonials = (completedAuctions: AuctionResponse[]): Testimonial[] => 
 
 const TestimonialCard: React.FC<{ data: Testimonial }> = ({ data }) => {
   return (
-    <div className={styles.testimonialCard}>
-      <div className={styles.testimonialCardBody}>
-        <h4 className={styles.testimonialName}>
-          {data.name}
-        </h4>
-        <span className={styles.testimonialRole}>
-          {data.role}
-        </span>
-        <div className={styles.testimonialStars}>
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className={styles.testimonialStar}></div>
-          ))}
-        </div>
-        <p className={styles.testimonialText}>
-          {data.feedback}
-        </p>
+    <div className="bg-white p-8 rounded-3xl shadow-xl shadow-[#2e3d83]/5 border border-slate-100 relative group hover:-translate-y-2 transition-transform duration-300">
+      <Quote className="absolute top-6 right-6 text-slate-100 group-hover:text-blue-50 transition-colors w-16 h-16 -z-0" />
+      
+      <div className="flex items-center gap-1 mb-6 relative z-10">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} size={20} className="fill-[#f4c23d] text-[#f4c23d]" />
+        ))}
       </div>
-
-      <img
-        src={data.image}
-        alt={data.name}
-        className={styles.testimonialAvatar}
-      />
+      
+      <p className="text-slate-600 text-lg leading-relaxed font-medium mb-8 relative z-10 min-h-[100px]">
+        "{data.feedback}"
+      </p>
+      
+      <div className="flex items-center gap-4 relative z-10 pt-6 border-t border-slate-100">
+        <img
+          src={data.image}
+          alt={data.name}
+          className="w-14 h-14 rounded-full border-2 border-slate-100 shadow-md group-hover:border-[#2e3d83] transition-colors"
+        />
+        <div>
+          <h4 className="font-extrabold text-[#2e3d83] text-[17px] mb-0.5">
+            {data.name}
+          </h4>
+          <span className="text-sm font-semibold text-slate-400">
+            {data.role}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -97,57 +102,29 @@ const TestimonialSection: React.FC = () => {
   }, []);
 
   return (
-    <section className={`${styles.section} ${styles.sectionSoft} ${styles.testimonialSection}`}>
-      <div className={styles.container}>
-      <div className={styles.sectionColumnCenter}>
-        <div className={`${styles.titleBlock} ${styles.testimonialTitleBlock}`}>
-          <h2 className={`${styles.title} ${styles.testimonialTitle}`}>
-            Chia sẻ từ người thắng
+    <section className="w-full bg-[#f8fafc] py-24 pb-32 border-t border-slate-200">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex flex-col items-center text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-[#2e3d83] mb-6 tracking-tight">
+            Khách Hàng <span className="text-[#f4c23d]">Nói Gì?</span>
           </h2>
-          <div className={styles.divider}>
-            <div className={styles.dividerLine}></div>
-            <div className={styles.dividerDot}></div>
+          <div className="flex items-center justify-center relative w-64 h-8 mb-4">
+            <div className="absolute inset-0 top-1/2 -translate-y-1/2 h-0.5 bg-slate-300"></div>
+            <div className="w-8 h-8 rounded-full bg-slate-900 relative z-10 shadow-md"></div>
           </div>
         </div>
 
-        <div className={styles.testimonialContentRow}>
-          <div className={styles.testimonialLeft}>
-            <h3 className={styles.testimonialLeftTitle}>
-              Đánh giá nổi bật
-            </h3>
-            <p className={styles.testimonialLeftQuote}>
-              Trải nghiệm thực tế từ người tham gia và chiến thắng các phiên đấu giá gần đây.
-            </p>
-
-            <div className={styles.testimonialArrowRow}>
-              <button className={styles.testimonialArrowButton}>
-                <svg width="18" height="8" viewBox="0 0 18 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 1L1 4M1 4L4 7M1 4H17" stroke="black" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <button className={styles.testimonialArrowButton}>
-                <svg width="18" height="8" viewBox="0 0 18 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 1L17 4M17 4L14 7M17 4H1" stroke="black" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {testimonials.length === 0 ? (
+            <div className="col-span-full py-20 text-center text-slate-500 font-bold bg-white rounded-3xl border border-slate-100 shadow-sm">
+              Chưa có phản hồi từ người thắng phiên gần đây.
             </div>
-          </div>
-
-          <div className={styles.testimonialRight}>
-            <div className={styles.testimonialTrack}>
-              {testimonials.length === 0 ? (
-                <p className={styles.activityEmpty}>Chưa có phản hồi từ người thắng phiên gần đây.</p>
-              ) : (
-                testimonials.map((item) => (
-                  <TestimonialCard key={item.id} data={item} />
-                ))
-              )}
-            </div>
-          </div>
-
+          ) : (
+            testimonials.map((item) => (
+              <TestimonialCard key={item.id} data={item} />
+            ))
+          )}
         </div>
-
-      </div>
       </div>
     </section>
   );
