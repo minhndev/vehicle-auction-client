@@ -100,6 +100,10 @@ export const authService = {
     return axiosClient.get(`/auth/verify?token=${token}`);
   },
 
+  loginWithGoogle: async (idToken: String): Promise<AuthResponse> => {
+    return axiosClient.post('/auth/google-login', { idToken });
+  },
+
   forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {
     return axiosClient.post('/auth/forgot-password', data);
   },

@@ -10,6 +10,7 @@ import type { RootState } from '../../../store';
 import { Button } from '../../../components/ui/Button/Button';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './AuthForm.module.css';
+import { GoogleLogin } from '@react-oauth/google';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -28,22 +29,20 @@ export const LoginForm: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const completeLogin = useCallback((accessToken: string, refreshToken: string, tokenType: string) => {
-    const userProfile = authService.getCurrentUserFromToken(accessToken);
+  const handleAuthSuccess = (response: any) => {
+    const userProfile = authService.getCurrentUserFromToken(response.accessToken);
 
     dispatch(setCredentials({
       user: userProfile,
-      tokens: {
-        accessToken,
-        refreshToken,
-        tokenType,
-      },
+      tokens: response,
     }));
 
     const roleStr = (userProfile.role || 'USER').toUpperCase();
-    const origin = location.state?.from?.pathname || (roleStr === 'ADMIN' ? '/admin/dashboard' : roleStr === 'SELLER' ? '/seller/dashboard' : '/user/dashboard');
+    const origin = location.state?.from?.pathname ||
+      (roleStr === 'ADMIN' ? '/admin/dashboard' :
+        roleStr === 'SELLER' ? '/seller/dashboard' : '/user/dashboard');
     navigate(origin);
-  }, [dispatch, location.state?.from?.pathname, navigate]);
+  };
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -57,13 +56,18 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      dispatch(setError(''));
-      const authorizeUrl = authService.getGoogleOAuth2AuthorizeUrl();
-      window.location.assign(authorizeUrl);
+      dispatch(setLoading(true));
+      const idToken = credentialResponse.credential;
+      if (!idToken) throw new Error("No ID Token found");
+
+      const response = await authService.loginWithGoogle(idToken);
+      handleAuthSuccess(response);
     } catch (err: unknown) {
-      dispatch(setError(getErrorMessage(err, 'Cannot start Google OAuth2 flow')));
+      dispatch(setError(getErrorMessage(err, 'Google login failed')));
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -142,9 +146,16 @@ export const LoginForm: React.FC = () => {
           <div className={styles.divider}>or sign in with</div>
 
           <div className={styles.socialActions}>
-            <button type="button" className={styles.socialBtn} onClick={handleGoogleSignIn}>
-              Google
-            </button>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => dispatch(setError('Google login was cancelled or failed.'))}
+              theme="outline"
+              size="large"
+              shape="rectangular"
+              width="100%"
+            />
+            {/* <button type="button" className={styles.socialBtn}>Google</button> */}
+            <button type="button" className={styles.socialBtn}>Facebook</button>
           </div>
 
           <p className={styles.linkText}>
