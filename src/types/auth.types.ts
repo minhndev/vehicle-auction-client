@@ -36,6 +36,10 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
 // Global user profile mapped after login
 export interface UserProfile {
   id: string; // The backend usually provides this via /me or decoded from JWT

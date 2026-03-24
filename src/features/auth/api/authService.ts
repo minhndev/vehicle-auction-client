@@ -1,6 +1,7 @@
 import axiosClient from '../../../api/axiosClient';
 import type {
   AuthResponse,
+  GoogleLoginRequest,
   LoginRequest,
   RegisterRequest,
   RefreshTokenRequest
@@ -16,6 +17,24 @@ export interface ResetPasswordRequest {
   newPassword: string;
   confirmPassword: string;
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+const GOOGLE_OAUTH2_AUTHORIZE_PATH = '/oauth2/authorization/google';
+const GOOGLE_OAUTH2_AUTHORIZE_URL_OVERRIDE = import.meta.env.VITE_GOOGLE_OAUTH2_AUTHORIZE_URL;
+
+const joinApiUrl = (baseUrl: string, path: string): string => {
+  const sanitizedBase = baseUrl.replace(/\/+$/, '');
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${sanitizedBase}${normalizedPath}`;
+};
+
+const getBackendOrigin = (baseUrl: string): string => {
+  try {
+    return new URL(baseUrl).origin;
+  } catch {
+    return 'http://localhost:8080';
+  }
+};
 
 const decodeToken = (token: string): any => {
   try {
@@ -51,6 +70,18 @@ const pickBestRole = (candidates: string[]): UserRole => {
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     return axiosClient.post('/auth/login', credentials);
+  },
+
+  googleLogin: async (data: GoogleLoginRequest): Promise<AuthResponse> => {
+    return axiosClient.post('/auth/google-login', data);
+  },
+
+  getGoogleOAuth2AuthorizeUrl: (): string => {
+    if (GOOGLE_OAUTH2_AUTHORIZE_URL_OVERRIDE) {
+      return GOOGLE_OAUTH2_AUTHORIZE_URL_OVERRIDE;
+    }
+
+    return joinApiUrl(getBackendOrigin(API_BASE_URL), GOOGLE_OAUTH2_AUTHORIZE_PATH);
   },
 
   register: async (userData: RegisterRequest): Promise<AuthResponse> => {

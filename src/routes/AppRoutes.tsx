@@ -20,6 +20,7 @@ import { PaymentReturn } from '../pages/Public/PaymentReturn/PaymentReturn';
 import { PaymentSuccess } from '../pages/Public/PaymentSuccess/PaymentSuccess';
 import { PaymentFailed } from '../pages/Public/PaymentFailed/PaymentFailed';
 import { VerifyEmail } from '../pages/Public/VerifyEmail/VerifyEmail';
+import { OAuth2Redirect } from '../pages/Public/OAuth2Redirect/OAuth2Redirect';
 
 // User Pages
 import { UserDashboard } from '../pages/User/Dashboard/UserDashboard';
@@ -64,6 +65,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/failed" element={<PaymentFailed />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />

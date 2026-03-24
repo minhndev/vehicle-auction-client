@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -28,27 +28,42 @@ export const LoginForm: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
 
+  const completeLogin = useCallback((accessToken: string, refreshToken: string, tokenType: string) => {
+    const userProfile = authService.getCurrentUserFromToken(accessToken);
+
+    dispatch(setCredentials({
+      user: userProfile,
+      tokens: {
+        accessToken,
+        refreshToken,
+        tokenType,
+      },
+    }));
+
+    const roleStr = (userProfile.role || 'USER').toUpperCase();
+    const origin = location.state?.from?.pathname || (roleStr === 'ADMIN' ? '/admin/dashboard' : roleStr === 'SELLER' ? '/seller/dashboard' : '/user/dashboard');
+    navigate(origin);
+  }, [dispatch, location.state?.from?.pathname, navigate]);
+
   const onSubmit = async (data: LoginFormValues) => {
     try {
       dispatch(setLoading(true));
       const response = await authService.login(data);
-
-      // Extract user profile from token since /users/me doesn't exist
-      const userProfile = authService.getCurrentUserFromToken(response.accessToken);
-
-      dispatch(setCredentials({
-        user: userProfile,
-        tokens: response,
-      }));
-
-      // Redirect to origin or dashboard based on role
-      const roleStr = (userProfile.role || 'USER').toUpperCase();
-      const origin = location.state?.from?.pathname || (roleStr === 'ADMIN' ? '/admin/dashboard' : roleStr === 'SELLER' ? '/seller/dashboard' : '/user/dashboard');
-      navigate(origin);
+      completeLogin(response.accessToken, response.refreshToken, response.tokenType);
     } catch (err: unknown) {
       dispatch(setError(getErrorMessage(err, 'Failed to login')));
     } finally {
       dispatch(setLoading(false));
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      dispatch(setError(''));
+      const authorizeUrl = authService.getGoogleOAuth2AuthorizeUrl();
+      window.location.assign(authorizeUrl);
+    } catch (err: unknown) {
+      dispatch(setError(getErrorMessage(err, 'Cannot start Google OAuth2 flow')));
     }
   };
 
@@ -124,11 +139,12 @@ export const LoginForm: React.FC = () => {
             </Button>
           </form>
 
-          <div className={styles.divider}>or continue with</div>
+          <div className={styles.divider}>or sign in with</div>
 
           <div className={styles.socialActions}>
-            <button type="button" className={styles.socialBtn}>Google</button>
-            <button type="button" className={styles.socialBtn}>Facebook</button>
+            <button type="button" className={styles.socialBtn} onClick={handleGoogleSignIn}>
+              Google
+            </button>
           </div>
 
           <p className={styles.linkText}>
