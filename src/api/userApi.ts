@@ -15,6 +15,9 @@ export const userApi = {
   getMe: async (): Promise<MeResponse> => {
     return axiosClient.get('/users/me');
   },
+  getUserById: async (id: string): Promise<MeResponse> => {
+    return axiosClient.get(`/users/${id}`);
+  },
   updateUser: async (userId: string, data: any): Promise<any> => {
     return axiosClient.put(`/users/${userId}`, data);
   },

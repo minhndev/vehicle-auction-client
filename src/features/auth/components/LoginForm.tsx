@@ -10,15 +10,15 @@ import type { RootState } from '../../../store';
 import { Button } from '../../../components/ui/Button/Button';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import { GoogleLogin } from '@react-oauth/google';
+import { useTranslation } from 'react-i18next';
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+interface LoginFormValues {
+  email: string;
+  password: string;
+}
 
 export const LoginForm: React.FC = () => {
+  const { t } = useTranslation(['auth', 'validation', 'common']);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,6 +37,11 @@ export const LoginForm: React.FC = () => {
     const { registerNotice: _ignored, ...restState } = routeState;
     navigate(location.pathname, { replace: true, state: restState });
   }, [location.pathname, location.state, navigate]);
+
+  const loginSchema = z.object({
+    email: z.string().email(t('validation:email_invalid', 'Email không hợp lệ')),
+    password: z.string().min(1, t('validation:password_required', 'Mật khẩu là bắt buộc')),
+  });
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -63,7 +68,7 @@ export const LoginForm: React.FC = () => {
       const response = await authService.login(data);
       handleAuthSuccess(response);
     } catch (err: unknown) {
-      dispatch(setError(getErrorMessage(err, 'Failed to login')));
+      dispatch(setError(getErrorMessage(err, t('auth:login.error_failed', 'Failed to login'))));
     } finally {
       dispatch(setLoading(false));
     }
@@ -78,7 +83,7 @@ export const LoginForm: React.FC = () => {
       const response = await authService.loginWithGoogle(idToken);
       handleAuthSuccess(response);
     } catch (err: unknown) {
-      dispatch(setError(getErrorMessage(err, 'Google login failed')));
+      dispatch(setError(getErrorMessage(err, t('auth:login.error_google_failed', 'Google login failed'))));
     } finally {
       dispatch(setLoading(false));
     }
@@ -92,28 +97,28 @@ export const LoginForm: React.FC = () => {
         <div className="hidden md:flex flex-col justify-center bg-[#2e3d83] text-white p-12 lg:p-16 w-1/2 relative">
           <div className="absolute inset-0 bg-blue-900/20 backdrop-blur-sm pointer-events-none"></div>
           <div className="relative z-10 w-full max-w-md mx-auto">
-            <p className="text-blue-300 font-bold text-xs tracking-widest uppercase mb-4">Vehicle Auction</p>
+            <p className="text-blue-300 font-bold text-xs tracking-widest uppercase mb-4">{t('common:vehicle_auction', 'Đấu giá phương tiện')}</p>
             <h2 className="text-white text-4xl lg:text-5xl font-extrabold mb-6 leading-tight">
-              Đăng nhập để tiếp tục các phiên đấu giá trực tiếp
+              {t('auth:login.promo_title')}
             </h2>
             <p className="text-blue-100 text-lg mb-10 leading-relaxed font-medium">
-              Theo dõi giá theo thời gian thực, nhận thông báo vượt giá và thanh toán xe thắng thầu trên nền tảng thống nhất.
+              {t('auth:login.promo_subtitle')}
             </p>
             
             <div className="flex flex-wrap gap-3 mb-12">
-              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">Live bidding</span>
-              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">Thông báo tức thì</span>
-              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">VNPay checkout</span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">{t('auth:login.promo_badge_1')}</span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">{t('auth:login.promo_badge_2')}</span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">{t('auth:login.promo_badge_3')}</span>
             </div>
             
             <div className="flex gap-12 border-t border-white/20 pt-8">
               <div>
                 <strong className="block text-3xl lg:text-4xl font-black mb-1 tracking-tight">12.5k+</strong>
-                <p className="text-blue-200 text-sm font-semibold">active bidders</p>
+                <p className="text-blue-200 text-sm font-semibold">{t('auth:login.promo_stat_1', 'người tham gia')}</p>
               </div>
               <div>
                 <strong className="block text-3xl lg:text-4xl font-black mb-1 tracking-tight">98%</strong>
-                <p className="text-blue-200 text-sm font-semibold">trusted sellers</p>
+                <p className="text-blue-200 text-sm font-semibold">{t('auth:login.promo_stat_2', 'đối tác tin cậy')}</p>
               </div>
             </div>
           </div>
@@ -122,8 +127,8 @@ export const LoginForm: React.FC = () => {
         {/* Right Side: Login Form */}
         <div className="w-full md:w-1/2 p-8 sm:p-12 lg:p-16 flex flex-col justify-center bg-white">
           <div className="max-w-md w-full mx-auto">
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Welcome Back</h2>
-            <p className="text-slate-500 font-medium mb-8">Sign in to manage bids, orders and live auctions.</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-2">{t('auth:login.title')}</h2>
+            <p className="text-slate-500 font-medium mb-8">{t('auth:login.subtitle')}</p>
 
             {error && (
               <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3.5 rounded-xl text-sm font-semibold flex items-center">
@@ -141,7 +146,7 @@ export const LoginForm: React.FC = () => {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="email">Email Address</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="email">{t('auth:login.email_label')}</label>
                 <div className="relative">
                   <input
                     className={`w-full px-4 py-3.5 rounded-xl border ${errors.email ? 'border-red-300 focus:ring-red-200 focus:border-red-400' : 'border-slate-200 focus:ring-[#2e3d83]/20 focus:border-[#2e3d83]'} outline-none transition-all duration-200 bg-slate-50 focus:bg-white font-medium text-slate-900`}
@@ -155,7 +160,7 @@ export const LoginForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="password">Password</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="password">{t('auth:login.password_label')}</label>
                 <div className="relative">
                   <input
                     className={`w-full px-4 py-3.5 rounded-xl border ${errors.password ? 'border-red-300 focus:ring-red-200 focus:border-red-400' : 'border-slate-200 focus:ring-[#2e3d83]/20 focus:border-[#2e3d83]'} outline-none transition-all duration-200 bg-slate-50 focus:bg-white font-medium text-slate-900 tracking-wider`}
@@ -171,16 +176,16 @@ export const LoginForm: React.FC = () => {
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-2.5 cursor-pointer group">
                   <input type="checkbox" className="w-4.5 h-4.5 rounded border-slate-300 text-[#2e3d83] focus:ring-[#2e3d83] transition-colors" />
-                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Remember me</span>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">{t('auth:login.remember_me')}</span>
                 </label>
-                <Link to="/forgot-password" className="text-sm font-bold text-[#2e3d83] hover:text-blue-800 transition-colors">
-                  Forgot password?
+                <Link to="/forgot-password" className="font-bold text-[#2e3d83] hover:text-blue-800 transition-colors">
+                  {t('auth:login.forgot_pass')}
                 </Link>
               </div>
 
               <div className="pt-2">
                 <Button type="submit" variant="primary" className="w-full py-4 rounded-xl text-base font-bold bg-[#2e3d83] hover:bg-[#202b5e] transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={loading}>
-                  {loading ? 'Processing...' : 'Sign In To Account'}
+                  {loading ? t('auth:login.processing') : t('auth:login.submit_btn')}
                 </Button>
               </div>
             </form>
@@ -190,7 +195,7 @@ export const LoginForm: React.FC = () => {
                 <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-slate-400 font-bold uppercase tracking-wider text-xs">or sign in with</span>
+                <span className="px-4 bg-white text-slate-400 font-bold uppercase tracking-wider text-xs">{t('auth:login.or_divider')}</span>
               </div>
             </div>
 
@@ -207,7 +212,7 @@ export const LoginForm: React.FC = () => {
             </div>
 
             <p className="mt-8 text-center text-sm font-semibold text-slate-500">
-              Don't have an account? <Link to="/register" className="ml-1 text-[#2e3d83] font-bold hover:underline hover:text-blue-800 transition-colors">Create one here</Link>
+              {t('auth:login.no_account')} <Link to="/register" className="ml-1 text-[#2e3d83] font-bold hover:underline hover:text-blue-800 transition-colors">{t('auth:login.create_one')}</Link>
             </p>
           </div>
         </div>

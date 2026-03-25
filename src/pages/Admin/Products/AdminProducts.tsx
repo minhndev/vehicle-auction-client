@@ -3,7 +3,11 @@ import { adminApi } from '../../../api/adminApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { ProductResponse } from '../../../types/index';
 import { getErrorMessage } from '../../../utils/errorHelpers';
-import { Search, Loader2, RefreshCw, Trash2, CheckCircle2, XCircle, AlertCircle, Image as ImageIcon, Eye, X } from 'lucide-react';
+import { 
+  Search, Eye, CheckCircle2, XCircle, Trash2, ImageIcon, 
+  AlertCircle, Mail, Loader2, RefreshCw, X 
+} from 'lucide-react';
+import { SellerEmail } from './components/SellerEmail';
 
 export const AdminProducts: React.FC = () => {
   const [items, setItems] = useState<ProductResponse[]>([]);
@@ -153,7 +157,12 @@ export const AdminProducts: React.FC = () => {
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VIN: {item.vinNumber || 'MISSING'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-medium text-slate-500 text-sm font-mono bg-slate-100 px-2 py-1 rounded-md">{item.sellerId ? String(item.sellerId).slice(0, 8) : 'N/A'}...</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-600 text-sm bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-2">
+                          <Mail size={14} className="text-[#2e3d83] opacity-70" />
+                          <SellerEmail sellerId={item.sellerEmail || (item.createdBy?.includes('@') ? item.createdBy : item.sellerId) || item.createdBy || ''} />
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col items-start gap-1">
@@ -212,7 +221,13 @@ export const AdminProducts: React.FC = () => {
                     onClick={() => selectedItem.images?.[mainImageIndex]?.url && setZoomedImage(selectedItem.images[mainImageIndex].url)}
                   >
                     {selectedItem.images && selectedItem.images.length > 0 ? (
-                      <img src={selectedItem.images[mainImageIndex]?.url || selectedItem.images[0].url} alt="Main" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      <img 
+                        key={selectedItem.images[mainImageIndex]?.url}
+                        src={selectedItem.images[mainImageIndex]?.url || selectedItem.images[0].url} 
+                        alt="Main" 
+                        loading="eager"
+                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] animate-in fade-in zoom-in-95" 
+                      />
                     ) : (
                       <ImageIcon size={64} className="text-slate-300"/>
                     )}
@@ -272,6 +287,12 @@ export const AdminProducts: React.FC = () => {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-500 font-medium">Hộp số</span>
                       <span className="font-bold text-slate-800 capitalize">{selectedItem.transmission || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-200/60">
+                      <span className="text-slate-500 font-medium">Người đăng ký</span>
+                      <span className="font-bold text-[#2e3d83]">
+                        <SellerEmail sellerId={selectedItem.sellerEmail || (selectedItem.createdBy?.includes('@') ? selectedItem.createdBy : selectedItem.sellerId) || selectedItem.createdBy || ''} />
+                      </span>
                     </div>
                   </div>
                   

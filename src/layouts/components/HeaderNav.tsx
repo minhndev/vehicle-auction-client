@@ -5,6 +5,9 @@ import { Gavel, LayoutDashboard, User as UserIcon, History, LogOut, Bell } from 
 import type { RootState } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { authService } from '../../features/auth/api/authService';
+import { watchlistApi } from '../../api/watchlistApi';
+import { auctionApi } from '../../features/bidding/api/auctionApi';
+import { AlertCircle, X } from 'lucide-react';
 
 export interface NavItem {
   id: string;
@@ -56,7 +59,56 @@ export const HeaderNav: React.FC = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+  const notifiedAuctions = useRef<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const checkWatchlist = async () => {
+      try {
+        const [watchlist, upcomingResponse] = await Promise.all([
+          watchlistApi.getWatchlist(),
+          auctionApi.getPublicAuctions({ status: 'UPCOMING', size: 50 })
+        ]);
+
+        const watchlistProductIds = new Set(watchlist.map(w => String(w.productId)));
+        
+        // Find upcoming auctions for products in watchlist
+        const upcomingAuctions = (upcomingResponse as any).content || [];
+        const myUpcoming = upcomingAuctions.filter((a: any) => 
+          watchlistProductIds.has(String(a.productId)) && a.startTime
+        );
+
+        const now = Date.now();
+        const FIFTEEN_MINS = 15 * 60 * 1000;
+
+        for (const auction of myUpcoming) {
+          const startTime = new Date(auction.startTime).getTime();
+          const diff = startTime - now;
+
+          // If starting in less than 15 mins but not started yet
+          if (diff > 0 && diff <= FIFTEEN_MINS) {
+            if (!notifiedAuctions.current.has(auction.id)) {
+              setNotification(`Phiên đấu giá "${auction.productName}" sẽ bắt đầu trong ít phút nữa!`);
+              notifiedAuctions.current.add(auction.id);
+              
+              // Auto hide after 10s
+              setTimeout(() => setNotification(null), 10000);
+              break; 
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Lỗi kiểm tra lịch đấu giá:', err);
+      }
+    };
+
+    checkWatchlist();
+    const interval = setInterval(checkWatchlist, 120000); // Check every 2 mins
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -122,7 +174,24 @@ export const HeaderNav: React.FC = () => {
   };
 
   return (
-    <div className={headerClassName} style={headerStyle}>
+    <>
+      {notification && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-[#2e3d83] text-white px-6 py-3 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-3 backdrop-blur-md">
+            <div className="w-8 h-8 rounded-full bg-[#f4c23d] flex items-center justify-center text-slate-900 shrink-0">
+               <AlertCircle size={18} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-blue-200 uppercase tracking-wider">Thông báo quan tâm</span>
+              <span className="text-sm font-semibold">{notification}</span>
+            </div>
+            <button onClick={() => setNotification(null)} className="ml-4 p-1 hover:bg-white/10 rounded-full transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+      <div className={headerClassName} style={headerStyle}>
       <div className="w-full max-w-[1202px] flex items-center justify-between px-4 xl:px-0">
         
         {/* Logo */}
@@ -202,5 +271,6 @@ export const HeaderNav: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };

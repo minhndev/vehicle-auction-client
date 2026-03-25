@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { miscApi } from '../../../api/miscApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import { getErrorMessage } from '../../../utils/errorHelpers';
-import { ShieldCheck, Shield, Plus, Trash2, RefreshCw, Loader2, AlertCircle, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, Shield, Plus, Trash2, RefreshCw, Loader2, AlertCircle, ShieldAlert, X } from 'lucide-react';
 
 interface Role {
   id: string | number;
@@ -19,6 +19,12 @@ export const AdminRoles: React.FC = () => {
 
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [actionLoading, setActionLoading] = useState<string | number | null>(null);
+
+  // Permission Management
+  const [editingPermissionsRole, setEditingPermissionsRole] = useState<Role | null>(null);
+  const [allPermissions, setAllPermissions] = useState<any[]>([]);
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
+  const [permissionLoading, setPermissionLoading] = useState(false);
 
   useEffect(() => {
     fetchRoles();
@@ -75,6 +81,50 @@ export const AdminRoles: React.FC = () => {
       alert(`${tp('adminRoles.restoreFailed')}: ${getErrorMessage(err)}`);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleOpenPermissions = async (role: Role) => {
+    try {
+      setEditingPermissionsRole(role);
+      setPermissionLoading(true);
+      
+      // Fetch role details to get its current permissions
+      const roleDetails = await miscApi.getRoleById(role.id);
+      const currentIds = (roleDetails.permissions || []).map((p: any) => String(p.id));
+      setSelectedPermissionIds(currentIds);
+
+      // Fetch all available permissions if not already fetched
+      if (allPermissions.length === 0) {
+        const permsRes = await miscApi.getPermissions({ size: 100 });
+        setAllPermissions(permsRes.content || permsRes || []);
+      }
+    } catch (err) {
+      alert('Không thể tải danh sách quyền.');
+    } finally {
+      setPermissionLoading(false);
+    }
+  };
+
+  const handleTogglePermission = (id: string) => {
+    setSelectedPermissionIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSavePermissions = async () => {
+    if (!editingPermissionsRole) return;
+    try {
+      setPermissionLoading(true);
+      await miscApi.updateRole(editingPermissionsRole.id, {
+        permissionIds: selectedPermissionIds
+      });
+      setEditingPermissionsRole(null);
+      alert('Cập nhật quyền thành công!');
+    } catch (err) {
+      alert('Không thể lưu quyền: ' + getErrorMessage(err));
+    } finally {
+      setPermissionLoading(false);
     }
   };
 
@@ -186,6 +236,13 @@ export const AdminRoles: React.FC = () => {
                         </td>
                         <td className="px-8 py-5 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <button 
+                              onClick={() => handleOpenPermissions(role)}
+                              className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all"
+                              title="Quản lý Quyền"
+                            >
+                              <Shield size={14}/>
+                            </button>
                             {role.name !== 'ADMIN' && role.name !== 'USER' && (
                               role.isDeleted ? (
                                 <button 
@@ -218,6 +275,96 @@ export const AdminRoles: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Permissions Modal */}
+      {editingPermissionsRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !permissionLoading && setEditingPermissionsRole(null)}></div>
+          <div className="bg-white relative z-10 w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Cài đặt Quyền: {editingPermissionsRole.name}</h3>
+                <p className="text-sm text-slate-500">Chọn các quyền hạn gán cho vai trò này</p>
+              </div>
+              <button 
+                onClick={() => setEditingPermissionsRole(null)} 
+                disabled={permissionLoading}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8">
+              {permissionLoading && allPermissions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-sm">
+                  <Loader2 className="animate-spin mb-4" size={32} />
+                  Đang tải danh sách quyền...
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Group by groupName if available */}
+                  {Object.entries(
+                    allPermissions.reduce((acc: any, p: any) => {
+                      const group = p.groupName || 'Khác';
+                      if (!acc[group]) acc[group] = [];
+                      acc[group].push(p);
+                      return acc;
+                    }, {})
+                  ).map(([group, perms]: [string, any]) => (
+                    <div key={group} className="space-y-3">
+                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-l-4 border-blue-500 pl-3">{group}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {perms.map((p: any) => (
+                          <label 
+                            key={p.id} 
+                            className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
+                              selectedPermissionIds.includes(String(p.id)) 
+                                ? 'bg-blue-50 border-blue-200' 
+                                : 'bg-white border-slate-100 hover:border-slate-300'
+                            }`}
+                          >
+                            <input 
+                              type="checkbox" 
+                              className="mt-1 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                              checked={selectedPermissionIds.includes(String(p.id))}
+                              onChange={() => handleTogglePermission(String(p.id))}
+                            />
+                            <div>
+                              <p className={`text-sm font-bold ${selectedPermissionIds.includes(String(p.id)) ? 'text-blue-900' : 'text-slate-700'}`}>{p.name}</p>
+                              <p className="text-[11px] text-slate-400 line-clamp-1">{p.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+              <p className="text-sm text-slate-500">Đã chọn <strong>{selectedPermissionIds.length}</strong> quyền</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setEditingPermissionsRole(null)}
+                  disabled={permissionLoading}
+                  className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all"
+                >
+                  Hủy
+                </button>
+                <button 
+                  onClick={handleSavePermissions}
+                  disabled={permissionLoading}
+                  className="px-8 py-2.5 bg-[#2e3d83] text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-800 transition-all flex items-center gap-2"
+                >
+                  {permissionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Lưu Quyền Hạn'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

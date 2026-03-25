@@ -1,13 +1,32 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { RootState } from '../../../store';
+import { setCredentials } from '../../../store/slices/authSlice';
+import { userApi } from '../../../api/userApi';
 import { Mail, Phone, MapPin, Calendar, ShieldCheck } from 'lucide-react';
 
 export const MyProfilePage: React.FC = () => {
   const { tp } = usePageI18n();
+  const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.accessToken);
+
+  useEffect(() => {
+    if (token) {
+      userApi.getMe().then(data => {
+        dispatch(setCredentials({
+          user: { ...user, ...data } as any,
+          tokens: {
+             accessToken: token,
+             refreshToken: localStorage.getItem('refreshToken') || '',
+             tokenType: 'Bearer'
+          }
+        }));
+      }).catch(console.error);
+    }
+  }, [dispatch, token]);
 
   const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || tp('myProfile.defaultName');
   const initials = `${user?.firstName?.[0] ?? 'A'}${user?.lastName?.[0] ?? 'M'}`.toUpperCase();
@@ -28,8 +47,14 @@ export const MyProfilePage: React.FC = () => {
         {/* Decorative background element */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full -translate-y-1/2 translate-x-1/3 opacity-50 pointer-events-none"></div>
         
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2e3d83] to-[#1e293b] flex-shrink-0 flex items-center justify-center text-white text-3xl font-bold shadow-inner ring-4 ring-slate-50 z-10">
-          {initials}
+        <div className="w-24 h-24 rounded-full bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center border-4 border-white shadow-lg z-10">
+          {user?.avatarURL ? (
+            <img src={user.avatarURL} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#2e3d83] to-[#1e293b] flex items-center justify-center text-white text-3xl font-bold">
+              {initials}
+            </div>
+          )}
         </div>
         
         <div className="flex-1 text-center sm:text-left z-10">
@@ -87,7 +112,14 @@ export const MyProfilePage: React.FC = () => {
                 </span>
                 <strong className="text-slate-800 font-bold text-[15px]">
                   {/* @ts-expect-error fallback property */}
-                  {user?.dob || user?.dateOfBirth || user?.birthdate || <span className="text-slate-300 italic">Chưa cập nhật</span>}
+                  {user?.birthdate || user?.dob || user?.dateOfBirth || <span className="text-slate-300 italic">Chưa cập nhật</span>}
+                </strong>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm text-slate-400 font-medium font-bold text-[#2e3d83]">Số căn cước công dân</span>
+                <strong className="text-slate-800 font-bold text-[15px]">
+                  {/* @ts-expect-error fallback property */}
+                  {user?.identityNumber || <span className="text-slate-300 italic">Chưa xác thực</span>}
                 </strong>
               </div>
               <div className="flex flex-col gap-1.5 sm:col-span-2">

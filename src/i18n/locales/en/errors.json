@@ -5,5 +5,6 @@
   "1004": "Session expired. Please log in again.",
   "1005": "Invalid refresh token.",
   "1006": "You do not have permission to perform this action.",
+  "auction.not.active": "This vehicle has not entered its auction period yet or the auction has already closed.",
   "fallback": "An unknown error occurred"
 }

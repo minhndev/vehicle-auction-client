@@ -13,6 +13,12 @@ export interface UserResponse {
   email: string;
   firstName: string;
   lastName: string;
+  identityNumber?: string;
+  avatarURL?: string;
+  address?: string;
+  phoneNumber?: string;
+  birthdate?: string;
+  gender?: string;
   role: string;
   roles?: string[];
   status: string; // Active, Banned...
@@ -51,6 +57,12 @@ const normalizeUser = (user: unknown, index: number): UserResponse => {
   const email = toStringSafe(source.email, 'unknown@example.com');
   const firstName = toStringSafe(source.firstName || source.first_name || source.givenName, toStringSafe(source.fullName, 'Unknown'));
   const lastName = toStringSafe(source.lastName || source.last_name || source.familyName, '');
+  const identityNumber = toStringSafe(source.identityNumber || source.identity_number, '');
+  const avatarURL = toStringSafe(source.avatarURL || source.avatar_url, '');
+  const address = toStringSafe(source.address, '');
+  const phoneNumber = toStringSafe(source.phoneNumber || source.phone_number || source.phone, '');
+  const birthdate = toStringSafe(source.birthdate || source.birth_date || source.dob, '');
+  const gender = toStringSafe(source.gender, '');
   const roles = Array.isArray(source.roles)
     ? source.roles.map((value) => toStringSafe(value).toUpperCase()).filter(Boolean)
     : [];
@@ -66,6 +78,12 @@ const normalizeUser = (user: unknown, index: number): UserResponse => {
     email,
     firstName,
     lastName,
+    identityNumber,
+    avatarURL,
+    address,
+    phoneNumber,
+    birthdate,
+    gender,
     role,
     roles,
     status,

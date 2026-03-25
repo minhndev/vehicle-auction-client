@@ -4,7 +4,7 @@ import { adminApi, type UserResponse } from '../../../api/adminApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import { getErrorMessage } from '../../../utils/errorHelpers';
 import type { RootState } from '../../../store';
-import { ShieldCheck, UserCheck, UserX, Loader2, Search, Key, Shield } from 'lucide-react';
+import { ShieldCheck, UserCheck, UserX, Loader2, Search, Key, Shield, Eye, X } from 'lucide-react';
 
 export const AdminUsers: React.FC = () => {
   const { tp, getUserStatusLabel } = usePageI18n();
@@ -15,6 +15,7 @@ export const AdminUsers: React.FC = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [grantingUserId, setGrantingUserId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
 
   // Helper func current role logic truncated for brevity, assume "ADMIN" directly as visual
   const currentRole = 'ADMIN'; 
@@ -163,6 +164,13 @@ export const AdminUsers: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <button 
+                            onClick={() => setSelectedUser(user)}
+                            className="w-9 h-9 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={16}/>
+                          </button>
+                          <button 
                             onClick={() => handleGrantSeller(user)}
                             disabled={grantingUserId === user.id || roleStr === 'SELLER'}
                             className="text-xs font-bold px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:hidden"
@@ -193,6 +201,59 @@ export const AdminUsers: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* User Detail Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedUser(null)}></div>
+          <div className="bg-white relative z-10 w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h2 className="text-xl font-black text-slate-800">Hồ Sơ Chi Tiết Người Dùng</h2>
+              <button onClick={() => setSelectedUser(null)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-500 transition-colors bg-white shadow-sm border border-slate-200"><X size={20}/></button>
+            </div>
+            
+            <div className="p-8 space-y-8 overflow-y-auto max-h-[80vh]">
+              <div className="flex items-center gap-6 pb-6 border-b border-slate-100">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md flex items-center justify-center">
+                  {selectedUser.avatarURL ? <img src={selectedUser.avatarURL} alt="Avatar" className="w-full h-full object-cover" /> : <div className="text-3xl font-black text-slate-300 uppercase">{selectedUser.firstName?.[0] || '?'}</div>}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-800">{selectedUser.firstName} {selectedUser.lastName}</h3>
+                  <p className="text-slate-500 font-medium">{selectedUser.email}</p>
+                  <div className="mt-2 text-xs font-black uppercase tracking-widest px-2.5 py-1 bg-blue-100 text-blue-700 rounded-md inline-block">{selectedUser.role}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Số Định Danh (CCCD)</p>
+                  <p className="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">{selectedUser.identityNumber || 'Chưa cập nhật'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Số Điện Thoại</p>
+                  <p className="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">{selectedUser.phoneNumber || 'Chưa cập nhật'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày Sinh</p>
+                  <p className="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">{selectedUser.birthdate || 'Chưa cập nhật'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày Đăng Ký</p>
+                  <p className="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('vi-VN') : '—'}</p>
+                </div>
+                <div className="md:col-span-2 space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Địa Chỉ Liên Hệ</p>
+                  <p className="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">{selectedUser.address || 'Chưa cập nhật'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 px-8 py-5 border-t border-slate-100 flex justify-end">
+              <button onClick={() => setSelectedUser(null)} className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-sm">Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

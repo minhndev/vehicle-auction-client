@@ -5,5 +5,6 @@
   "1004": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
   "1005": "Token làm mới không hợp lệ.",
   "1006": "Bạn không có quyền thực hiện hành động này.",
+  "auction.not.active": "Chiếc xe này chưa bước vào thời gian bắt đầu đấu giá hoặc phiên đấu giá đã khép lại.",
   "fallback": "Đã xảy ra lỗi không xác định"
 }

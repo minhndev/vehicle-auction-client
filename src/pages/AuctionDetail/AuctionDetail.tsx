@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { CalendarDays, Settings2, Droplets, Gauge, AlertCircle, Clock, Trophy, CheckCircle2, MapPin, ImageIcon, ArrowLeft, Send, X } from 'lucide-react';
+import { CalendarDays, Settings2, Droplets, Gauge, AlertCircle, Clock, Trophy, CheckCircle2, MapPin, ImageIcon, ArrowLeft, Send, X, ChevronUp, ChevronDown, Heart } from 'lucide-react';
 import { catalogApi } from '../../api/catalogApi';
 import { paymentApi } from '../../api/paymentApi';
+import { userApi } from '../../api/userApi';
+import { watchlistApi } from '../../api/watchlistApi';
 import { auctionApi } from '../../features/bidding/api/auctionApi';
 import type { AuctionResponse, BidResponse, ProductResponse } from '../../types/index';
 import { useCountdown } from '../../hooks/useCountdown';
@@ -292,7 +294,36 @@ const trimBids = (items: BidResponse[], limit = LIVE_APPEND_BIDS_LIMIT): BidResp
 };
 
 const sortBidsByRank = (items: BidResponse[]): BidResponse[] => {
-  return [...items].sort((a, b) => {
+  if (!items || !Array.isArray(items) || items.length === 0) return [];
+
+  // Group by bidderId, keeping the highest bid for each user
+  const highestBidMap = new Map<string, BidResponse>();
+
+  for (const bid of items) {
+    const key = bid.bidderId ? String(bid.bidderId) : getBidIdentity(bid);
+    const existing = highestBidMap.get(key);
+    
+    if (!existing) {
+      highestBidMap.set(key, bid);
+    } else {
+      const currentAmount = Number(bid.amount ?? 0);
+      const existingAmount = Number(existing.amount ?? 0);
+      
+      if (currentAmount > existingAmount) {
+        highestBidMap.set(key, bid);
+      } else if (currentAmount === existingAmount) {
+        // Tie breaker for same amount: earlier time wins
+        const currentTime = new Date(bid.createdAt ?? 0).getTime();
+        const existingTime = new Date(existing.createdAt ?? 0).getTime();
+        if (currentTime < existingTime) {
+           highestBidMap.set(key, bid);
+        }
+      }
+    }
+  }
+
+  // Sort the unique highest bids
+  return Array.from(highestBidMap.values()).sort((a, b) => {
     const rankA = Number(a.rank);
     const rankB = Number(b.rank);
     const hasRankA = Number.isFinite(rankA) && rankA > 0;
@@ -308,12 +339,12 @@ const sortBidsByRank = (items: BidResponse[]): BidResponse[] => {
     const amountA = Number(a.amount ?? 0);
     const amountB = Number(b.amount ?? 0);
     if (amountA !== amountB) {
-      return amountB - amountA;
+      return amountB - amountA; // Descending amount
     }
 
     const timeA = new Date(a.createdAt ?? 0).getTime();
     const timeB = new Date(b.createdAt ?? 0).getTime();
-    return timeB - timeA;
+    return timeA - timeB; // Ascending time (earlier is better for auction)
   });
 };
 
@@ -835,12 +866,35 @@ export const AuctionDetail: React.FC = () => {
     'https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
 
   const allImages = product?.images?.map((img) => img.url).filter(Boolean) as string[] | undefined;
+  const currentImageIndex = allImages ? Math.max(0, allImages.indexOf(selectedImage || mainImage)) : 0;
+
+  const thumbnailsRef = useRef<HTMLDivElement>(null);
+  const scrollThumbnails = (direction: 'up' | 'down') => {
+    if (thumbnailsRef.current) {
+      const scrollAmount = 140; // rough height of thumbnail + gap
+      thumbnailsRef.current.scrollBy({ top: direction === 'up' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     if (mainImage) {
       setSelectedImage(mainImage);
     }
   }, [mainImage]);
+
+  const [fetchedWinnerEmail, setFetchedWinnerEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (auction?.status === 'ENDED' && auction.winnerId && !auction.winnerEmail) {
+      userApi.getUserById(String(auction.winnerId))
+        .then(res => {
+          if (res.email) setFetchedWinnerEmail(res.email);
+        })
+        .catch(() => {
+          // Ignore error if user fetch fails due to privacy or non-existence
+        });
+    }
+  }, [auction?.status, auction?.winnerId, auction?.winnerEmail]);
 
   const statusLabel =
     auction?.status === 'ACTIVE'
@@ -849,12 +903,20 @@ export const AuctionDetail: React.FC = () => {
         ? tp('auctionDetail.statusUpcoming')
         : tp('auctionDetail.statusEnded');
 
+  const maskEmail = (email: string) => {
+    const parts = email.split('@');
+    if (parts.length !== 2) return email;
+    const name = parts[0];
+    const domain = parts[1];
+    return `${name.slice(0, Math.max(1, Math.min(3, name.length)))}***@${domain}`;
+  };
+
   const winnerDisplay =
-    auction?.winnerEmail
-    || auction?.winnerUsername
-    || auction?.winnerName
-    || auction?.winnerId
-    || '';
+    fetchedWinnerEmail ? maskEmail(fetchedWinnerEmail) :
+    auction?.winnerEmail ? maskEmail(auction.winnerEmail) :
+    auction?.winnerUsername ? auction.winnerUsername :
+    auction?.winnerName ? auction.winnerName :
+    auction?.winnerId ? `NT-**${String(auction.winnerId).slice(-2)}` : '';
 
   const rankedBids = useMemo(() => sortBidsByRank(recentBids), [recentBids]);
   const userRankIndex = useMemo(() => rankedBids.findIndex((bid) => normalize(bid.bidderId) === normalize(currentUserId)), [rankedBids, currentUserId]);
@@ -951,9 +1013,11 @@ export const AuctionDetail: React.FC = () => {
           <div className="flex-1 w-full lg:w-[60%] flex flex-col gap-8">
             
             {/* Gallery */}
-            <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden relative">
+            <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden relative flex flex-col md:flex-row h-[400px] md:h-[500px]">
+              
+              {/* Main Image Area */}
               <div 
-                className="relative aspect-[16/10] bg-slate-900 overflow-hidden group cursor-zoom-in"
+                className="flex-1 relative bg-slate-900 overflow-hidden group cursor-zoom-in"
                 onClick={() => setZoomedImage(selectedImage || mainImage)}
               >
                 <img src={selectedImage || mainImage} alt={auction.productName ?? 'Xe đấu giá'} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
@@ -962,39 +1026,63 @@ export const AuctionDetail: React.FC = () => {
                 <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 z-10 shadow-lg border border-white/10">
                   <ImageIcon size={14} /> V-Auction Verified
                 </div>
-
-                {/* Floating Thumbnails (Vertical) */}
-                {allImages && allImages.length > 1 && (
-                  <div className="absolute top-1/2 -translate-y-1/2 right-4 flex flex-col gap-3 py-2 z-10 max-h-[90%] overflow-y-auto custom-scrollbar pr-1 hidden md:flex">
-                    {allImages.slice(0, 6).map((url, idx) => (
-                      <button 
-                        key={idx} 
-                        type="button" 
-                        onClick={(e) => { e.stopPropagation(); setSelectedImage(url); }} 
-                        className={`relative w-16 h-16 xl:w-20 xl:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 shadow-lg shrink-0 ${selectedImage === url ? 'border-[#f4c23d] scale-110 shadow-[#f4c23d]/40' : 'border-white/20 opacity-70 hover:opacity-100 hover:scale-105'}`}
-                      >
-                        <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
                 
-                {/* Mobile horizontal scroll for thumbnails */}
-                {allImages && allImages.length > 1 && (
-                  <div className="absolute bottom-4 left-0 w-full px-4 flex gap-3 overflow-x-auto no-scrollbar md:hidden z-10">
-                     {allImages.slice(0, 6).map((url, idx) => (
+                {/* Counter Badge */}
+                <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1.5 rounded z-10 tracking-widest">
+                  {currentImageIndex + 1} / {allImages?.length || 1}
+                </div>
+              </div>
+
+              {/* Thumbnails Sidebar (Desktop) */}
+              {allImages && allImages.length > 1 && (
+                <div className="hidden md:flex flex-col w-[100px] xl:w-[130px] bg-white border-l border-slate-200 relative">
+                  <button 
+                    onClick={() => scrollThumbnails('up')}
+                    className="h-10 w-full flex items-center justify-center bg-slate-300 hover:bg-slate-400 transition-colors text-white shrink-0"
+                  >
+                    <ChevronUp size={28} strokeWidth={3} />
+                  </button>
+                  
+                  <div 
+                    ref={thumbnailsRef}
+                    className="flex-1 overflow-y-auto no-scrollbar flex flex-col scroll-smooth gap-1 p-1 bg-white"
+                  >
+                    {allImages.map((url, idx) => (
                       <button 
                         key={idx} 
                         type="button" 
                         onClick={(e) => { e.stopPropagation(); setSelectedImage(url); }} 
-                        className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-300 shadow-md shrink-0 ${selectedImage === url ? 'border-[#f4c23d] scale-105' : 'border-white/40 opacity-80'}`}
+                        className={`relative w-full aspect-[4/3] shrink-0 transition-all duration-200 ${selectedImage === url ? 'border-[3px] border-red-500 p-0 transform scale-100 z-10' : 'border-[3px] border-transparent opacity-80 hover:opacity-100'}`}
                       >
                         <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>
-                )}
-              </div>
+
+                  <button 
+                    onClick={() => scrollThumbnails('down')}
+                    className="h-10 w-full flex items-center justify-center bg-slate-300 hover:bg-slate-400 transition-colors text-white shrink-0"
+                  >
+                    <ChevronDown size={28} strokeWidth={3} />
+                  </button>
+                </div>
+              )}
+                
+              {/* Mobile horizontal scroll for thumbnails */}
+              {allImages && allImages.length > 1 && (
+                <div className="absolute bottom-4 left-0 w-full px-4 flex gap-3 overflow-x-auto no-scrollbar md:hidden z-10">
+                   {allImages.map((url, idx) => (
+                    <button 
+                      key={idx} 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setSelectedImage(url); }} 
+                      className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-300 shadow-md shrink-0 ${selectedImage === url ? 'border-red-500 scale-105' : 'border-white/40 opacity-80'}`}
+                    >
+                      <img src={url} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Quick Stats Ribbon */}
@@ -1073,10 +1161,20 @@ export const AuctionDetail: React.FC = () => {
               <div className="p-8 bg-gradient-to-br from-[#1e293b] to-[#2e3d83] text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                 <div className="relative z-10">
-                  <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider mb-4 ${auction?.status === 'ACTIVE' ? 'bg-[#f4c23d] text-slate-900 border-2 border-transparent' : 'bg-white/10 text-white backdrop-blur-md border border-white/20'}`}>
-                    {statusLabel}
-                  </span>
-                  <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight mb-2 drop-shadow-md !text-white">{auction.productName}</h1>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ${auction?.status === 'ACTIVE' ? 'bg-[#f4c23d] text-slate-900 border-2 border-transparent' : 'bg-white/10 text-white backdrop-blur-md border border-white/20'}`}>
+                      {statusLabel}
+                    </span>
+                    <button 
+                      onClick={toggleWatchlist}
+                      disabled={watchlistLoading}
+                      title={isWatchlisted ? "Bỏ Lưu Xe" : "Lưu Xe Để Theo Dõi"}
+                      className={`p-2.5 rounded-full backdrop-blur-md transition-all ${isWatchlisted ? 'bg-white text-red-500 shadow-xl scale-110' : 'bg-white/10 text-white hover:bg-white/20 active:scale-95'}`}
+                    >
+                      <Heart size={22} className={isWatchlisted ? 'fill-red-500' : ''} />
+                    </button>
+                  </div>
+                  <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight mb-2 drop-shadow-md !text-white pr-10">{auction.productName}</h1>
                   <p className="text-blue-100/90 text-sm font-medium opacity-90 mb-6">Mã phiên: {String(auction.id).slice(0,8).toUpperCase()} • Người tạo: {auction.createdBy}</p>
                   
                   {/* Countdown UI */}
@@ -1115,27 +1213,35 @@ export const AuctionDetail: React.FC = () => {
                     {checkingDeposit ? (
                        <button className="w-full bg-slate-200 text-slate-500 font-bold py-4 rounded-xl cursor-not-allowed">Đang kiểm tra trạng thái cọc...</button>
                     ) : isDepositVerified ? (
-                      <div className="space-y-5">
-                        <div className="flex items-center justify-between">
-                           <span className="text-sm font-bold text-slate-500 uppercase">Bước Giá: {formatVND(bidStepValue)}</span>
-                           <span className="text-xs font-bold bg-[#2e3d83] text-white px-3 py-1 rounded-full">{userRank ? `Vị trí thứ ${userRank}` : 'Chưa xếp hạng'}</span>
+                      auction.status === 'UPCOMING' || auction.status === 'SCHEDULED' ? (
+                        <div className="bg-emerald-50 text-emerald-600 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 font-bold border border-emerald-100 shadow-sm text-center">
+                          <CheckCircle2 size={36} className="text-emerald-500" />
+                          <p className="text-lg">Đã Nộp Cọc Thành Công</p>
+                          <p className="text-sm font-medium opacity-80">Hệ thống đã ghi nhận tiền cọc của bạn. Vui lòng quay lại đặt giá khi phiên đấu giá thức mở.</p>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                           {stepOptions.map(step => (
-                              <button key={step} onClick={() => setSelectedBidStep(step)} className={`py-3 rounded-xl font-bold text-sm border-2 transition-all ${selectedBidStep === step ? 'bg-slate-900 border-slate-900 text-white shadow-lg -translate-y-0.5' : 'bg-white border-slate-200 text-slate-600 hover:border-[#2e3d83] hover:text-[#2e3d83]'}`}>
-                                +{step}
-                              </button>
-                           ))}
+                      ) : (
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between">
+                             <span className="text-sm font-bold text-slate-500 uppercase">Bước Giá: {formatVND(bidStepValue)}</span>
+                             <span className="text-xs font-bold bg-[#2e3d83] text-white px-3 py-1 rounded-full">{userRank ? `Vị trí thứ ${userRank}` : 'Chưa xếp hạng'}</span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-2">
+                             {stepOptions.map(step => (
+                                <button key={step} onClick={() => setSelectedBidStep(step)} className={`py-3 rounded-xl font-bold text-sm border-2 transition-all ${selectedBidStep === step ? 'bg-slate-900 border-slate-900 text-white shadow-lg -translate-y-0.5' : 'bg-white border-slate-200 text-slate-600 hover:border-[#2e3d83] hover:text-[#2e3d83]'}`}>
+                                  +{step}
+                                </button>
+                             ))}
+                          </div>
+                          <button onClick={handlePlaceBid} disabled={bidLoading} className="w-full bg-gradient-to-r from-[#f4c23d] to-[#ffcf4c] hover:opacity-90 active:scale-[0.98] transition-all text-slate-900 font-black text-lg h-14 rounded-2xl uppercase tracking-widest shadow-xl shadow-[#f4c23d]/20 flex items-center justify-center gap-2">
+                            {bidLoading ? 'ĐANG THEO GIÁ...' : `ĐẶT ${formatVND(selectedBidAmount)}`} <Send size={20}/>
+                          </button>
+                          {bidError && <p className="text-red-500 text-sm font-bold mt-2 text-center bg-red-50 py-2 rounded-lg">{bidError}</p>}
                         </div>
-                        <button onClick={handlePlaceBid} disabled={bidLoading} className="w-full bg-gradient-to-r from-[#f4c23d] to-[#ffcf4c] hover:opacity-90 active:scale-[0.98] transition-all text-slate-900 font-black text-lg h-14 rounded-2xl uppercase tracking-widest shadow-xl shadow-[#f4c23d]/20 flex items-center justify-center gap-2">
-                          {bidLoading ? 'ĐANG THEO GIÁ...' : `ĐẶT ${formatVND(selectedBidAmount)}`} <Send size={20}/>
-                        </button>
-                        {bidError && <p className="text-red-500 text-sm font-bold mt-2 text-center bg-red-50 py-2 rounded-lg">{bidError}</p>}
-                      </div>
+                      )
                     ) : (
                       <>
                         <button onClick={handleDeposit} disabled={depositLoading} className="w-full bg-[#2e3d83] hover:bg-[#1f2f6d] active:scale-[0.98] transition-all text-white font-black text-lg h-14 rounded-2xl uppercase tracking-widest shadow-xl shadow-[#2e3d83]/20">
-                           {depositLoading ? 'ĐANG KHỞI TẠO...' : 'NỘP CỌC BẰNG VNPAY'}
+                           {depositLoading ? 'ĐANG KHỞI TẠO...' : (auction.status === 'UPCOMING' || auction.status === 'SCHEDULED' ? 'ĐĂNG KÝ ĐẶT CỌC VNPAY' : 'NỘP CỌC BẰNG VNPAY')}
                         </button>
                         {depositError && <p className="text-red-500 text-sm font-bold mt-2 text-center">{depositError}</p>}
                       </>

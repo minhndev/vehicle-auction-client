@@ -65,8 +65,12 @@ export const authService = {
     return axiosClient.post('/auth/logout');
   },
 
-  verifyAccount: async (token: string): Promise<void> => {
-    return axiosClient.get(`/auth/verify?token=${encodeURIComponent(token)}`);
+  verifyAccount: async (data: { email: string, otp: string }): Promise<void> => {
+    return axiosClient.post('/auth/verify', data);
+  },
+
+  resendVerificationToken: async (email: string): Promise<void> => {
+    return axiosClient.post('/auth/resend-verification', { email });
   },
 
   loginWithGoogle: async (idToken: string): Promise<AuthResponse> => {

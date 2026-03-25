@@ -18,22 +18,19 @@ export const RegisterForm: React.FC = () => {
   const navigate = useNavigate();
   const { loading, error } = useSelector((state: RootState) => state.auth);
   const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!registerSuccess) return;
+    if (!registerSuccess || !registeredEmail) return;
 
     const timer = window.setTimeout(() => {
-      navigate('/login', {
-        state: {
-          registerNotice: 'Tài khoản đã được tạo. Vui lòng kiểm tra email và bấm link xác thực trước khi đăng nhập.',
-        },
-      });
-    }, 3000);
+      navigate(`/verify-email?email=${encodeURIComponent(registeredEmail)}`);
+    }, 1500);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [registerSuccess, navigate]);
+  }, [registerSuccess, registeredEmail, navigate]);
 
   // Define schema inside the component so it has access to `t`
   const registerSchema = z.object({
@@ -85,7 +82,8 @@ export const RegisterForm: React.FC = () => {
         address: 'Chua cap nhat',
       });
 
-      setRegisterSuccess('Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập. Tự động chuyển sang trang đăng nhập sau 3 giây...');
+      setRegisteredEmail(normalizedEmail);
+      setRegisterSuccess(t('auth:register.success_message'));
     } catch (err: unknown) {
       dispatch(setError(getErrorMessage(err, t('errors:fallback'))));
     } finally {
@@ -101,18 +99,18 @@ export const RegisterForm: React.FC = () => {
         <div className="hidden md:flex flex-col justify-center bg-[#2e3d83] text-white p-12 lg:p-16 w-1/2 relative bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
           <div className="absolute inset-0 bg-blue-900/80 backdrop-blur-sm pointer-events-none"></div>
           <div className="relative z-10 w-full max-w-md mx-auto">
-            <p className="text-blue-300 font-bold text-xs tracking-widest uppercase mb-4">Seller Onboarding</p>
+            <p className="text-blue-300 font-bold text-xs tracking-widest uppercase mb-4">{t('auth:register.promo_eyebrow')}</p>
             <h2 className="text-white text-4xl lg:text-5xl font-extrabold mb-6 leading-tight">
-              Create your auction profile in under 2 minutes
+              {t('auth:register.promo_title')}
             </h2>
             <p className="text-blue-100 text-lg mb-10 leading-relaxed font-medium">
-              Complete the form to activate bidding access, sync your account across devices, and receive instant notifications when your target lots go live.
+              {t('auth:register.promo_subtitle')}
             </p>
             
             <div className="flex flex-wrap gap-3">
-              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">Identity verified</span>
-              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">Realtime bids</span>
-              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">Secure checkout</span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">{t('auth:register.promo_badge_1')}</span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">{t('auth:register.promo_badge_2')}</span>
+              <span className="px-4 py-2 bg-white/10 rounded-full text-sm font-semibold border border-white/20 backdrop-blur-md">{t('auth:register.promo_badge_3')}</span>
             </div>
           </div>
         </div>
@@ -145,7 +143,7 @@ export const RegisterForm: React.FC = () => {
                   id="email" 
                   type="email" 
                   {...register('email')} 
-                  placeholder="name@example.com" 
+                  placeholder={t('auth:register.email_placeholder', 'name@example.com')} 
                 />
                 {errors.email && <span className="text-red-500 text-xs mt-1.5 block font-bold">{errors.email.message}</span>}
               </div>
@@ -248,13 +246,9 @@ export const RegisterForm: React.FC = () => {
                     type="button"
                     variant="outline"
                     className="w-full py-3.5 rounded-xl text-sm font-bold border-2 border-[#2e3d83] text-[#2e3d83] hover:bg-slate-50 transition-colors"
-                    onClick={() => navigate('/login', {
-                      state: {
-                        registerNotice: 'Tài khoản đã được tạo. Vui lòng kiểm tra email và bấm link xác thực trước khi đăng nhập.',
-                      },
-                    })}
+                    onClick={() => navigate(`/verify-email?email=${encodeURIComponent(registeredEmail || '')}`)}
                   >
-                    Đi tới Đăng nhập
+                    {t('auth:register.go_to_verify_btn')}
                   </Button>
                 </div>
               )}

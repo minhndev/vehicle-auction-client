@@ -7,6 +7,7 @@ import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { CategoryResponse } from '../../../types/index';
 import type { RootState } from '../../../store';
 import { Car, Settings, ImageIcon, CheckCircle2, ChevronRight, ChevronLeft, UploadCloud, X, AlertCircle } from 'lucide-react';
+import { CurrencyInput } from '../../../components/ui/CurrencyInput/CurrencyInput';
 
 export const VehicleRegistrationForm: React.FC = () => {
   const { tp } = usePageI18n();
@@ -33,8 +34,8 @@ export const VehicleRegistrationForm: React.FC = () => {
     vinNumber: '',
     categoryId: '',
     mileage: 0,
-    transmission: 'Automatic',
-    fuelType: 'Gasoline',
+    transmission: 'Số sàn (Manual)',
+    fuelType: 'Xăng (Gasoline)',
     description: '',
     basePrice: 0,
     stepPrice: 0,
@@ -315,19 +316,19 @@ export const VehicleRegistrationForm: React.FC = () => {
                   <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Hộp số <span className="text-red-500">*</span></label>
                   <select name="transmission" value={formData.transmission} onChange={handleChange} required
                     className="w-full px-5 py-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#2e3d83] focus:ring-4 focus:ring-[#2e3d83]/10 outline-none transition-all font-medium appearance-none">
-                    <option value="Automatic">Tự động (Automatic)</option>
-                    <option value="Manual">Số sàn (Manual)</option>
-                    <option value="CVT">Vô cấp (CVT)</option>
+                    <option value="Tự động (Automatic)">Tự động (Automatic)</option>
+                    <option value="Số sàn (Manual)">Số sàn (Manual)</option>
+                    <option value="Vô cấp (CVT)">Vô cấp (CVT)</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Nhiên liệu <span className="text-red-500">*</span></label>
                   <select name="fuelType" value={formData.fuelType} onChange={handleChange} required
                     className="w-full px-5 py-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#2e3d83] focus:ring-4 focus:ring-[#2e3d83]/10 outline-none transition-all font-medium appearance-none">
-                    <option value="Gasoline">Xăng (Gasoline)</option>
-                    <option value="Diesel">Dầu (Diesel)</option>
-                    <option value="Electric">Điện (Electric)</option>
-                    <option value="Hybrid">Xăng Lai Điện (Hybrid)</option>
+                    <option value="Xăng (Gasoline)">Xăng (Gasoline)</option>
+                    <option value="Dầu (Diesel)">Dầu (Diesel)</option>
+                    <option value="Điện (Electric)">Điện (Electric)</option>
+                    <option value="Xăng Lai Điện (Hybrid)">Xăng Lai Điện (Hybrid)</option>
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -346,12 +347,13 @@ export const VehicleRegistrationForm: React.FC = () => {
               
               <div className="space-y-10">
                 <div className="space-y-4">
-                  <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Mức Giá Sàn (VND) <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                     <span className="absolute left-5 top-1/2 -translate-y-1/2 font-extrabold text-slate-400">₫</span>
-                     <input type="number" name="basePrice" value={formData.basePrice || ''} onChange={handleChange} required min={1000000} placeholder="VD: 500.000.000"
-                      className="w-full pl-12 pr-5 py-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#2e3d83] focus:ring-4 focus:ring-[#2e3d83]/10 outline-none transition-all font-bold text-lg text-[#2e3d83]" />
-                  </div>
+                  <CurrencyInput
+                    label="Mức Giá Sàn (VND)"
+                    value={formData.basePrice}
+                    onChange={(val) => setFormData(prev => ({ ...prev, basePrice: val }))}
+                    required
+                    placeholder="VD: 500.000.000"
+                  />
                   <p className="text-sm text-slate-500">Giá sàn là mốc giá tham chiếu để bạn thiết lập phiên đấu giá sau này. Nên sát với giá thị trường.</p>
                 </div>
 

@@ -4,7 +4,8 @@ import { sellerApi } from '../../../features/seller/api/sellerApi';
 import { auctionApi } from '../../../features/bidding/api/auctionApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import type { AuctionRequest, ProductResponse } from '../../../types/index';
-import { Car, CalendarClock, DollarSign, Tag, ShieldCheck, CheckCircle2, XCircle, ArrowLeft, Loader2, Info } from 'lucide-react';
+import { Car, CalendarClock, ShieldCheck, CheckCircle2, XCircle, ArrowLeft, Loader2, Info, Timer } from 'lucide-react';
+import { CurrencyInput } from '../../../components/ui/CurrencyInput/CurrencyInput';
 
 const formatVND = (amount?: number) =>
   amount
@@ -100,6 +101,11 @@ export const SellerAuctionCreateForm: React.FC = () => {
       return;
     }
 
+    if (effectiveDeposit > 500000000) {
+      setError('Số tiền cọc tối đa không được vượt quá 500.000.000 VNĐ.');
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError(null);
@@ -118,6 +124,40 @@ export const SellerAuctionCreateForm: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  const addTime = (hours: number) => {
+    const base = formData.startTime ? new Date(formData.startTime) : new Date();
+    const newDate = new Date(base.getTime() + hours * 60 * 60 * 1000);
+    
+    // Format to yyyy-MM-ddThh:mm
+    const year = newDate.getFullYear();
+    const month = String(newDate.getMonth() + 1).padStart(2, '0');
+    const day = String(newDate.getDate()).padStart(2, '0');
+    const h = String(newDate.getHours()).padStart(2, '0');
+    const m = String(newDate.getMinutes()).padStart(2, '0');
+    
+    setFormData(prev => ({ ...prev, endTime: `${year}-${month}-${day}T${h}:${m}` }));
+  };
+
+  const calculateDuration = () => {
+    if (!formData.startTime || !formData.endTime) return null;
+    const start = new Date(formData.startTime).getTime();
+    const end = new Date(formData.endTime).getTime();
+    const diff = end - start;
+    if (diff <= 0) return null;
+
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const mins = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+
+    let result = '';
+    if (days > 0) result += `${days} ngày `;
+    if (hours > 0) result += `${hours} giờ `;
+    if (mins > 0) result += `${mins} phút`;
+    return result.trim();
+  };
+
+  const durationStr = calculateDuration();
 
   if (loading) {
     return (
@@ -210,26 +250,40 @@ export const SellerAuctionCreateForm: React.FC = () => {
                     <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><CalendarClock size={16}/> Hạn Chót Kết Thúc <span className="text-red-500">*</span></label>
                     <input type="datetime-local" required value={formData.endTime} onChange={e => setFormData(p => ({...p, endTime: e.target.value}))}
                       className="w-full px-5 py-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#2e3d83] focus:ring-4 focus:ring-[#2e3d83]/10 outline-none font-medium transition-all" />
+                    
+                    {durationStr && (
+                      <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-100 flex items-center gap-2 animate-in fade-in zoom-in-95 duration-300 shadow-sm">
+                        <Timer size={16} /> 
+                        Thời gian diễn ra: <span className="text-emerald-600">{durationStr}</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 mt-2">
+                       <button type="button" onClick={() => addTime(1)} className="px-3 py-1.5 text-xs font-bold bg-[#2e3d83]/5 text-[#2e3d83] rounded-lg hover:bg-[#2e3d83]/10 transition-colors flex items-center gap-1"><Timer size={12}/> +1h</button>
+                       <button type="button" onClick={() => addTime(24)} className="px-3 py-1.5 text-xs font-bold bg-[#2e3d83]/5 text-[#2e3d83] rounded-lg hover:bg-[#2e3d83]/10 transition-colors flex items-center gap-1"><Timer size={12}/> +24h</button>
+                       <button type="button" onClick={() => addTime(72)} className="px-3 py-1.5 text-xs font-bold bg-[#2e3d83]/5 text-[#2e3d83] rounded-lg hover:bg-[#2e3d83]/10 transition-colors flex items-center gap-1"><Timer size={12}/> +3 ngày</button>
+                       <button type="button" onClick={() => addTime(168)} className="px-3 py-1.5 text-xs font-bold bg-[#2e3d83]/5 text-[#2e3d83] rounded-lg hover:bg-[#2e3d83]/10 transition-colors flex items-center gap-1"><Timer size={12}/> +7 ngày</button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Mức Giá */}
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><Tag size={16}/> Giá Khởi Điểm Bán <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-5 top-1/2 -translate-y-1/2 font-extrabold text-slate-400">₫</span>
-                      <input type="number" required min={1000000} value={formData.startPrice || ''} onChange={e => setFormData(p => ({...p, startPrice: Number(e.target.value)}))}
-                        className="w-full pl-12 pr-5 py-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#2e3d83] focus:ring-4 focus:ring-[#2e3d83]/10 outline-none font-extrabold text-[#2e3d83] transition-all text-lg" />
-                    </div>
+                    <CurrencyInput
+                      label="Giá Khởi Điểm Bán"
+                      value={formData.startPrice}
+                      onChange={val => setFormData(p => ({...p, startPrice: val}))}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><DollarSign size={16}/> Thiết lập Bước Giá (Tối thiểu) <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-5 top-1/2 -translate-y-1/2 font-extrabold text-slate-400">₫</span>
-                      <input type="number" required min={1000} value={formData.bidIncrement || ''} onChange={e => setFormData(p => ({...p, bidIncrement: Number(e.target.value)}))}
-                        className="w-full pl-12 pr-5 py-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#2e3d83] focus:ring-4 focus:ring-[#2e3d83]/10 outline-none font-bold text-slate-700 transition-all text-lg" />
-                    </div>
+                    <CurrencyInput
+                      label="Thiết lập Bước Giá (Tối thiểu)"
+                      value={formData.bidIncrement}
+                      onChange={val => setFormData(p => ({...p, bidIncrement: val}))}
+                      required
+                    />
                   </div>
                 </div>
               </div>
@@ -270,11 +324,14 @@ export const SellerAuctionCreateForm: React.FC = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#f4c23d]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                       </div>
                     ) : (
-                      <div className="space-y-2 relative">
-                        <label className="text-sm font-bold text-[#2e3d83] uppercase tracking-wide">Nhập Tiền Cọc (VND)</label>
-                        <span className="absolute left-5 top-[2.4rem] font-extrabold text-slate-400">₫</span>
-                        <input type="number" required min={0} value={formData.depositAmount || ''} onChange={e => setFormData(p => ({...p, depositAmount: Number(e.target.value)}))} placeholder="Nhập số tiền VNĐ..."
-                          className="w-full pl-12 pr-5 py-4 rounded-xl border-2 border-[#f4c23d] bg-yellow-50 focus:border-yellow-500 outline-none font-black text-[#2e3d83] text-xl transition-all shadow-sm" />
+                      <div className="space-y-2">
+                        <CurrencyInput
+                          label="Nhập Tiền Cọc (VND)"
+                          value={formData.depositAmount}
+                          onChange={val => setFormData(p => ({...p, depositAmount: val}))}
+                          required
+                          className="border-2 border-[#f4c23d] bg-yellow-50 focus:border-yellow-500"
+                        />
                       </div>
                     )}
                   </div>

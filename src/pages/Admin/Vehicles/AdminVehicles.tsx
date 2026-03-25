@@ -127,8 +127,10 @@ export const AdminVehicles: React.FC = () => {
 
                 <div className="bg-slate-50 rounded-2xl p-4 mb-6 space-y-3 flex-1 border border-slate-100">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center text-slate-500 gap-1.5"><User size={16}/> Cung cấp bởi</span>
-                    <span className="font-bold text-slate-800" title={vehicle.sellerId}>ID: {vehicle.sellerId?.substring(0,8) || 'N/A'}</span>
+                    <span className="flex items-center text-slate-500 gap-1.5"><User size={16}/> Người đăng ký</span>
+                    <span className="font-bold text-slate-800" title={vehicle.sellerEmail || vehicle.sellerId}>
+                      {vehicle.sellerEmail || `ID: ${vehicle.sellerId?.substring(0,8)}`}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm pt-3 border-t border-slate-200/60">
                     <span className="flex items-center text-slate-500 gap-1.5"><Gauge size={16}/> ODO</span>

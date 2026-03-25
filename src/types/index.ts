@@ -61,6 +61,7 @@ export interface ProductImageResponse {
 export interface ProductResponse {
   id?: string;
   sellerId?: string;
+  sellerEmail?: string;
   name?: string;
   brand?: string;
   model?: string;
@@ -77,6 +78,7 @@ export interface ProductResponse {
   basePrice?: number;
   startPrice?: number;
   status?: string;
+  createdBy?: string;
   categoryId?: string;
   categoryName?: string;
   createdAt?: string;

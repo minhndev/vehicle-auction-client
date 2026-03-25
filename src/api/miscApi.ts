@@ -42,8 +42,8 @@ export const miscApi = {
   },
 
   // Auth Verify
-  verifyAccount: async (token: string) => {
-    const response = await axiosClient.get(`/auth/verify?token=${encodeURIComponent(token)}`);
+  verifyAccount: async (data: { email: string, otp: string }) => {
+    const response = await axiosClient.post('/auth/verify', data);
     return response.data || response;
   },
 
