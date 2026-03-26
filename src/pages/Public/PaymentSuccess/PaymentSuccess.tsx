@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 
@@ -10,6 +10,9 @@ export const PaymentSuccess: React.FC = () => {
   const { tp } = usePageI18n();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
+
+  const [countdown, setCountdown] = React.useState(3);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const auctionIdFromQuery =
@@ -22,9 +25,23 @@ export const PaymentSuccess: React.FC = () => {
 
     if (resolvedAuctionId) {
       sessionStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
+      
+      // Auto-redirect logic
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigate(`/auctions/${resolvedAuctionId}`);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
     }
     sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
@@ -55,6 +72,19 @@ export const PaymentSuccess: React.FC = () => {
         <p style={{ color: '#6b7280', marginBottom: '1.5rem', lineHeight: 1.6 }}>
           {tp('paymentSuccess.description')}
         </p>
+
+        <div style={{
+          background: '#f8fafc',
+          padding: '12px',
+          borderRadius: '12px',
+          marginBottom: '1.5rem',
+          fontSize: '14px',
+          color: '#475569',
+          fontWeight: 500,
+          border: '1px dashed #e2e8f0'
+        }}>
+          🚀 Hệ thống sẽ tự động đưa bạn quay lại phiên đấu giá sau <strong>{countdown}</strong> giây...
+        </div>
 
         {ref && (
           <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '1.5rem' }}>

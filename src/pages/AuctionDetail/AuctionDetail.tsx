@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useAppSelector } from '../../store';
 import { CalendarDays, Settings2, Droplets, Gauge, AlertCircle, Clock, Trophy, CheckCircle2, MapPin, ImageIcon, ArrowLeft, Send, X, ChevronUp, ChevronDown, Heart } from 'lucide-react';
 import { catalogApi } from '../../api/catalogApi';
 import { paymentApi } from '../../api/paymentApi';
@@ -13,7 +13,6 @@ import { useAuctionWebSocket } from '../../hooks/useAuctionWebSocket';
 import { Button } from '../../components/ui/Button/Button';
 import { Alert } from '../../components/ui/Alert/Alert';
 import { usePageI18n } from '../../i18n/usePageI18n';
-import type { RootState } from '../../store';
 import styles from './AuctionDetail.module.css';
 
 const DEPOSIT_PENDING_AUCTION_ID_KEY = 'deposit.pendingAuctionId';
@@ -300,7 +299,8 @@ const sortBidsByRank = (items: BidResponse[]): BidResponse[] => {
   const highestBidMap = new Map<string, BidResponse>();
 
   for (const bid of items) {
-    const key = bid.bidderId ? String(bid.bidderId) : getBidIdentity(bid);
+    // Priority: bidderId (numeric or UUID) > bidderMask (e.g. BIDDER-F3027C) > fallback identity
+    const key = (bid.bidderId ? String(bid.bidderId) : bid.bidderMask) || getBidIdentity(bid);
     const existing = highestBidMap.get(key);
     
     if (!existing) {
@@ -361,12 +361,13 @@ const getDisplayRank = (bid: BidResponse, index: number): number => {
 const CountdownDisplay: React.FC<{
   startTime?: string | null;
   endTime?: string | null;
+  actualEndTime?: string | null;
   auctionHasStarted: boolean;
   isEnded: boolean;
   extensionBadgeMinutes: number;
-}> = ({ startTime, endTime, auctionHasStarted, isEnded, extensionBadgeMinutes }) => {
-  const startCountdown = useCountdown(startTime ?? '');
-  const endCountdown = useCountdown(endTime ?? '');
+}> = ({ startTime, endTime, actualEndTime, auctionHasStarted, isEnded, extensionBadgeMinutes }) => {
+  const startCountdown = useCountdown(startTime || '');
+  const endCountdown = useCountdown(actualEndTime || endTime || '');
 
   return (
     <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/10 grid grid-cols-2 gap-4">
@@ -389,8 +390,8 @@ export const AuctionDetail: React.FC = () => {
   const { tp } = usePageI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const currentUserId = useAppSelector((state) => state.auth.user?.id);
 
   const [auction, setAuction] = useState<AuctionResponse | null>(null);
   const [product, setProduct] = useState<ProductResponse | null>(null);
@@ -413,8 +414,44 @@ export const AuctionDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'auction'>('overview');
+  const [isWatchlisted, setIsWatchlisted] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [showOutbidBanner, setShowOutbidBanner] = useState(false);
+  const hasAnnouncedWinnerRef = useRef(false);
   const bidsFailCountRef = useRef(0);
   const bidsCooldownUntilRef = useRef(0);
+
+  // Use a real state so component re-renders every second to check if time is up
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const iv = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const toggleWatchlist = async () => {
+    if (!id || !isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    const productId = auction?.productId || product?.id;
+    if (!productId) return;
+
+    setWatchlistLoading(true);
+    try {
+      if (isWatchlisted) {
+        await watchlistApi.removeFromWatchlist(productId);
+        setIsWatchlisted(false);
+      } else {
+        await watchlistApi.addToWatchlist(productId);
+        setIsWatchlisted(true);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setWatchlistLoading(false);
+    }
+  };
 
   const fetchBidsWithBackoff = useCallback(async (auctionId: string): Promise<BidResponse[]> => {
     const now = Date.now();
@@ -604,7 +641,7 @@ export const AuctionDetail: React.FC = () => {
     fetchData();
   }, [fetchBidsWithBackoff, id]);
 
-  const { currentPrice: wsPrice, latestMessage, notification, depositStatusMessage, isConnected } = useAuctionWebSocket(id ?? '');
+  const { currentPrice: wsPrice, latestMessage, notification, outbidNotification, depositStatusMessage, isConnected } = useAuctionWebSocket(id ?? '');
 
   useEffect(() => {
     if (!id || !depositStatusMessage) {
@@ -667,10 +704,76 @@ export const AuctionDetail: React.FC = () => {
     ? displayPrice + (bidStepValue * selectedBidStep)
     : minNextBid;
 
-  const isEnded =
-    auction?.status === 'COMPLETED' ||
-    auction?.status === 'CANCELLED' ||
-    auction?.status === 'FAILED';
+  // isEnded — computed from live clock (nowMs), not useMemo
+  const isEnded = (() => {
+    const status = auction?.status?.toUpperCase() || '';
+    if (['COMPLETED', 'CANCELLED', 'FAILED', 'ENDED', 'FINISHED'].includes(status)) return true;
+    const targetTime = new Date(auction?.actualEndTime || auction?.endTime || 0).getTime();
+    return targetTime > 0 && targetTime <= nowMs;
+  })();
+
+  // Auto-refresh when auction ends locally but API hasn't caught up yet
+  // Keep polling every 3s (up to 10 times) until status flips to COMPLETED
+  const winnerPollCountRef = useRef(0);
+  useEffect(() => {
+    if (!isEnded || !id) return;
+    if (['COMPLETED', 'CANCELLED', 'FAILED'].includes(auction?.status ?? '')) return;
+    // Auction ended locally but status still ACTIVE — start polling
+    winnerPollCountRef.current = 0;
+    const poll = setInterval(async () => {
+      winnerPollCountRef.current += 1;
+      await refreshAuctionRealtime(id);
+      if (winnerPollCountRef.current >= 10) clearInterval(poll);
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [isEnded, id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Winner modal via API status (after refresh)
+  useEffect(() => {
+    const winnerId = String(auction?.winnerId ?? '').trim();
+    const userId = String(currentUserId ?? '').trim();
+    if (!winnerId || !userId) return;
+    if (isEnded && auction?.status === 'COMPLETED' && winnerId === userId && !hasAnnouncedWinnerRef.current) {
+      setShowWinnerModal(true);
+      hasAnnouncedWinnerRef.current = true;
+    }
+  }, [isEnded, auction?.status, auction?.winnerId, currentUserId]);
+
+  // Winner modal via WS notification push (AUCTION_WON type from BE)
+  useEffect(() => {
+    if (!notification || !notification.type) return;
+    const notifType = String(notification.type).toUpperCase();
+    // BE sends type = AUCTION_WON  (not 'WIN' or 'WINNER')
+    const isWinNotif = notifType === 'AUCTION_WON' || notifType.includes('WON') || notifType.includes('WIN');
+    if (isWinNotif && !hasAnnouncedWinnerRef.current) {
+      setShowWinnerModal(true);
+      hasAnnouncedWinnerRef.current = true;
+    }
+  }, [notification]);
+
+  // Auto-refresh when auction starts (UPCOMING -> ACTIVE transition)
+  const hasRefreshedOnStartRef = useRef(false);
+  useEffect(() => {
+    if (!id || !auction?.startTime || auction.status !== 'UPCOMING') return;
+    
+    const startTimeMs = new Date(auction.startTime).getTime();
+    if (nowMs >= startTimeMs && !hasRefreshedOnStartRef.current) {
+      hasRefreshedOnStartRef.current = true;
+      console.log('Auction start time reached, refreshing status...');
+      refreshAuctionRealtime(id);
+    } else if (nowMs < startTimeMs) {
+      // Reset ref if we are before start (in case of time sync/updates)
+      hasRefreshedOnStartRef.current = false;
+    }
+  }, [id, auction?.startTime, auction?.status, nowMs, refreshAuctionRealtime]);
+
+  // Outbid banner
+  useEffect(() => {
+    if (!outbidNotification) return;
+    setShowOutbidBanner(true);
+    const t = window.setTimeout(() => setShowOutbidBanner(false), 6000);
+    return () => window.clearTimeout(t);
+  }, [outbidNotification]);
 
   useEffect(() => {
     setSelectedBidStep(1);
@@ -1181,6 +1284,7 @@ export const AuctionDetail: React.FC = () => {
                   <CountdownDisplay 
                     startTime={auction?.startTime} 
                     endTime={auction?.endTime} 
+                    actualEndTime={auction?.actualEndTime}
                     auctionHasStarted={auctionHasStarted} 
                     isEnded={isEnded} 
                     extensionBadgeMinutes={extensionBadgeMinutes} 
@@ -1289,6 +1393,76 @@ export const AuctionDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Winner Modal & Confetti Overlay */}
+      {showWinnerModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+           {/* Modal Backdrop with better blur */}
+           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[8px] animate-in fade-in duration-700" onClick={() => setShowWinnerModal(false)}></div>
+           
+           <div className="relative bg-white rounded-[3rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] p-12 max-w-md w-full text-center overflow-visible animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 scale-110">
+              
+              {/* Animated Trophy Icon */}
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-28 h-28 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full flex items-center justify-center text-white shadow-2xl animate-bounce-slow ring-8 ring-white">
+                <Trophy size={56} />
+              </div>
+
+              {/* Confetti Pieces (more and better looking) */}
+              <div className="confetti-container absolute inset-0 overflow-visible pointer-events-none">
+                  {[...Array(40)].map((_, i) => (
+                    <div key={i} className={`confetti-piece piece-${i}`}></div>
+                  ))}
+              </div>
+
+              <div className="mt-8">
+                <h2 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">XIN CHÚC MỪNG!</h2>
+                <div className="h-1 w-20 bg-amber-400 mx-auto mb-6 rounded-full"></div>
+                
+                <p className="text-slate-600 mb-8 font-medium leading-relaxed">
+                  Bạn là người trả giá cao nhất cho <br/>
+                  <span className="text-[#2e3d83] font-bold text-lg">{auction?.productName}</span> <br/>
+                  với số tiền cực kỳ ấn tượng <br/>
+                  <span className="text-emerald-600 font-extrabold text-2xl drop-shadow-sm">{formatVND(auction?.currentPrice)}</span>
+                </p>
+                
+                <button 
+                  onClick={() => setShowWinnerModal(false)}
+                  className="w-full py-5 bg-gradient-to-r from-[#2e3d83] to-[#1e293b] text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/40 active:scale-95 transition-all mb-3"
+                >
+                  XÁC NHẬN CHIẾN THẮNG
+                </button>
+                <button
+                  onClick={() => { setShowWinnerModal(false); navigate('/orders'); }}
+                  className="w-full py-3 bg-emerald-50 text-emerald-700 border-2 border-emerald-200 rounded-2xl font-bold text-sm hover:bg-emerald-100 transition-all"
+                >
+                  Xem & Thanh Toán Hợp Đồng →
+                </button>
+              </div>
+
+              {/* Floating Stars */}
+              <div className="absolute -right-4 -top-4 text-yellow-500 animate-pulse"><Trophy size={32} /></div>
+              <div className="absolute -left-4 top-20 text-yellow-400 animate-bounce delay-150"><Trophy size={20} /></div>
+           </div>
+        </div>
+      )}
+
+      {/* Outbid Banner */}
+      {showOutbidBanner && outbidNotification && (
+        <div className="fixed top-6 right-6 z-[90] max-w-sm animate-in slide-in-from-right duration-500">
+          <div className="bg-red-600 text-white rounded-2xl shadow-2xl p-4 flex items-start gap-3 border border-red-400">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+              <ChevronUp size={20} className="text-white"/>
+            </div>
+            <div className="flex-1">
+              <p className="font-black text-sm">{outbidNotification.title || 'Bạn bị vượt giá!'}</p>
+              <p className="text-red-100 text-xs mt-1 leading-relaxed">{outbidNotification.content || 'Người khác vừa đặt giá cao hơn. Hãy tăng giá ngay!'}</p>
+            </div>
+            <button onClick={() => setShowOutbidBanner(false)} className="text-white/60 hover:text-white ml-1">
+              <X size={16}/>
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
@@ -1299,6 +1473,39 @@ export const AuctionDetail: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #cbd5e1;
           border-radius: 4px;
+        }
+
+        .animate-bounce-slow {
+          animation: bounce-slow 2s infinite;
+        }
+        @keyframes bounce-slow {
+          0%, 100% { transform: translate(-50%, 0); }
+          50% { transform: translate(-50%, -15px); }
+        }
+
+        .confetti-piece {
+          position: absolute;
+          width: 10px; height: 10px;
+          top: -20px;
+          border-radius: 2px;
+          animation: confetti-fall linear forwards;
+        }
+
+        ${[...Array(40)].map((_, i) => `
+          .piece-${i} {
+            left: ${Math.random() * 100}%;
+            background: ${['#f4c23d', '#2e3d83', '#de3c4b', '#1ea971', '#3864d1', '#f97316', '#a855f7'][i % 7]};
+            animation-duration: ${1.5 + Math.random() * 2.5}s;
+            animation-delay: ${Math.random() * 3}s;
+            transform: rotate(${Math.random() * 360}deg);
+            width: ${6 + Math.random() * 8}px;
+            height: ${6 + Math.random() * 12}px;
+          }
+        `).join('')}
+
+        @keyframes confetti-fall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(600px) rotate(720deg); opacity: 0; }
         }
       `}</style>
 

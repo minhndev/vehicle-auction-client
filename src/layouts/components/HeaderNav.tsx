@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Gavel, LayoutDashboard, User as UserIcon, History, LogOut, Bell } from 'lucide-react';
+import { Gavel, LayoutDashboard, User as UserIcon, History, LogOut } from 'lucide-react';
 import type { RootState } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { authService } from '../../features/auth/api/authService';
 import { watchlistApi } from '../../api/watchlistApi';
 import { auctionApi } from '../../features/bidding/api/auctionApi';
 import { AlertCircle, X } from 'lucide-react';
+import { NotificationBell } from '../../components/NotificationBell/NotificationBell';
+import { useAuctionWebSocket } from '../../hooks/useAuctionWebSocket';
 
 export interface NavItem {
   id: string;
@@ -62,6 +64,9 @@ export const HeaderNav: React.FC = () => {
   const [notification, setNotification] = useState<string | null>(null);
   const notifiedAuctions = useRef<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Global WS for personal notifications (empty auctionId = still connects for /user/queue/notification)
+  const { notification: wsNotification } = useAuctionWebSocket('');
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -228,10 +233,7 @@ export const HeaderNav: React.FC = () => {
         ) : (
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
-            <Link to="/user/notifications" className="relative p-2 text-slate-500 hover:text-[#2e3d83] transition-colors rounded-full hover:bg-slate-100">
-              <Bell size={20} strokeWidth={2} />
-              {/* Note: Unread count could be fetched here via API or Redux. For now, we display the bell directly. */}
-            </Link>
+            <NotificationBell liveNotification={wsNotification} />
 
             <div className="relative" ref={dropdownRef}>
               <button

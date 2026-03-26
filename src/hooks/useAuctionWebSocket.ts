@@ -97,6 +97,7 @@ export const useAuctionWebSocket = (auctionId: string) => {
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [latestMessage, setLatestMessage] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationMessage | null>(null);
+  const [outbidNotification, setOutbidNotification] = useState<NotificationMessage | null>(null);
   const [depositStatusMessage, setDepositStatusMessage] = useState<DepositPaymentStatusMessage | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [autoTransport, setAutoTransport] = useState<'websocket' | 'sockjs'>('websocket');
@@ -153,12 +154,18 @@ export const useAuctionWebSocket = (auctionId: string) => {
       });
 
       // 2. Subscribe to personal notifications (outbid, won, etc.)
+      // BE pushes via Spring convertAndSendToUser → destination becomes /user/queue/notification
       if (accountId) {
-        client.subscribe(`/queue/notifications/${accountId}`, (message) => {
+        client.subscribe('/user/queue/notification', (message) => {
           if (!message.body) return;
           try {
             const notif: NotificationMessage = JSON.parse(message.body);
             setNotification(notif);
+            // Track outbid separately for targeted UI banner
+            const t = String(notif.type || '').toUpperCase();
+            if (t.includes('OUTBID') || t.includes('OUT_BID')) {
+              setOutbidNotification(notif);
+            }
           } catch (e) {
             console.error('[WS] Failed to parse notification', e);
           }
@@ -229,5 +236,5 @@ export const useAuctionWebSocket = (auctionId: string) => {
     return false;
   }, [auctionId]);
 
-  return { currentPrice, latestMessage, notification, depositStatusMessage, isConnected, placeBidViaWS };
+  return { currentPrice, latestMessage, notification, outbidNotification, depositStatusMessage, isConnected, placeBidViaWS };
 };

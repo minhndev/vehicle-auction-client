@@ -46,8 +46,13 @@ export const PaymentFailed: React.FC = () => {
         )}
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/user/orders">
-            <Button variant="primary">{tp('paymentFailed.retryPayment')}</Button>
+          {sessionStorage.getItem('deposit.pendingAuctionId') && (
+            <Link to={`/auctions/${sessionStorage.getItem('deposit.pendingAuctionId')}`}>
+              <Button variant="primary">Quay lại phiên đấu giá</Button>
+            </Link>
+          )}
+          <Link to="/user/wallet/deposit">
+            <Button variant={sessionStorage.getItem('deposit.pendingAuctionId') ? 'outline' : 'primary'}>{tp('paymentFailed.retryPayment')}</Button>
           </Link>
           <Link to="/">
             <Button variant="outline">{tp('paymentFailed.goHome')}</Button>
