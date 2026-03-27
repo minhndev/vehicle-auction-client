@@ -15,16 +15,27 @@ export const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const auctionIdFromQuery =
+    const pendingAuctionId = 
+      sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || 
+      localStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || 
+      '';
+    
+    const rawAuctionIdFromQuery =
       searchParams.get('auctionId') ||
       searchParams.get('referenceId') ||
       searchParams.get('ref') ||
       '';
-    const pendingAuctionId = sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || '';
-    const resolvedAuctionId = auctionIdFromQuery || pendingAuctionId;
+
+    // Heuristic: If it looks like a transaction ID (starts with TXN-), skip it
+    const auctionIdFromQuery = (rawAuctionIdFromQuery && !rawAuctionIdFromQuery.startsWith('TXN-')) 
+      ? rawAuctionIdFromQuery 
+      : '';
+
+    const resolvedAuctionId = pendingAuctionId || auctionIdFromQuery;
 
     if (resolvedAuctionId) {
       sessionStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
+      localStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
       
       // Auto-redirect logic
       const timer = setInterval(() => {
@@ -41,7 +52,25 @@ export const PaymentSuccess: React.FC = () => {
       return () => clearInterval(timer);
     }
     sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
+    localStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
   }, [searchParams, navigate]);
+
+  const pendingAuctionId = 
+    sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || 
+    localStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || 
+    '';
+  
+  const rawAuctionIdFromQuery =
+    searchParams.get('auctionId') ||
+    searchParams.get('referenceId') ||
+    searchParams.get('ref') ||
+    '';
+
+  const auctionIdFromQuery = (rawAuctionIdFromQuery && !rawAuctionIdFromQuery.startsWith('TXN-')) 
+    ? rawAuctionIdFromQuery 
+    : '';
+
+  const resolvedAuctionId = pendingAuctionId || auctionIdFromQuery;
 
   return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
@@ -73,18 +102,33 @@ export const PaymentSuccess: React.FC = () => {
           {tp('paymentSuccess.description')}
         </p>
 
-        <div style={{
-          background: '#f8fafc',
-          padding: '12px',
-          borderRadius: '12px',
-          marginBottom: '1.5rem',
-          fontSize: '14px',
-          color: '#475569',
-          fontWeight: 500,
-          border: '1px dashed #e2e8f0'
-        }}>
-          🚀 Hệ thống sẽ tự động đưa bạn quay lại phiên đấu giá sau <strong>{countdown}</strong> giây...
-        </div>
+        {resolvedAuctionId ? (
+          <div style={{
+            background: '#f8fafc',
+            padding: '12px',
+            borderRadius: '12px',
+            marginBottom: '1.5rem',
+            fontSize: '14px',
+            color: '#475569',
+            fontWeight: 500,
+            border: '1px dashed #e2e8f0'
+          }}>
+            🚀 Hệ thống sẽ tự động đưa bạn quay lại phiên đấu giá sau <strong>{countdown}</strong> giây...
+          </div>
+        ) : (
+          <div style={{
+            background: '#fff7ed',
+            padding: '12px',
+            borderRadius: '12px',
+            marginBottom: '1.5rem',
+            fontSize: '14px',
+            color: '#9a3412',
+            fontWeight: 500,
+            border: '1px dashed #fed7aa'
+          }}>
+            Lưu ý: Không xác định được mã phiên đấu giá. Vui lòng quay lại danh sách để tiếp tục.
+          </div>
+        )}
 
         {ref && (
           <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '1.5rem' }}>
@@ -93,11 +137,16 @@ export const PaymentSuccess: React.FC = () => {
         )}
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/user/orders">
-            <Button variant="primary">{tp('paymentSuccess.viewOrders')}</Button>
-          </Link>
+          {resolvedAuctionId && (
+            <Link to={`/auctions/${resolvedAuctionId}`}>
+              <Button variant="primary">Quay lại phiên đấu giá</Button>
+            </Link>
+          )}
           <Link to="/auctions">
-            <Button variant="outline">{tp('paymentSuccess.continueAuction')}</Button>
+            <Button variant={resolvedAuctionId ? "outline" : "primary"}>{tp('paymentSuccess.continueAuction')}</Button>
+          </Link>
+          <Link to="/user/orders">
+            <Button variant="outline">{tp('paymentSuccess.viewOrders')}</Button>
           </Link>
         </div>
       </div>

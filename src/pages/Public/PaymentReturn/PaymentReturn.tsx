@@ -48,35 +48,56 @@ export const PaymentReturn: React.FC = () => {
     }
 
     try {
-      const response = await miscApi.verifyVnPayReturn(location.search);
+      const response: any = await miscApi.verifyVnPayReturn(location.search);
       // Depending on API response structure, determine success or failure
       // Usually vnpay returns vnp_ResponseCode=00 in query string if success
       const urlParams = new URLSearchParams(location.search);
       const isSuccess = urlParams.get('vnp_ResponseCode') === '00';
-      const auctionIdFromQuery =
+      
+      const pendingAuctionId = 
+        sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || 
+        localStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || 
+        '';
+
+      // Check for auctionId in backend response if available
+      const auctionIdFromResponse = 
+        response?.auctionId || 
+        response?.data?.auctionId || 
+        '';
+      
+      const rawAuctionIdFromQuery =
         urlParams.get('auctionId') ||
         urlParams.get('referenceId') ||
         urlParams.get('ref') ||
         '';
-      const pendingAuctionId = sessionStorage.getItem(DEPOSIT_PENDING_AUCTION_ID_KEY) || '';
-      const resolvedAuctionId = auctionIdFromQuery || pendingAuctionId;
+      
+      // Heuristic: If it looks like a transaction ID (starts with TXN-), skip it
+      const auctionIdFromQuery = (rawAuctionIdFromQuery && !rawAuctionIdFromQuery.startsWith('TXN-')) 
+        ? rawAuctionIdFromQuery 
+        : '';
+
+      const resolvedAuctionId = pendingAuctionId || auctionIdFromResponse || auctionIdFromQuery;
       
       if (isSuccess || (response && response.status === 'success')) {
         if (resolvedAuctionId) {
           sessionStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
+          localStorage.setItem(`${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${resolvedAuctionId}`, '1');
           setDepositAuctionId(resolvedAuctionId);
         }
         sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
+        localStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
         setStatus('success');
         setMessage(tp('paymentReturn.success'));
       } else {
         sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
+        localStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
         setStatus('failed');
         setMessage(tp('paymentReturn.failed'));
       }
     } catch (err) {
       // In a real app we might get a 400 from backend if signature fails
       sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
+      localStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
       setStatus('failed');
       setMessage(tp('paymentReturn.serverVerifyFailed'));
     }
@@ -102,18 +123,25 @@ export const PaymentReturn: React.FC = () => {
             </div>
             <h2>{tp('paymentReturn.successTitle')}</h2>
             <p className={styles.text}>{message}</p>
-            {depositAuctionId && (
+            {depositAuctionId ? (
               <p className={styles.text}>{tp('paymentReturn.redirectAuction')}</p>
+            ) : (
+                <p className={styles.text} style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                  Hệ thống không xác định được mã phiên đấu giá. Vui lòng quay lại danh sách hoặc trang cá nhân để tiếp tục.
+                </p>
             )}
             <div className={styles.actions}>
-              {depositAuctionId && (
+              {depositAuctionId ? (
                 <Button variant="primary" onClick={() => navigate(`/auctions/${depositAuctionId}`)}>{tp('paymentReturn.backToAuction')}</Button>
+              ) : (
+                <Button variant="primary" onClick={() => navigate('/auctions')}>Xem danh sách đấu giá</Button>
               )}
-              <Button variant="primary" onClick={() => navigate('/user/wallet/deposit')}>{tp('paymentReturn.viewWallet')}</Button>
-              <Button variant="outline" onClick={() => navigate('/user/orders')}>{tp('paymentReturn.viewOrders')}</Button>
+              <Button variant="outline" onClick={() => navigate('/user/dashboard')}>Trang cá nhân</Button>
+              <Button variant="outline" onClick={() => navigate('/user/orders')}>Lịch sử đơn hàng</Button>
             </div>
           </div>
         )}
+
 
         {status === 'failed' && (
           <div className={styles.failedState}>

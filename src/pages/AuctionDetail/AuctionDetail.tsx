@@ -834,7 +834,9 @@ export const AuctionDetail: React.FC = () => {
     }
 
     const paidFlagKey = `${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${id}`;
-    const localPaidFlag = sessionStorage.getItem(paidFlagKey) === '1';
+    const localPaidFlag = 
+      sessionStorage.getItem(paidFlagKey) === '1' || 
+      localStorage.getItem(paidFlagKey) === '1';
 
     if (!silent) {
       setCheckingDeposit(true);
@@ -943,6 +945,7 @@ export const AuctionDetail: React.FC = () => {
       }
 
       sessionStorage.setItem(DEPOSIT_PENDING_AUCTION_ID_KEY, id);
+      localStorage.setItem(DEPOSIT_PENDING_AUCTION_ID_KEY, id);
       window.location.href = paymentUrl;
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
@@ -951,6 +954,7 @@ export const AuctionDetail: React.FC = () => {
       if (message.toLowerCase().includes('deposit has already been paid')) {
         const paidFlagKey = `${DEPOSIT_PAID_AUCTION_KEY_PREFIX}${id}`;
         sessionStorage.setItem(paidFlagKey, '1');
+        localStorage.setItem(paidFlagKey, '1');
         setIsDepositVerified(true);
         setDepositError('');
         return;
@@ -961,6 +965,7 @@ export const AuctionDetail: React.FC = () => {
       setDepositLoading(false);
     }
   };
+
 
   // Main image
   const mainImage =
