@@ -7,6 +7,8 @@ import { setCredentials } from '../../../store/slices/authSlice';
 import { userApi } from '../../../api/userApi';
 import { ArrowLeft, Save, Camera, User, Loader2 } from 'lucide-react';
 import { sellerApi } from '../../../features/seller/api/sellerApi';
+import { usePageI18n } from '../../../i18n/usePageI18n';
+import { getErrorMessage } from '../../../utils/errorHelpers';
 
 interface UpdateProfileFormData {
   firstName: string;
@@ -19,6 +21,7 @@ interface UpdateProfileFormData {
 }
 
 export const UpdateProfilePage: React.FC = () => {
+  const { tp } = usePageI18n();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -86,7 +89,7 @@ export const UpdateProfilePage: React.FC = () => {
       const url = await sellerApi.uploadImage(file);
       setValue('avatarURL', url);
     } catch (err) {
-      setErrorMsg('Không thể tải ảnh lên.');
+      setErrorMsg(getErrorMessage(err, tp('errors:profile.avatar_upload_failed')));
     } finally {
       setUploading(false);
     }
@@ -115,7 +118,7 @@ export const UpdateProfilePage: React.FC = () => {
       // Navigate back to profile
       navigate('/user/profile');
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật hồ sơ.');
+      setErrorMsg(getErrorMessage(error, tp('errors:profile.update_failed')));
     } finally {
       setLoading(false);
     }

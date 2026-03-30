@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Button } from '../../../components/ui/Button/Button';
+import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './AuthForm.module.css';
 
 const schema = z.object({
@@ -29,7 +30,7 @@ export const ForgotPasswordForm: React.FC = () => {
       await authService.forgotPassword(data);
       setSuccess(true);
     } catch (err: unknown) {
-      setError((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to send reset link');
+      setError(getErrorMessage(err, 'Failed to send reset link'));
     } finally {
       setLoading(false);
     }

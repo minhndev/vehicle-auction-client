@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Button } from '../../../components/ui/Button/Button';
+import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './AuthForm.module.css';
 
 const schema = z.object({
@@ -45,7 +46,7 @@ export const ResetPasswordForm: React.FC = () => {
       // Redirect to login after successful reset
       navigate('/login?reset=success');
     } catch (err: unknown) {
-      setError((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to reset password');
+      setError(getErrorMessage(err, 'Failed to reset password'));
     } finally {
       setLoading(false);
     }

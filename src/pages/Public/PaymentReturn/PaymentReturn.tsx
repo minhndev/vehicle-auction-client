@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button/Button';
 import { miscApi } from '../../../api/miscApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
+import { getErrorMessage } from '../../../utils/errorHelpers';
 import styles from './PaymentReturn.module.css';
 
 const DEPOSIT_PENDING_AUCTION_ID_KEY = 'deposit.pendingAuctionId';
@@ -99,7 +100,7 @@ export const PaymentReturn: React.FC = () => {
       sessionStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
       localStorage.removeItem(DEPOSIT_PENDING_AUCTION_ID_KEY);
       setStatus('failed');
-      setMessage(tp('paymentReturn.serverVerifyFailed'));
+      setMessage(getErrorMessage(err, tp('paymentReturn.serverVerifyFailed')));
     }
   };
 

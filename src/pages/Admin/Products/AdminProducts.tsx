@@ -11,7 +11,7 @@ import { SellerEmail } from './components/SellerEmail';
 
 export const AdminProducts: React.FC = () => {
   const [items, setItems] = useState<ProductResponse[]>([]);
-  const { getProductStatusLabel } = usePageI18n();
+  const { tp, getProductStatusLabel } = usePageI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState('all');
@@ -33,7 +33,7 @@ export const AdminProducts: React.FC = () => {
       const data = await adminApi.getProducts({ page: 0, size: 100, sort: 'createdAt,desc', ...(status !== 'all' ? { status } : {}), ...(keyword.trim() ? { keyword: keyword.trim() } : {}) });
       setItems(data);
     } catch (err) {
-      setError(getErrorMessage(err, 'Không thể tải danh sách xe.'));
+      setError(getErrorMessage(err, tp('errors:admin.load_failed')));
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export const AdminProducts: React.FC = () => {
       setActionLoadingId(id);
       await adminApi.approveVehicle(id);
       await fetchItems();
-    } catch (err) { setError(getErrorMessage(err, 'Không thể duyệt.')); } finally { setActionLoadingId(null); }
+    } catch (err) { setError(getErrorMessage(err, tp('errors:admin.approve_failed'))); } finally { setActionLoadingId(null); }
   };
 
   const handleReject = async (id: string) => {
@@ -71,7 +71,7 @@ export const AdminProducts: React.FC = () => {
       setActionLoadingId(id);
       await adminApi.rejectVehicle(id, reason);
       await fetchItems();
-    } catch (err) { setError(getErrorMessage(err, 'Không thể từ chối.')); } finally { setActionLoadingId(null); }
+    } catch (err) { setError(getErrorMessage(err, tp('errors:admin.reject_failed'))); } finally { setActionLoadingId(null); }
   };
 
   const handleDelete = async (id: string) => {
@@ -80,7 +80,7 @@ export const AdminProducts: React.FC = () => {
       setActionLoadingId(id);
       await adminApi.deleteProduct(id);
       await fetchItems();
-    } catch (err) { setError(getErrorMessage(err, 'Lỗi.')); } finally { setActionLoadingId(null); }
+    } catch (err) { setError(getErrorMessage(err, tp('errors:admin.delete_failed'))); } finally { setActionLoadingId(null); }
   };
 
   const handleRestore = async (id: string) => {
@@ -89,7 +89,7 @@ export const AdminProducts: React.FC = () => {
       setActionLoadingId(id);
       await adminApi.restoreProduct(id);
       await fetchItems();
-    } catch (err) { setError(getErrorMessage(err, 'Lỗi.')); } finally { setActionLoadingId(null); }
+    } catch (err) { setError(getErrorMessage(err, tp('errors:admin.load_failed'))); } finally { setActionLoadingId(null); }
   };
 
   return (

@@ -5,8 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import type { RootState } from '../../../store';
 import { userApi } from '../../../api/userApi';
 import { ArrowLeft, Lock, KeyRound } from 'lucide-react';
+import { usePageI18n } from '../../../i18n/usePageI18n';
+import { getErrorMessage } from '../../../utils/errorHelpers';
 
 export const ChangePasswordPage: React.FC = () => {
+  const { tp } = usePageI18n();
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,7 @@ export const ChangePasswordPage: React.FC = () => {
         confirmPassword: data.confirmPassword
       });
       
-      setSuccessMsg('Đổi mật khẩu thành công. Vui lòng ghi nhớ mật khẩu mới của bạn.');
+      setSuccessMsg(tp('errors:profile.change_password_success'));
       reset();
       
       // Navigate back after a delay
@@ -46,7 +49,7 @@ export const ChangePasswordPage: React.FC = () => {
       }, 3000);
       
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.message || 'Có lỗi xảy ra khi đổi mật khẩu.');
+      setErrorMsg(getErrorMessage(error, tp('errors:profile.change_password_failed')));
     } finally {
       setLoading(false);
     }

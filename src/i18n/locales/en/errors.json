@@ -1,10 +1,28 @@
 {
-  "1001": "This email is already registered.",
-  "1002": "Invalid credentials. Please check your email and password.",
-  "1003": "Account has not been verified yet. Check your email.",
-  "1004": "Session expired. Please log in again.",
-  "1005": "Invalid refresh token.",
-  "1006": "You do not have permission to perform this action.",
-  "auction.not.active": "This vehicle has not entered its auction period yet or the auction has already closed.",
-  "fallback": "An unknown error occurred"
+  "1001": "This email has already been registered. Please use a different one.",
+  "1002": "Invalid login credentials. Please check your email and password.",
+  "1003": "Account not verified. Please check your email for activation instructions.",
+  "1004": "Session expired. Please log in again to continue.",
+  "1005": "Invalid or expired authentication request.",
+  "1006": "You do not have permission to perform this action. Please contact support.",
+  "auction.not.active": "This auction is currently unavailable (not started or already closed).",
+  "status": {
+    "401": "Your session has expired. Please log in again.",
+    "403": "You don't have permission to access or perform this action.",
+    "404": "Requested content or resource not found.",
+    "500": "The system is experiencing technical difficulties. Please try again later."
+  },
+  "profile": {
+    "update_failed": "An error occurred while updating the profile.",
+    "avatar_upload_failed": "Unable to upload image.",
+    "change_password_failed": "An error occurred while changing the password.",
+    "change_password_success": "Password changed successfully. Please remember your new password."
+  },
+  "admin": {
+    "load_failed": "Failed to load the data list.",
+    "approve_failed": "Error while approving the record.",
+    "reject_failed": "Error while rejecting the record.",
+    "delete_failed": "Error while deleting the data."
+  },
+  "fallback": "An unknown error occurred. Please try again later."
 }

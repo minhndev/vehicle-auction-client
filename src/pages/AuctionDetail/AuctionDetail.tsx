@@ -13,6 +13,7 @@ import { useAuctionWebSocket } from '../../hooks/useAuctionWebSocket';
 import { Button } from '../../components/ui/Button/Button';
 import { Alert } from '../../components/ui/Alert/Alert';
 import { usePageI18n } from '../../i18n/usePageI18n';
+import { getErrorMessage } from '../../utils/errorHelpers';
 import styles from './AuctionDetail.module.css';
 
 const DEPOSIT_PENDING_AUCTION_ID_KEY = 'deposit.pendingAuctionId';
@@ -632,7 +633,7 @@ export const AuctionDetail: React.FC = () => {
           setProduct(null);
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : tp('auctionDetail.loadFailed');
+        const msg = getErrorMessage(err, tp('auctionDetail.loadFailed'));
         setError(msg);
       } finally {
         setLoading(false);
@@ -905,17 +906,7 @@ export const AuctionDetail: React.FC = () => {
         });
       }
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { status?: number; data?: { message?: string } } };
-      const statusCode = axiosErr.response?.status;
-      const serverMessage = axiosErr.response?.data?.message ?? '';
-
-      if (statusCode === 401) {
-        setBidError(tp('errors.auth.expired', { ns: 'errors', defaultValue: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để đặt giá.' }));
-      } else if (statusCode === 403 || /do not have access/i.test(serverMessage)) {
-        setBidError(tp('errors.bid.notAllowed', { ns: 'errors', defaultValue: 'Hiện chưa thể đặt giá cho phiên này. Vui lòng kiểm tra trạng thái phiên, trạng thái đặt cọc hoặc đăng nhập lại rồi thử lại.' }));
-      } else {
-        setBidError(serverMessage || tp('errors.bid.failed', { ns: 'errors', defaultValue: 'Đặt giá thất bại, vui lòng thử lại' }));
-      }
+      setBidError(getErrorMessage(err, tp('errors.bid.failed', { ns: 'errors', defaultValue: 'Đặt giá thất bại, vui lòng thử lại' })));
     } finally {
       setBidLoading(false);
     }

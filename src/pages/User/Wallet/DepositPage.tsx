@@ -3,6 +3,7 @@ import { Button } from '../../../components/ui/Button/Button';
 import { paymentApi } from '../../../api/paymentApi';
 import { usePageI18n } from '../../../i18n/usePageI18n';
 import { WalletHistory } from './WalletHistory';
+import { getErrorMessage } from '../../../utils/errorHelpers';
 import type { DepositRequest } from '../../../types/index';
 import styles from './DepositPage.module.css';
 
@@ -52,8 +53,7 @@ export const DepositPage: React.FC = () => {
         setError(tp('deposit.noPaymentUrl'));
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? tp('deposit.initError');
-      setError(msg);
+      setError(getErrorMessage(err, tp('deposit.initError')));
     } finally {
       setLoading(false);
     }

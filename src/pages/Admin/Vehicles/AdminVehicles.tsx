@@ -24,7 +24,7 @@ export const AdminVehicles: React.FC = () => {
       const list = Array.isArray(data) ? data : (data as any)?.content || [];
       setVehicles(list);
     } catch (err) {
-      setError(getErrorMessage(err, tp('adminVehicles.loadError', 'Không thể tải danh sách')));
+      setError(getErrorMessage(err, tp('errors:admin.load_failed')));
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,7 @@ export const AdminVehicles: React.FC = () => {
       setVehicles(prev => prev.filter(v => v.id !== id));
       setTimeout(() => alert(tp('adminVehicles.approveSuccess', 'Duyệt hồ sơ thành công!')), 100);
     } catch (err) {
-      alert(`${tp('adminVehicles.approveFailed', 'Lỗi khi duyệt')}: ${getErrorMessage(err, 'Lỗi không xác định')}`);
+      alert(`${tp('adminVehicles.approveFailed', 'Lỗi khi duyệt')}: ${getErrorMessage(err, tp('errors:admin.approve_failed'))}`);
     } finally {
       setActionLoading(null);
     }
@@ -54,7 +54,7 @@ export const AdminVehicles: React.FC = () => {
       setVehicles(prev => prev.filter(v => v.id !== id));
       setTimeout(() => alert(tp('adminVehicles.rejectSuccess', 'Đã từ chối hồ sơ xe!')), 100);
     } catch (err) {
-      alert(`${tp('adminVehicles.rejectFailed', 'Lỗi khi từ chối')}: ${getErrorMessage(err, 'Lỗi không xác định')}`);
+      alert(`${tp('adminVehicles.rejectFailed', 'Lỗi khi từ chối')}: ${getErrorMessage(err, tp('errors:admin.reject_failed'))}`);
     } finally {
       setActionLoading(null);
     }

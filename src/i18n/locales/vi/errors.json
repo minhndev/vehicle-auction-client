@@ -1,10 +1,28 @@
 {
-  "1001": "Email này đã được đăng ký.",
-  "1002": "Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại email và mật khẩu.",
-  "1003": "Tài khoản chưa được xác thực. Vui lòng kiểm tra email của bạn.",
-  "1004": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-  "1005": "Token làm mới không hợp lệ.",
-  "1006": "Bạn không có quyền thực hiện hành động này.",
-  "auction.not.active": "Chiếc xe này chưa bước vào thời gian bắt đầu đấu giá hoặc phiên đấu giá đã khép lại.",
-  "fallback": "Đã xảy ra lỗi không xác định"
+  "1001": "Email này đã được đăng ký. Vui lòng sử dụng email khác.",
+  "1002": "Thông tin đăng nhập không chính xác. Vui lòng kiểm tra lại email và mật khẩu.",
+  "1003": "Tài khoản của bạn chưa được xác thực. Hãy kiểm tra hộp thư đến để kích hoạt.",
+  "1004": "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.",
+  "1005": "Yêu cầu xác thực không hợp lệ hoặc đã quá hạn.",
+  "1006": "Bạn không có quyền thực hiện hành động này. Vui lòng liên hệ quản trị viên.",
+  "auction.not.active": "Phiên đấu giá này hiện không khả dụng (chưa bắt đầu hoặc đã kết thúc).",
+  "status": {
+    "401": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    "403": "Bạn không có quyền truy cập hoặc thực hiện thao tác này.",
+    "404": "Không tìm thấy nội dung hoặc tài nguyên yêu cầu.",
+    "500": "Hệ thống đang gặp sự cố kỹ thuật. Vui lòng thử lại sau ít phút."
+  },
+  "profile": {
+    "update_failed": "Có lỗi xảy ra khi cập nhật hồ sơ.",
+    "avatar_upload_failed": "Không thể tải ảnh lên.",
+    "change_password_failed": "Có lỗi xảy ra khi đổi mật khẩu.",
+    "change_password_success": "Đổi mật khẩu thành công. Vui lòng ghi nhớ mật khẩu mới của bạn."
+  },
+  "admin": {
+    "load_failed": "Không thể tải danh sách dữ liệu.",
+    "approve_failed": "Lỗi khi phê duyệt hồ sơ.",
+    "reject_failed": "Lỗi khi từ chối hồ sơ.",
+    "delete_failed": "Lỗi khi xóa dữ liệu."
+  },
+  "fallback": "Đã xảy ra lỗi không xác định. Vui lòng thử lại sau."
 }

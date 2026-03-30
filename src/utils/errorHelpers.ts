@@ -1,71 +1,43 @@
-// Helper utility to extract standard Java Spring Boot AppException error codes / messages
 import { AxiosError } from 'axios';
-import type { AppExceptionResponse } from '../types/auth.types';
 import i18n from '../i18n/config';
 
 export const getErrorMessage = (error: unknown, defaultMessage: string = i18n.t('errors:fallback')): string => {
-  if (isAxiosError(error) && error.response?.data) {
-    const raw = typeof error.response.data === 'string'
-      ? error.response.data
-      : JSON.stringify(error.response.data);
-    const normalizedRaw = raw.toLowerCase();
-
-    if (
-      normalizedRaw.includes('accounts_email_key') ||
-      normalizedRaw.includes('duplicate key value violates unique constraint') ||
-      (normalizedRaw.includes('email') && normalizedRaw.includes('already exists'))
-    ) {
-      return 'Email đã tồn tại. Vui lòng dùng email khác hoặc đăng nhập.';
-    }
-
-    const appException = error.response.data as AppExceptionResponse;
-
-    // Check if the backend sent a recognizable code/message shape
-    if (appException.code && appException.message) {
-      // We can map specific codes to user-friendly overrides via i18n if needed
-      if (i18n.exists(`errors:${appException.code}`)) {
-         return i18n.t(`errors:${appException.code}`);
-      }
-      return appException.message; // Fall back to the backend's default message if not tracked
-    }
-
-    if (
-      typeof error.response.data === 'object' &&
-      error.response.data !== null &&
-      'message' in error.response.data &&
-      typeof (error.response.data as Record<string, unknown>).message === 'string'
-    ) {
-      return (error.response.data as Record<string, string>).message;
-    }
-  }
-
   if (isAxiosError(error)) {
-    const msg = String(error.message || '').toLowerCase();
+    const status = error.response?.status;
+    const data = error.response?.data as any;
+
+    // 1. Check for specific backend error code mapping (e.g., 1001, 1002)
+    if (data?.code && i18n.exists(`errors:${data.code}`)) {
+      return i18n.t(`errors:${data.code}`);
+    }
+
+    // 2. Map known database constraint or substring patterns (before general status)
+    const rawData = typeof data === 'string' ? data : JSON.stringify(data || '');
+    const msg = (rawData + (error.message || '')).toLowerCase();
+    
     if (
       msg.includes('accounts_email_key') ||
       msg.includes('duplicate key value violates unique constraint') ||
       (msg.includes('email') && msg.includes('already exists'))
     ) {
-      return 'Email đã tồn tại. Vui lòng dùng email khác hoặc đăng nhập.';
-    }
-  }
-
-  if (isAxiosError(error) && error.response?.status) {
-    if (error.response.status === 401) {
-      return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      return i18n.t('errors:1001'); // "Email already exists"
     }
 
-    if (error.response.status === 403) {
-      return 'Bạn không có quyền truy cập tài nguyên này (thiếu authority phù hợp).';
+    // 3. Fallback to HTTP status mapping if defined in i18n
+    if (status !== undefined && i18n.exists(`errors:status.${status}`)) {
+      return i18n.t(`errors:status.${status}`);
     }
 
-    if (error.response.status >= 500) {
-      return 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.';
-    }
+    // 4. Default user-friendly messages for standard status codes if not explicitly in i18n status object
+    if (status === 401) return i18n.t('errors:status.401');
+    if (status === 403) return i18n.t('errors:status.403');
+    if (status && status >= 500) return i18n.t('errors:status.500');
   }
 
   if (error instanceof Error) {
-    return error.message;
+    // We generally don't want to show raw Error.message to end-users as it might be technical
+    // but we can log it for devs if needed. For the UI, we'll use the defaultMessage.
+    console.error('Handled Error mapping:', error);
   }
 
   return defaultMessage;
