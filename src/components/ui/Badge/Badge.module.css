@@ -1,0 +1,34 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 6px; /* Từ Figma UI chuẩn */
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* Các biến thể theo Figma (primary, secondary, etc.) */
+
+.primary {
+  background-color: #3b82f6; /* Hex Primary */
+  color: #ffffff;
+}
+
+.secondary {
+  background-color: #f1f5f9; /* Hex Secondary */
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.success {
+  background-color: #10b981; /* Hex Success */
+  color: #ffffff;
+}
+
+.warning {
+  background-color: #f59e0b; /* Hex Warning */
+  color: #ffffff;
+}

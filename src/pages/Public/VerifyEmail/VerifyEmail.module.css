@@ -1,0 +1,58 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: var(--space-xl);
+  background-color: #f8fafc;
+}
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xxxl) var(--space-xxl);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  border: 1px solid #edf2f7;
+}
+
+.card h2 {
+  color: var(--color-primary);
+  margin-bottom: var(--space-sm);
+  font-size: 1.5rem;
+}
+
+.card p {
+  color: var(--color-text-light);
+  margin-bottom: var(--space-xxl);
+  line-height: 1.5;
+}
+
+.iconCircleSuccess, .iconCircleFailed, .iconCircleWarning {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-xl);
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.iconCircleSuccess {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.iconCircleFailed {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.iconCircleWarning {
+  background-color: #fef3c7;
+  color: #f59e0b;
+}

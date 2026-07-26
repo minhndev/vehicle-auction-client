@@ -1,0 +1,107 @@
+import React from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
+import { authService } from '../features/auth/api/authService';
+import type { RootState } from '../store';
+import { LayoutDashboard, Car, Gavel, LogOut, Vibrate } from 'lucide-react';
+
+export const SellerLayout: React.FC = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // ignore
+    } finally {
+      dispatch(logout());
+      navigate('/');
+    }
+  };
+
+  const navItems = [
+    { name: 'Tổng Quan', path: '/seller/dashboard', icon: LayoutDashboard },
+    { name: 'Quản Lý Xe Đăng Ký', path: '/seller/products', icon: Car },
+    { name: 'Phiên Đấu Giá', path: '/seller/auctions', icon: Gavel },
+  ];
+
+  return (
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+      
+      {/* Sidebar */}
+      <aside className="w-72 bg-[#0f172a] text-white flex flex-col shadow-2xl z-20 shrink-0">
+        <div className="p-8 border-b border-white/10">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#10b981] to-emerald-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <Vibrate className="text-slate-900" size={20} />
+            </div>
+            <div>
+              <h3 className="font-black text-xl tracking-wide uppercase text-white">V-Auction</h3>
+              <p className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase">Seller Portal</p>
+            </div>
+          </Link>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2 custom-scrollbar">
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            const Icon = item.icon;
+            return (
+              <Link 
+                key={item.path} 
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ${
+                  isActive 
+                    ? 'bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-500/5' 
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Icon size={20} className={isActive ? 'text-emerald-400' : ''} />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-6 border-t border-white/10">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 w-full text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl font-bold transition-colors"
+          >
+            <LogOut size={20} />
+            Đăng Xuất
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 z-10 shrink-0 shadow-sm">
+          <div className="flex items-center justify-start flex-1">
+            <h2 className="text-xl font-black text-slate-800 tracking-wide">Khu vực Nhà Phân Phối</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden md:block">
+              <p className="text-sm font-black text-slate-800">{`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Seller'}</p>
+              <p className="text-xs font-bold text-slate-400">{user?.email || 'Đối tác bán hàng'}</p>
+            </div>
+            <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-extrabold shadow-md border-2 border-white">
+              {(user?.firstName || 'S').charAt(0).toUpperCase()}
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 relative z-0">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+};

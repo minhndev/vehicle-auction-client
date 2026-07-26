@@ -1,0 +1,174 @@
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.4rem;
+}
+
+.hero {
+  border-radius: 24px;
+  border: 1px solid #d8e1f3;
+  background:
+    radial-gradient(460px 220px at 100% 0%, rgba(108, 161, 248, 0.33), transparent 68%),
+    linear-gradient(135deg, #243368 0%, #1e2752 100%);
+  color: #f5f8ff;
+  padding: 1.3rem 1.45rem;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #f2c64d;
+}
+
+.hero h1 {
+  margin: 0.55rem 0 0.4rem;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.hero p {
+  margin: 0;
+  color: #d8e0f4;
+}
+
+.grid {
+  margin-top: 0.95rem;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.profileCard,
+.quickCard,
+.infoCard {
+  border-radius: 16px;
+  border: 1px solid #dce4f2;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 12px 24px rgba(28, 41, 86, 0.08);
+}
+
+.avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f5f8ff;
+  background: linear-gradient(135deg, #2f4ea8 0%, #23346b 100%);
+}
+
+.profileCard h2 {
+  margin: 0.7rem 0 0.25rem;
+  color: #23356a;
+  font-size: 1.25rem;
+}
+
+.profileCard p {
+  margin: 0;
+  color: #647297;
+  font-size: 0.88rem;
+}
+
+.metaList {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.52rem;
+}
+
+.metaList div {
+  border-radius: 10px;
+  border: 1px solid #e4eaf5;
+  background: #f8faff;
+  padding: 0.58rem 0.65rem;
+}
+
+.metaList span {
+  display: block;
+  font-size: 0.74rem;
+  color: #6a7698;
+}
+
+.metaList strong {
+  display: block;
+  margin-top: 0.18rem;
+  color: #25356a;
+  font-size: 0.88rem;
+}
+
+.quickCard h3,
+.infoCard h3 {
+  margin: 0 0 0.55rem;
+  color: #22356a;
+  font-size: 1rem;
+}
+
+.quickCard {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+
+.quickCard a {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid #dbe4f3;
+  background: #f8faff;
+  color: #2e4382;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.72rem;
+}
+
+.progressWrap {
+  margin-top: 0.4rem;
+  height: 10px;
+  border-radius: 999px;
+  background: #e8edf8;
+  overflow: hidden;
+}
+
+.progressBar {
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(90deg, #2f4ea8 0%, #f3c54d 100%);
+}
+
+.infoCard p {
+  margin: 0.5rem 0 0;
+  font-weight: 700;
+  color: #22356a;
+}
+
+.infoCard small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #647297;
+  line-height: 1.5;
+}
+
+@media (max-width: 920px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0.95rem 0.9rem;
+  }
+
+  .hero {
+    border-radius: 18px;
+    padding: 1rem;
+  }
+}

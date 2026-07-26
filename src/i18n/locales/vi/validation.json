@@ -1,0 +1,14 @@
+{
+  "email_invalid": "Địa chỉ email không hợp lệ",
+  "email_required": "Bắt buộc nhập email",
+  "password_min": "Mật khẩu phải có ít nhất 8 ký tự",
+  "passwords_dont_match": "Mật khẩu không khớp",
+  "first_name_required": "Bắt buộc nhập tên",
+  "last_name_required": "Bắt buộc nhập họ",
+  "identity_required": "Bắt buộc nhập số CCCD/Hộ chiếu",
+  "birthdate_invalid": "Định dạng phải là YYYY-MM-DD",
+  "gender_invalid": "Vui lòng chọn giới tính hợp lệ",
+  "phone_required": "Bắt buộc nhập số điện thoại",
+  "address_required": "Bắt buộc nhập địa chỉ",
+  "avatar_url_invalid": "Phải là một đường dẫn URL hợp lệ"
+}

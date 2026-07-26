@@ -1,0 +1,2896 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Vehicle Auction API",
+        "description": "API documentation for the Vehicle Auction System",
+        "contact": {
+            "name": "Backend Team",
+            "url": "https://www.example.com",
+            "email": "admin@example.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "https://springdoc.org/"
+        },
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080/api/v1",
+            "description": "Generated server url"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Product Management",
+            "description": "APIs for managing vehicles (products) before they go to auction"
+        },
+        {
+            "name": "Permission Management",
+            "description": "APIs for managing user permissions"
+        },
+        {
+            "name": "Auction Management",
+            "description": "APIs for managing auctions"
+        },
+        {
+            "name": "Deposit Management",
+            "description": "APIs for auction deposits"
+        },
+        {
+            "name": "Category Management",
+            "description": "APIs for managing vehicle categories"
+        },
+        {
+            "name": "Order Management",
+            "description": "APIs for managing post-auction orders"
+        },
+        {
+            "name": "Notification",
+            "description": "API for managing user notifications"
+        },
+        {
+            "name": "UploadFile",
+            "description": "APIs for upload files"
+        },
+        {
+            "name": "Authentication",
+            "description": "APIs related to user authentication"
+        },
+        {
+            "name": "Role Management",
+            "description": "APIs for managing user roles and permissions"
+        },
+        {
+            "name": "Watchlist",
+            "description": "API for managing user's product watchlist"
+        }
+    ],
+    "paths": {
+        "/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Get role details by ID",
+                "description": "Returns detailed information about a specific role, including its permissions.",
+                "operationId": "getRoleById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Update an existing role",
+                "description": "This endpoint allows Admin to update role details and its associated permissions.",
+                "operationId": "updateRole",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleUpdateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Soft delete a role",
+                "description": "This endpoint allows Admin to soft delete a role. The role will be marked as deleted but not removed from the database.",
+                "operationId": "deleteRole",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Role deleted successfully"
+                    }
+                }
+            }
+        },
+        "/products/{id}": {
+            "get": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Get product by ID",
+                "operationId": "getProductById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Update product details",
+                "operationId": "updateProduct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Soft delete a product",
+                "operationId": "deleteProduct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Product deleted successfully"
+                    }
+                }
+            }
+        },
+        "/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Get category by ID",
+                "operationId": "getCategoryById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Update category details",
+                "operationId": "updateCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Soft delete a category",
+                "operationId": "deleteCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Category deleted successfully"
+                    }
+                }
+            }
+        },
+        "/watchlist/{productId}": {
+            "post": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Add a product to the watchlist",
+                "operationId": "addToWatchlist",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Remove a product from the watchlist",
+                "operationId": "removeFromWatchlist",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/roles": {
+            "get": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Get paginated list of roles",
+                "description": "Returns a paginated list of roles. Use 'page, 'size', and 'sort' parameters.",
+                "operationId": "getAllRoles",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page index (0..N)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "The size of the page to be returned",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageRoleResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Create a new role",
+                "description": "This endpoint allows Admin to create a custom role and link it with multiple permissions.",
+                "operationId": "createRole",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Role name already exists",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/products": {
+            "get": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Get all active products with pagination",
+                "operationId": "getAllProducts",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page index (0..N)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "The size of the page to be returned",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageProductResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Register a new vehicle",
+                "description": "Allows SELLER or ADMIN to register a new vehicle into the system. The vehicle will be created with a DRAFT status and will await approval before being auctioned.",
+                "operationId": "createProduct",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Vehicle registered successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input or VIN number already exists",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/create": {
+            "post": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "createPayment",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentCreateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/orders/{id}/pay": {
+            "post": {
+                "tags": [
+                    "Order Management"
+                ],
+                "summary": "Checkout order via VNPay",
+                "description": "Thanh toán phần tiền còn lại của đơn hàng qua VNPay",
+                "operationId": "payOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/files/upload": {
+            "post": {
+                "tags": [
+                    "UploadFile"
+                ],
+                "operationId": "uploadImage",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadFileResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/deposits": {
+            "post": {
+                "tags": [
+                    "Deposit Management"
+                ],
+                "summary": "Pay deposit for an auction (Mock)",
+                "operationId": "payDeposit",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DepositRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/categories": {
+            "get": {
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Get all active categories with pagination",
+                "operationId": "getAllCategories",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page index (0..N)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "The size of the page to be returned",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageCategoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Create a new category",
+                "description": "Admin only. Auto-generates a unique URL slug.",
+                "operationId": "createCategory",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new account",
+                "operationId": "register",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh-token": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reissue a new Access Token using Refresh Token.",
+                "operationId": "refreshToken",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout",
+                "operationId": "logout",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login to the system",
+                "operationId": "login",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions": {
+            "get": {
+                "tags": [
+                    "Auction Management"
+                ],
+                "summary": "Search and filter auction sessions",
+                "description": "Allows users to search for auction sessions based on various criteria such as status, price range, keyword, and category. Supports pagination for efficient data retrieval.",
+                "operationId": "searchAuctions",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "UPCOMING",
+                                "ACTIVE",
+                                "COMPLETED",
+                                "CANCELLED",
+                                "FAILED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "categoryId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "minPrice",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "maxPrice",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page index (0..N)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "The size of the page to be returned",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Auctions retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageAuctionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Auction Management"
+                ],
+                "summary": "Create a new auction session",
+                "description": "Allows Admin to create a new auction for an APPROVED product. The auction will start in UPCOMING status until the start time is reached.",
+                "operationId": "createAuction",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuctionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Auction session created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuctionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid time, overlapping auctions, or invalid product status",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuctionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuctionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Auction Management"
+                ],
+                "summary": "Cancel an auction session",
+                "description": "Allows Admin to cancel an UPCOMING or ACTIVE auction. This action will automatically trigger deposit refunds for all participating users.",
+                "operationId": "cancelAuction",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CancelAuctionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Auction cancelled successfully"
+                    },
+                    "400": {
+                        "description": "Auction cannot be cancelled in its current status"
+                    },
+                    "404": {
+                        "description": "Auction not found"
+                    }
+                }
+            }
+        },
+        "/auctions/{auctionId}/bids": {
+            "get": {
+                "tags": [
+                    "bid-controller"
+                ],
+                "summary": "Get Top 10 Bids Ranking",
+                "operationId": "getAllBids",
+                "parameters": [
+                    {
+                        "name": "auctionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BidResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "bid-controller"
+                ],
+                "operationId": "placeBid",
+                "parameters": [
+                    {
+                        "name": "auctionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BidRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BidResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "post": {
+                "tags": [
+                    "Permission Management"
+                ],
+                "summary": "Create a new permission",
+                "description": "This endpoint allows Admin to create a permission.",
+                "operationId": "createPermission",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Permission created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PermissionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Permission name already exists",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PermissionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/{id}/restore": {
+            "patch": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Restore a soft-deleted role",
+                "description": "This endpoint allows Admin to restore a previously soft-deleted role.",
+                "operationId": "restoreRole",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Role restored successfully"
+                    }
+                }
+            }
+        },
+        "/products/{id}/restore": {
+            "patch": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Restore a product",
+                "operationId": "restoreProduct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Product Restored successfully"
+                    }
+                }
+            }
+        },
+        "/products/{id}/reject": {
+            "patch": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Approve a vehicle (Admin only)",
+                "description": "Changes the status of a vehicle from DRAFT to APPROVED. Only approved vehicles can be added to an auction session.",
+                "operationId": "rejectProduct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle rejected successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Vehicle is not in PENDING status",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Vehicle not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{id}/approve": {
+            "patch": {
+                "tags": [
+                    "Product Management"
+                ],
+                "summary": "Approve a vehicle (Admin only)",
+                "description": "Changes the status of a vehicle from DRAFT to APPROVED. Only approved vehicles can be added to an auction session.",
+                "operationId": "approveProduct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle approved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Vehicle is not in DRAFT status",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Vehicle not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/{id}/read": {
+            "patch": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Mark a notification as read.",
+                "operationId": "markAsRead",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/categories/{id}/restore": {
+            "patch": {
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Restore a category",
+                "operationId": "restoreCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Category Restored successfully"
+                    }
+                }
+            }
+        },
+        "/watchlist": {
+            "get": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Get my watchlist",
+                "description": "Retrieves all products in the current user's watchlist",
+                "operationId": "getMyWatchlist",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/WatchlistModel"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/vnpay-return": {
+            "get": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "vnpayReturn",
+                "parameters": [
+                    {
+                        "name": "params",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/vnpay-ipn": {
+            "get": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "operationId": "vnpayIpn",
+                "parameters": [
+                    {
+                        "name": "params",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IpnResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Order Management"
+                ],
+                "summary": "Get order details",
+                "description": "Lấy thông tin chi tiết đơn hàng dành cho người thắng cuộc",
+                "operationId": "getOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/orders/my-orders": {
+            "get": {
+                "tags": [
+                    "Order Management"
+                ],
+                "summary": "Get my orders",
+                "description": "Lấy danh sách tất cả đơn hàng của người dùng hiện tại",
+                "operationId": "getMyOrders",
+                "parameters": [
+                    {
+                        "name": "pageable",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/Pageable"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageOrderResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Get my notification list",
+                "operationId": "getMyNotifications",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/NotificationModel"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/unread-count": {
+            "get": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Count the number of unread notifications.",
+                "operationId": "getUnreadCount",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/verify": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "operationId": "verifyAccount",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RoleUpdateRequest": {
+                "type": "object",
+                "description": "Request body for updating a role",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "AUCTION_MODERATOR",
+                        "maxLength": 50,
+                        "minLength": 3
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Responsible for managing auction sessions"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "permissionIds": {
+                        "type": "array",
+                        "description": "New set of permissions IDs",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "uniqueItems": true
+                    }
+                }
+            },
+            "PermissionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "groupName": {
+                        "type": "string",
+                        "example": "AUCTION"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "AUCTION_CREATE"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Allow user to create new auction sessions"
+                    },
+                    "system": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "example": "SYSTEM"
+                    },
+                    "updatedBy": {
+                        "type": "string",
+                        "example": "SYSTEM"
+                    }
+                }
+            },
+            "RoleResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "MANAGER"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Staff responsible for approving vehicle listings"
+                    },
+                    "system": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "example": [
+                            {
+                                "id": "550e8400-e29b-41d4-a716-446655440000",
+                                "groupName": "AUCTION",
+                                "name": "AUCTION_CREATE",
+                                "description": "Allow user to create new auction sessions",
+                                "system": true,
+                                "active": true,
+                                "createdAt": "2024-01-01T12:00:00",
+                                "updatedAt": "2024-01-01T12:00:00",
+                                "createdBy": "SYSTEM",
+                                "updatedBy": "SYSTEM"
+                            }
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/PermissionResponse"
+                        },
+                        "uniqueItems": true
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "example": "SYSTEM"
+                    },
+                    "updatedBy": {
+                        "type": "string",
+                        "example": "SYSTEM"
+                    },
+                    "deleted": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "deletedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00"
+                    }
+                }
+            },
+            "ProductRequest": {
+                "type": "object",
+                "description": "Request body for registering a new vehicle (product)",
+                "properties": {
+                    "categoryId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID of the category (e.g., SUV, Sedan)",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the vehicle",
+                        "example": "Toyota Camry 2.5Q 2022",
+                        "minLength": 1
+                    },
+                    "brand": {
+                        "type": "string",
+                        "example": "Toyota",
+                        "minLength": 1
+                    },
+                    "model": {
+                        "type": "string",
+                        "example": "Camry",
+                        "minLength": 1
+                    },
+                    "vinNumber": {
+                        "type": "string",
+                        "description": "Vehicle Identification Number - Must be unique",
+                        "example": "JTDKB46K803123456",
+                        "minLength": 1
+                    },
+                    "manufactureYear": {
+                        "type": "string",
+                        "example": 2022
+                    },
+                    "mileage": {
+                        "type": "string",
+                        "description": "Current mileage in km",
+                        "example": 15000
+                    },
+                    "startPrice": {
+                        "type": "string",
+                        "description": "Starting price for the auction",
+                        "example": 850000000
+                    },
+                    "imageUrls": {
+                        "type": "array",
+                        "description": "List of image URLs uploaded via Cloudinary/S3. The first URL will be the main image.",
+                        "example": [
+                            "https://cloud.com/img1.jpg",
+                            "https://cloud.com/img2.jpg"
+                        ],
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    }
+                },
+                "required": [
+                    "brand",
+                    "categoryId",
+                    "imageUrls",
+                    "manufactureYear",
+                    "mileage",
+                    "model",
+                    "name",
+                    "startPrice",
+                    "vinNumber"
+                ]
+            },
+            "ProductImageResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "main": {
+                        "type": "boolean"
+                    },
+                    "sortOrder": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "ProductResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "brand": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "vinNumber": {
+                        "type": "string"
+                    },
+                    "startPrice": {
+                        "type": "number"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "APPROVED",
+                            "REJECTED",
+                            "IN_AUCTION",
+                            "SOLD",
+                            "CANCELLED"
+                        ]
+                    },
+                    "categoryId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "categoryName": {
+                        "type": "string"
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductImageResponse"
+                        }
+                    }
+                }
+            },
+            "CategoryRequest": {
+                "type": "object",
+                "description": "Request body for creating a new vehicle category",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the category",
+                        "example": "SUV 7 Chỗ",
+                        "maxLength": 150,
+                        "minLength": 2
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description of the category",
+                        "example": "Dòng xe thể thao đa dụng 7 chỗ ngồi",
+                        "maxLength": 250,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "CategoryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "RoleRequest": {
+                "type": "object",
+                "description": "Request body for creating a role",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Unique name of the role",
+                        "example": "MANAGER",
+                        "maxLength": 50,
+                        "minLength": 3
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Brief description of the role's responsibilities",
+                        "example": "Staff responsible for approving vehicle listings",
+                        "minLength": 1
+                    },
+                    "permissionIds": {
+                        "type": "array",
+                        "description": "List of permission UUIDs to be assigned to this role",
+                        "example": [
+                            "550e8400-e29b-41d4-a716-446655440000",
+                            "670e8400-e29b-41d4-a716-446655440001"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "description",
+                    "name"
+                ]
+            },
+            "PaymentCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "referenceId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "targetType": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "PaymentResponse": {
+                "type": "object",
+                "properties": {
+                    "paymentURL": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UploadFileResponse": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    }
+                }
+            },
+            "DepositRequest": {
+                "type": "object",
+                "properties": {
+                    "auctionId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "paymentMethod": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "auctionId"
+                ]
+            },
+            "RegisterRequest": {
+                "type": "object",
+                "description": "Request body for user registration",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "User's email",
+                        "example": "user@example.com",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "User's password",
+                        "example": "user@123",
+                        "minLength": 1
+                    },
+                    "confirmPassword": {
+                        "type": "string",
+                        "description": "User's confirm password",
+                        "example": "user@123",
+                        "minLength": 1
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "description": "User's first name",
+                        "example": "John",
+                        "minLength": 1
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "description": "User's last name",
+                        "example": "Doe",
+                        "minLength": 1
+                    },
+                    "identityNumber": {
+                        "type": "string",
+                        "description": "User's identity number",
+                        "example": 1234567890,
+                        "minLength": 1
+                    },
+                    "birthdate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "User's birthdate",
+                        "example": "1990-01-01"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "description": "User's gender",
+                        "enum": [
+                            "MALE",
+                            "FEMALE",
+                            "OTHER"
+                        ],
+                        "example": "MALE"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "description": "User's phone number",
+                        "example": "+1234567890",
+                        "pattern": "^\\+?[0-9.]{10,15}$"
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "Physical address",
+                        "example": 123
+                    },
+                    "avatarURL": {
+                        "type": "string",
+                        "description": "URL to the user's avatar image",
+                        "example": "https://example.com/avatar.jpg"
+                    }
+                },
+                "required": [
+                    "birthdate",
+                    "confirmPassword",
+                    "email",
+                    "firstName",
+                    "gender",
+                    "identityNumber",
+                    "lastName",
+                    "password"
+                ]
+            },
+            "AuthResponse": {
+                "type": "object",
+                "description": "Response containing authentication tokens after successful login or registration",
+                "properties": {
+                    "accessToken": {
+                        "type": "string",
+                        "description": "JWT Access Token for authenticating API requests",
+                        "example": "eyJhbGciOiJIUzI1NiJ9..."
+                    },
+                    "refreshToken": {
+                        "type": "string",
+                        "description": "Refresh Token used to obtain a new access token",
+                        "example": "d9b2f3e4-c5a6-4b7d-8e9f-1a2b3c4d5e6f"
+                    },
+                    "tokenType": {
+                        "type": "string",
+                        "description": "The type of token",
+                        "example": "Bearer"
+                    }
+                }
+            },
+            "RefreshTokenRequest": {
+                "type": "object",
+                "properties": {
+                    "refreshToken": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "refreshToken"
+                ]
+            },
+            "LoginRequest": {
+                "type": "object",
+                "description": "Request body for user login",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "user@123",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "AuctionRequest": {
+                "type": "object",
+                "description": "Request body to create a new auction session",
+                "properties": {
+                    "productId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO-8601 format",
+                        "example": "2026-03-01T10:00:00"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO-8601 format",
+                        "example": "2026-03-03T10:00:00"
+                    },
+                    "startPrice": {
+                        "type": "number"
+                    },
+                    "bidIncrement": {
+                        "type": "number"
+                    },
+                    "depositAmount": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "bidIncrement",
+                    "depositAmount",
+                    "endTime",
+                    "productId",
+                    "startPrice",
+                    "startTime"
+                ]
+            },
+            "AuctionResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "productId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "productName": {
+                        "type": "string"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "actualEndTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "startPrice": {
+                        "type": "number"
+                    },
+                    "currentPrice": {
+                        "type": "number"
+                    },
+                    "bidIncrement": {
+                        "type": "number"
+                    },
+                    "depositAmount": {
+                        "type": "number"
+                    },
+                    "winnerId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "version": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "UPCOMING",
+                            "ACTIVE",
+                            "COMPLETED",
+                            "CANCELLED",
+                            "FAILED"
+                        ]
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "updatedBy": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CancelAuctionRequest": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "reason"
+                ]
+            },
+            "BidRequest": {
+                "type": "object",
+                "description": "Request body for placing a bid in an active auction",
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "description": "The amount the user wants to bid",
+                        "example": 510000000
+                    }
+                },
+                "required": [
+                    "amount"
+                ]
+            },
+            "BidResponse": {
+                "type": "object",
+                "description": "Response object containing details of a successfully placed bid",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique ID of the bid record"
+                    },
+                    "auctionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID of the auction session"
+                    },
+                    "bidderId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID of the user who placed the bid"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "The accepted bid amount",
+                        "example": 510000000
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Exact timestamp when the bid was recorded"
+                    },
+                    "isWinning": {
+                        "type": "boolean",
+                        "description": "Indicates if this bid is currently the highest winning bid",
+                        "example": true
+                    }
+                }
+            },
+            "PermissionRequest": {
+                "type": "object",
+                "description": "Request body for creating a permission",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Unique name of the permission",
+                        "example": "AUCTION_CREATE",
+                        "maxLength": 50,
+                        "minLength": 3
+                    },
+                    "groupName": {
+                        "type": "string",
+                        "description": "Group name of the permission",
+                        "example": "AUCTION",
+                        "minLength": 1
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Brief description of the role's responsibilities",
+                        "example": "Create new auctions",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "description",
+                    "groupName",
+                    "name"
+                ]
+            },
+            "WatchlistModel": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "accountId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "productId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "PageRoleResponse": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RoleResponse"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PageableObject": {
+                "type": "object",
+                "properties": {
+                    "offset": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "paged": {
+                        "type": "boolean"
+                    },
+                    "pageNumber": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "unpaged": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "SortObject": {
+                "type": "object",
+                "properties": {
+                    "empty": {
+                        "type": "boolean"
+                    },
+                    "sorted": {
+                        "type": "boolean"
+                    },
+                    "unsorted": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PageProductResponse": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductResponse"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "IpnResponse": {
+                "type": "object",
+                "properties": {
+                    "RspCode": {
+                        "type": "string"
+                    },
+                    "Message": {
+                        "type": "string"
+                    }
+                }
+            },
+            "OrderResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "auctionId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "productName": {
+                        "type": "string"
+                    },
+                    "winningPrice": {
+                        "type": "number"
+                    },
+                    "depositAmount": {
+                        "type": "number"
+                    },
+                    "remainingAmount": {
+                        "type": "number"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING_PAYMENT",
+                            "PAID",
+                            "CANCELLED",
+                            "REFUNDED"
+                        ]
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "recipientName": {
+                        "type": "string"
+                    },
+                    "recipientPhone": {
+                        "type": "string"
+                    },
+                    "shippingAddress": {
+                        "type": "string"
+                    },
+                    "shippingNote": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Pageable": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 1
+                    },
+                    "sort": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "PageOrderResponse": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OrderResponse"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "NotificationModel": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "CREATE_PRODUCT",
+                            "OUTBID",
+                            "DEPOSIT_FORFEITED"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "referenceId": {
+                        "type": "string"
+                    },
+                    "referenceType": {
+                        "type": "string"
+                    },
+                    "readAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "read": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PageCategoryResponse": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CategoryResponse"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PageAuctionResponse": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuctionResponse"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "name": "bearerAuth",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}
